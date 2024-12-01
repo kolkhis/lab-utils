@@ -1,0 +1,91 @@
+- name: Install Loki, Prometheus, and Grafana on the Centralized VM
+  hosts: localhost # This IP is gonna vary (DHCP), so this is a placeholder
+  tasks:
+
+      ## Create /opt directories
+    - name: Create /opt/prometheus directory
+      ansible.builtin.file:
+        path: /opt/prometheus
+        state: directory
+        mode: '0755'
+
+    - name: Create /opt/loki directory
+      ansible.builtin.file:
+        path: /opt/loki
+        state: directory
+        mode: '0755'
+
+    - name: Create /opt/promtail directory
+      ansible.builtin.file:
+        path: /opt/promtail
+        state: directory
+        mode: '0755'
+
+        ## Copy config files
+    - name: Copy loki configuration file to VM
+      ansible.builtin.copy:
+        src: /home/kolkhis/config_files/loki-local-config.yml
+        dest: /opt/loki/loki-local-config.yml
+
+    - name: Copy prometheus configuration file to VM
+      ansible.builtin.copy:
+        src: /home/kolkhis/config_files/prometheus-config.yml
+        dest: /opt/prometheus/prometheus-config.yml
+
+    - name: Copy promtail configuration file to VM
+      ansible.builtin.copy:
+        src: /home/kolkhis/config_files/promtail-local-config.yml
+        dest: /opt/promtail/promtail-local-config.yml
+
+
+        # Download and install
+    - name: Download Grafana's GPG key and add the Grafana apt repository
+      become: yes
+      ansible.builtin.shell:
+        cmd: |
+          curl -o /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
+          echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+
+    - name: Install Grafana and dependencies
+      become: yes
+      ansible.builtin.apt:
+        update_cache: yes
+        name: |
+          apt-transport-https
+          software-properties-common
+          unzip
+          grafana-enterprise
+
+    - name: Verify Grafana is running
+      become: yes
+      ansible.builtin.shell:
+        cmd: |
+          systemctl daemon-reload
+          systemctl enable grafana-server
+          systemctl start grafana-server
+
+    - name: Download and install Loki
+      become: yes
+      ansible.builtin.shell:
+        chdir: /opt/loki
+        cmd: |
+          chmod 755 /opt/loki
+          curl -sL -o /opt/loki/loki-linux-amd64.zip https://github.com/grafana/loki/releases/download/v3.3.0/loki-linux-amd64.zip 
+          unzip /opt/loki/loki-linux-amd64.zip
+
+
+        # Save local IP to facts
+    - name: Get central VM's network IP and register variable
+      ansible.builtin.shell:
+        cmd: 'hostname -I | awk "{print $1}"'
+      register: central_vm_ip
+
+    - name: Save central VM's network IP to facts
+      ansible.builtin.set_fact:
+        DesmondIP: "{{ central_vm_ip.stdout | trim }}"
+        GrafanaLink: "http://{{ central_vm_ip.stdout | trim  }}:3000"
+
+    - name: Output the link for the Grafana server
+      ansible.builtin.debug:
+        msg: "Grafana Link: {{ hostvars['localhost']['GrafanaLink'] }}"
+

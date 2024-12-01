@@ -1,0 +1,76 @@
+- name: Install and configure node_exporter
+  hosts: none rn
+  vars: 
+    node_exporter_version: 1.8.2
+    node_exporter_dir: "/opt/node_exporter"
+    node_exporter_tarball: "node_exporter-{{ node_exporter_version }}-linux-amd64.tar.gz"
+
+  tasks:
+    - name: Create /opt/node_exporter
+      become: yes
+      ansible.builtin.file:
+        path: {{ node_exporter_dir }}
+        state: directory
+        mode: '0755'
+
+    - name: Create /etc/sysconfig
+      become: yes
+      ansible.builtin.file:
+        path: /etc/sysconfig
+        state: directory
+        mode: '0755'
+
+    - name: Download and extract latest version of node_exporter 
+      become: yes
+      ansible.builtin.shell:
+        cmd: |
+          curl -sLo /opt/node_exporter/node_exporter-1.8.2.linux-amd64.tar.gz https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz
+          tar -xzf /opt/node_exporter/node_exporter-1.8.2.linux-amd64.tar.gz
+          cd node_exporter-1.8.2.linux-amd64
+          git clone https://github.com/prometheus/node_exporter.git /opt/node_exporter/node_exporter-1.8.2.linux-amd64/config_files
+          cp /opt/node_exporter/node_exporter-*.*-linux-amd64/config_files/examples/systemd/node_exporter.socket /etc/systemd/system/node_exporter.socket
+          cp /opt/node_exporter/node_exporter-*.*-linux-amd64/config_files/examples/systemd/node_exporter.service /etc/systemd/system/node_exporter.service
+          cp /opt/node/node_exporter/node_exporter-*/node_exporter /usr/sbin/
+          cp /opt/node_exporter/node_exporter-*/config_files/examples/systemd/sysconfig.node_exporter /etc/sysconfig/node_exporter
+
+    - name: Create /var/lib/node_exporter/textfile_collector
+      become: yes
+      ansible.builtin.file:
+        path: /var/lib/node_exporter/textfile_collector
+        state: directory
+        mode: '0755'
+
+        # Create a user account for node_exporter
+    - name: Create a user account for node_exporter
+      ansible.builtin.user:
+        name: node_exporter
+        shell: /sbin/nologin
+
+    - name: Give ownership of node_exporter directories to the node_exporter user account and group
+      become: yes
+      ansible.builtin.file:
+        owner: node_exporter
+        group: node_exporter
+        path: {{ item }}
+      loop:
+        - /etc/sysconfig/node_exporter
+        - /var/lib/node_exporter/textfile_collector
+
+        # TODO: Change this to use ansible.builtin.file with 'owner' and 'group'
+    # - name: Give ownership of node_exporter directories to the node_exporter user account and group
+    #   become: yes
+    #   ansible.builtin.shell:
+    #     cmd: |
+    #       chown -R node_exporter:node_exporter /var/lib/node_exporter/textfile_collector
+    #       chown -R node_exporter:node_exporter /etc/sysconfig/node_exporter
+
+
+    - name: Start/enable node_exporter
+      become: yes
+      ansible.builtin.shell:
+        cmd: |
+          systemctl daemon-reload
+          systemctl enable node_exporter.service --now
+
+
+
