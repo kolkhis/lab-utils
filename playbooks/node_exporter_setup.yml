@@ -3,17 +3,18 @@
   vars: 
     node_exporter_version: 1.8.2
     node_exporter_dir: "/opt/node_exporter"
-    node_exporter_tarball: "node_exporter-{{ node_exporter_version }}-linux-amd64.tar.gz"
+    node_exporter_tarball: "node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    node_exporter_extracted_dir: "{{ node_exporter_dir }}/node_exporter-{{ node_exporter_version }}.linux-amd64"
 
   tasks:
-    - name: Create /opt/node_exporter
+    - name: Create /opt/node_exporter directory
       become: yes
       ansible.builtin.file:
-        path: {{ node_exporter_dir }}
+        path: "{{ node_exporter_dir }}"
         state: directory
         mode: '0755'
 
-    - name: Create /etc/sysconfig
+    - name: Create /etc/sysconfig directory
       become: yes
       ansible.builtin.file:
         path: /etc/sysconfig
@@ -24,14 +25,32 @@
       become: yes
       ansible.builtin.shell:
         cmd: |
-          curl -sLo /opt/node_exporter/node_exporter-1.8.2.linux-amd64.tar.gz https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz
-          tar -xzf /opt/node_exporter/node_exporter-1.8.2.linux-amd64.tar.gz
-          cd node_exporter-1.8.2.linux-amd64
+          curl -sLo {{ node_exporter_dir }}/{{ node_exporter_tarball }} https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+          tar -xzf {{ node_exporter_dir }}/{{ node_exporter_tarball }} -C {{ node_exporter_dir }}
+
+    - name: Clone the node_exporter configuration files repository
+      become: yes
+      ansible.builtin.shell:
+        cmd: |
           git clone https://github.com/prometheus/node_exporter.git /opt/node_exporter/node_exporter-1.8.2.linux-amd64/config_files
-          cp /opt/node_exporter/node_exporter-*.*-linux-amd64/config_files/examples/systemd/node_exporter.socket /etc/systemd/system/node_exporter.socket
-          cp /opt/node_exporter/node_exporter-*.*-linux-amd64/config_files/examples/systemd/node_exporter.service /etc/systemd/system/node_exporter.service
-          cp /opt/node/node_exporter/node_exporter-*/node_exporter /usr/sbin/
-          cp /opt/node_exporter/node_exporter-*/config_files/examples/systemd/sysconfig.node_exporter /etc/sysconfig/node_exporter
+          cp {{ node_exporter_extracted_dir }}/config_files/examples/systemd/node_exporter.socket /etc/systemd/system/node_exporter.socket
+          cp {{ node_exporter_extracted_dir }}/config_files/examples/systemd/node_exporter.service /etc/systemd/system/node_exporter.service
+          cp {{ node_exporter_extracted_dir }}/node_exporter /usr/sbin/
+          cp {{ node_exporter_extracted_dir }}/config_files/examples/systemd/sysconfig.node_exporter /etc/sysconfig/node_exporter
+
+        # # TODO: Change to use vars
+    # - name: Download and extract latest version of node_exporter 
+      # become: yes
+      # ansible.builtin.shell:
+        # cmd: |
+        #   curl -sLo /opt/node_exporter/node_exporter-1.8.2.linux-amd64.tar.gz https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz
+        #   tar -xzf /opt/node_exporter/node_exporter-1.8.2.linux-amd64.tar.gz
+        #   cd node_exporter-1.8.2.linux-amd64
+        #   git clone https://github.com/prometheus/node_exporter.git /opt/node_exporter/node_exporter-1.8.2.linux-amd64/config_files
+        #   cp /opt/node_exporter/node_exporter-*.*.linux-amd64/config_files/examples/systemd/node_exporter.socket /etc/systemd/system/node_exporter.socket
+        #   cp /opt/node_exporter/node_exporter-*.*.linux-amd64/config_files/examples/systemd/node_exporter.service /etc/systemd/system/node_exporter.service
+        #   cp /opt/node/node_exporter/node_exporter-*/node_exporter /usr/sbin/
+        #   cp /opt/node_exporter/node_exporter-*/config_files/examples/systemd/sysconfig.node_exporter /etc/sysconfig/node_exporter
 
     - name: Create /var/lib/node_exporter/textfile_collector
       become: yes
@@ -51,7 +70,7 @@
       ansible.builtin.file:
         owner: node_exporter
         group: node_exporter
-        path: {{ item }}
+        path: "{{ item }}"
       loop:
         - /etc/sysconfig/node_exporter
         - /var/lib/node_exporter/textfile_collector
@@ -64,13 +83,20 @@
     #       chown -R node_exporter:node_exporter /var/lib/node_exporter/textfile_collector
     #       chown -R node_exporter:node_exporter /etc/sysconfig/node_exporter
 
-
-    - name: Start/enable node_exporter
+    - name: Reload daemons and enable node_exporter
       become: yes
-      ansible.builtin.shell:
-        cmd: |
-          systemctl daemon-reload
-          systemctl enable node_exporter.service --now
+      ansible.builtin.systemd_service:
+        name: node_exporter.service
+        state: started
+        enabled: true
+        daemon_reload: true
+
+    # - name: Start/enable node_exporter
+    #   become: yes
+    #   ansible.builtin.shell:
+    #     cmd: |
+    #       systemctl daemon-reload
+    #       systemctl enable node_exporter.service --now
 
 
 
