@@ -1,9 +1,11 @@
 - name: Set up prometheus
   hosts: localhost  # Placeholder
   tasks:
+
     - name: Create a user account for Prometheus
       ansible.builtin.user:
         name: prometheus
+        shell: /sbin/nologin
 
     - name: Create the /var/lib/prometheus directory
       ansible.builtin.file:
@@ -18,5 +20,97 @@
           curl -o /tmp/prometheus-3.0.1.linux-amd64.tar.gz https://github.com/prometheus/prometheus/releases/download/v3.0.1/prometheus-3.0.1.linux-amd64.tar.gz
           tar -xzf /tmp/prometheus-3.0.1.linux-amd64.tar.gz -C /var/lib/prometheus --strip-components=1
           cp /var/lib/prometheus/prometheus /usr/bin/prometheus
-          chown -R prometheus:prometheus /usr/bin/prometheus
+
+    - name: Change ownership of prometheus binary
+      ansible.builtin.file:
+        path: /usr/bin/prometheus
+        owner: prometheus
+        group: prometheus
+        mode: '0755'
+
+    - name: Create the /etc/prometheus directory for configuration
+      ansible.builtin.file:
+        path: /etc/prometheus
+        state: directory
+        mode: '0755'
+
+    - name: Deploy prometheus.yml into /etc/prometheus
+      ansible.builtin.copy:
+        dest: /etc/prometheus/prometheus.yml
+        contents: |
+          # /etc/prometheus/prometheus.yml
+          global:
+            scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+            evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+            # scrape_timeout is set to the global default (10s).
+
+          # Alertmanager configuration
+          alerting:
+            alertmanagers:
+              - static_configs:
+                  - targets:
+                    # - alertmanager:9093
+          # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+          rule_files:
+            # - "first_rules.yml"
+            # - "second_rules.yml"
+
+          # A scrape configuration containing exactly one endpoint to scrape:
+          # Here it's Prometheus itself.
+          scrape_configs:
+            # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+            - job_name: "prometheus"
+              static_configs:
+                - targets: ["localhost:9090"]
+
+              # metrics_path defaults to '/metrics'
+              # scheme defaults to 'http'.
+            
+            - job_name: 'Prometheus_node'
+              static_configs:
+                - targets: 
+                    - 'localhost:9100'
+        # TODO: Add nodes running node_exporter to targets ("hostname:9100")
+
+    - name: Deploy prometheus.service into /etc/systemd/system
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/prometheus.service
+        contents: |
+          # /etc/systemd/system/prometheus.service
+          [Unit]
+          Description=Prometheus
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          User=prometheus
+          Group=prometheus
+          Type=simple
+          ExecStart=/usr/bin/prometheus \
+           --config.file /etc/prometheus/prometheus.yml \
+           --storage.tsdb.path /var/lib/prometheus/ \
+           --web.console.templates=/var/lib/prometheus/consoles \
+           --web.console.libraries=/var/lib/prometheus/console_libraries
+
+          [Install]
+          WantedBy=multi-user.target
+
+
+      ##### Saving IP to facts
+    - name: Save the prometheus host machine's network IP to a variable
+      ansible.builtin.command:
+        cmd: 'hostname -I | awk "{print $1}"'
+      register: prometheus_host_ip
+
+    - name: Save the prometheus host machine's network IP to facts
+      ansible.builtin.set_fact:
+        prometheus_host_ip: "{{ prometheus_host_ip.stdout | trim }}"
+
+  handlers:
+    - name: restart prometheus
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+        name: prometheus.service
+        state: started
+        enabled: true
 
