@@ -39,7 +39,6 @@
       become: yes
       ansible.builtin.shell:
         cmd: |
-          git clone https://github.com/prometheus/node_exporter.git /opt/node_exporter/node_exporter-1.8.2.linux-amd64/config_files
           cp {{ node_exporter_extracted_dir }}/config_files/examples/systemd/node_exporter.socket /etc/systemd/system/node_exporter.socket
           cp {{ node_exporter_extracted_dir }}/config_files/examples/systemd/node_exporter.service /etc/systemd/system/node_exporter.service
           cp {{ node_exporter_extracted_dir }}/node_exporter /usr/sbin/
@@ -82,13 +81,6 @@
         - /etc/sysconfig/node_exporter
         - /var/lib/node_exporter/textfile_collector
 
-        # TODO: Change this to use ansible.builtin.file with 'owner' and 'group'
-    # - name: Give ownership of node_exporter directories to the node_exporter user account and group
-    #   become: yes
-    #   ansible.builtin.shell:
-    #     cmd: |
-    #       chown -R node_exporter:node_exporter /var/lib/node_exporter/textfile_collector
-    #       chown -R node_exporter:node_exporter /etc/sysconfig/node_exporter
 
     - name: Reload daemons and enable node_exporter
       become: yes
