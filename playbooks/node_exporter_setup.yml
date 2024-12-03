@@ -28,6 +28,13 @@
           curl -sLo {{ node_exporter_dir }}/{{ node_exporter_tarball }} https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
           tar -xzf {{ node_exporter_dir }}/{{ node_exporter_tarball }} -C {{ node_exporter_dir }}
 
+    - name: Clone the node_exporter configuration files repo 
+      ansible.builtin.git:
+        repo: "https://github.com/prometheus/node_exporter.git"
+        dest: "{{ node_exporter_dir }}/config_files"
+
+
+      # TODO: Use the ansible.builtin.git module
     - name: Clone the node_exporter configuration files repository
       become: yes
       ansible.builtin.shell:
