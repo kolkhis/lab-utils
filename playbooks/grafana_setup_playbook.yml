@@ -7,19 +7,12 @@
         url: https://apt.grafana.com/gpg.key 
         dest: /usr/share/keyrings/grafana.key
         mode: '0644'
-      labels:
-        - setup
-        - download
 
     - name: Add the Grafana apt repository
       become: yes
       ansible.builtin.shell:
         cmd: |
           echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
-      labels:
-        - setup
-        - download
-
 
     - name: Install Grafana and dependencies
       become: yes
@@ -32,17 +25,12 @@
         state: present
         update_cache: yes
       notify: Start Grafana
-      labels:
-        - setup
-        - download
 
     - name: Save host IP
       ansible.builtin.shell:
         cmd: "hostname -I | awk '{ print $1 }'"
       register: grafana_host_ip
       notify: Generate Grafana link
-      labels: 
-        - nochange
 
 
   handlers:
