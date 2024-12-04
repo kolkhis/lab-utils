@@ -70,7 +70,19 @@
               static_configs:
                 - targets: 
                     - 'localhost:9100'
+            - job_name: 'node_exporter'
+              file_sd_configs:
+                - files:
+                    - '/etc/prometheus/targets.json'
         # TODO: Add nodes running node_exporter to targets ("hostname:9100")
+        # TODO (cont): Create script to dynamically generate a list of hosts using
+        #              either the Proxmox API or a bash script.
+        # 
+        # TODO (service discovery): Use file service discovery instead of hardcoded targets 
+        # - job name: 'node_exporter'
+        #   file_sd_configs:
+        #     - files: 
+        #         - '/etc/prometheus/targets.json'
 
     - name: Deploy prometheus.service into /etc/systemd/system
       ansible.builtin.copy:
