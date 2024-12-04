@@ -13,11 +13,11 @@
     - name: Install Grafana and dependencies
       become: yes
       ansible.builtin.apt:
-        name: |
-          apt-transport-https
-          software-properties-common
-          unzip
-          grafana-enterprise
+        name: 
+          - apt-transport-https
+          - software-properties-common
+          - unzip
+          - grafana-enterprise
         state: present
         update_cache: yes
       notify: Start Grafana
