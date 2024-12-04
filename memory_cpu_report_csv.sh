@@ -68,7 +68,7 @@ fi
 # Average: ,1.5G,1.5G,220.6M,5.7%,0.0k,1.9G,61.8%
 
 
-# Highest CPU spikes according to sar: 
+printf "Highest CPU spikes according to sar:\n" 
 sar -u -p -f "$1" |
     awk '{
         print "System: " $5 ", User: " $3 " Time: " $1 
