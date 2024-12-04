@@ -20,7 +20,7 @@
           grafana-enterprise
         state: present
         update_cache: yes
-        notify: Start Grafana
+      notify: Start Grafana
 
     - name: Save host IP
       ansible.builtin.shell:
@@ -31,7 +31,7 @@
 
   handlers:
     - name: Start Grafana
-      ansible.builtin.systemd_service:
+      ansible.builtin.systemd:
         daemon_reload: true
         name: grafana
         state: started
