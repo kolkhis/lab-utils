@@ -26,7 +26,7 @@ echo "LOGFILE: ${LOGFILE}"
 
 printf "Sar found. Generating CSV on CPU.\n"
 # sar CPU csv using timestamps, %cpu usage by user && system, %cpu i/o wait, and %idle
-sar -u -p -f $1 |
+sar -u -p -f "$1" |
     awk 'BEGIN 
         {
             print "Timestamp,%CPU used by User,%CPU used by System,%CPU I/O Wait,%CPU Idle"
