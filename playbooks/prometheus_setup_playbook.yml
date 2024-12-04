@@ -113,4 +113,10 @@
         name: prometheus.service
         state: started
         enabled: true
+      register: sysctl_prom_output
+      notify: Check the status of prometheus
+
+    - name: Check the status of prometheus
+      ansible.builtin.debug:
+        msg: "{{ sysctl_prom_output.stdout | trim }}"
 
