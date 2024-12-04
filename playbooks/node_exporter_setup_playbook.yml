@@ -82,7 +82,7 @@
         - /var/lib/node_exporter/textfile_collector
 
 
-    - name: Reload daemons and enable node_exporter
+    - name: Reload daemons and start node_exporter
       become: yes
       ansible.builtin.systemd_service:
         name: node_exporter.service
@@ -90,12 +90,38 @@
         enabled: true
         daemon_reload: true
 
-    # - name: Start/enable node_exporter
-    #   become: yes
-    #   ansible.builtin.shell:
-    #     cmd: |
-    #       systemctl daemon-reload
-    #       systemctl enable node_exporter.service --now
+    - name: Save remote machine's IP to variable
+      ansible.builtin.shell:
+        cmd: "hostname -I | awk '{print $1}'"
+      register: node_exporter_ip
+
+    - name: Save remote machine's IP to facts
+      ansible.builtin.set_fact:
+        node_exporter_target: "{{ node_exporter_ip.stdout | trim }}:9100"
+
+- name: Add node_exporter targets to Prometheus
+  hosts: localhost
+  vars:
+    node_exporter_target: hostvars['']['node_exporter_target']
+  tasks:
+
+    - name: Gather the node_exporter_targets
+      ansible.builtin.set_fact:
+        node_exporter_targets: >-
+          {{
+            ansible_play_hosts_all | map('extract', hostvars, 'node_exporter_target') | list
+          }}
+
+    - name: Debug collected targets
+      ansible.builtin.debug:
+        msg: "{{ node_exporter_targets }}"
+
+    # - name: Check if the current host is in the Prometheus configuration
+    #   ansible.builtin.copy:
+    #     dest: /etc/prometheus/targets.json
+    #   when: not (ansible_facts.stat.exists)
+
+
 
 
 
