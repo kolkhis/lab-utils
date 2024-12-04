@@ -1,0 +1,43 @@
+- name: Install Grafana on the system
+  hosts: localhost
+  tasks: 
+
+    - name: Download Grafana's GPG key and add apt repository
+      become: yes
+      ansible.builtin.shell:
+        cmd: |
+          curl -o /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
+          echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+
+
+    - name: Install Grafana and dependencies
+      become: yes
+      ansible.builtin.apt:
+        name: |
+          apt-transport-https
+          software-properties-common
+          unzip
+          grafana-enterprise
+        state: present
+        update_cache: yes
+        notify: Start Grafana
+
+    - name: Save host IP
+      ansible.builtin.shell:
+        cmd: 'hostname -I | awk "{ print $1 }"'
+      register: grafana_host_ip
+      notify: Generate Grafana link
+
+
+  handlers:
+    - name: Start Grafana
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+        name: grafana
+        state: started
+        enabled: true
+
+    - name: Generate Grafana link
+      ansible.builtin.debug:
+        msg: "Grafana link: http://{{ grafana_host_ip.stdout | trim }}:3000"
+
