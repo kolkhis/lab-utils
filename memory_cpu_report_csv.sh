@@ -7,7 +7,7 @@ if ! sar > /dev/null 2>&1; then
     printf "Exiting.\n";
     exit 1
 fi
-
+printf "Sar found.\n"
 
 
 if [[ $# -gt 0 ]]; then
@@ -24,14 +24,12 @@ fi
 
 echo "LOGFILE: ${LOGFILE}"
 
-printf "Sar found. Generating CSV on CPU.\n"
+printf "Generating CSV on CPU.\n"
 # sar CPU csv using timestamps, %cpu usage by user && system, %cpu i/o wait, and %idle
 sar -u -p -f "$1" |
-    awk 'BEGIN 
-        {
+    awk 'BEGIN {
             print "Timestamp,%CPU used by User,%CPU used by System,%CPU I/O Wait,%CPU Idle"
-        } NR>3 && /^[0-9|A]/
-        { 
+        } NR>3 && /^[0-9|A]/ { 
             print $1 "," $3 "," $5 "," $6 "," $8
         }' > cpu_usage_report.csv
 if [[ ! -f cpu_usage_report.csv ]]; then
