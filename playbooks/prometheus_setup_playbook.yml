@@ -13,11 +13,15 @@
         state: directory
         mode: '0755'
 
+    - name: Download Prometheus tarball
+      ansible.builtin.get_url:
+        url: https://github.com/prometheus/prometheus/releases/download/v3.0.1/prometheus-3.0.1.linux-amd64.tar.gz
+        dest: /tmp/prometheus-3.0.1.linux-amd64.tar.gz
+
     - name: Download and extract Prometheus and its dependencies
       become: yes
       ansible.builtin.shell:
         cmd: |
-          curl -o /tmp/prometheus-3.0.1.linux-amd64.tar.gz https://github.com/prometheus/prometheus/releases/download/v3.0.1/prometheus-3.0.1.linux-amd64.tar.gz
           tar -xzf /tmp/prometheus-3.0.1.linux-amd64.tar.gz -C /var/lib/prometheus --strip-components=1
           cp /var/lib/prometheus/prometheus /usr/bin/prometheus
 
