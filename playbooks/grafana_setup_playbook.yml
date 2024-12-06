@@ -106,6 +106,6 @@
     - name: Open Firewalld Port 3000
       ansible.builtin.shell:
         cmd: |
-          firewall-cmd --open-port=3000/tcp --permanent
+          firewall-cmd --add-port=3000/tcp --permanent 
           firewall-cmd --reload
       
