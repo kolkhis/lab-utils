@@ -74,8 +74,9 @@
           - dnf-plugins-core
           - unzip
           - grafana-enterprise
-      notify: Start Grafana
+        state: present
       when: ansible_os_family == "RedHat"
+      notify: Start Grafana
 
 
       ##################### end RH compliance ########################
