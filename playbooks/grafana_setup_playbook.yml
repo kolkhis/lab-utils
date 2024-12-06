@@ -71,8 +71,7 @@
       become: yes
       ansible.builtin.package:  # In case of older systems without dnf
         name: 
-          - apt-transport-https
-          - software-properties-common
+          - dnf-plugins-core
           - unzip
           - grafana-enterprise
       when: ansible_os_family == "RedHat"
