@@ -54,6 +54,7 @@
       when: ansible_os_family == "RedHat"
 
     - name: Add the Grafana yum repository for RedHat based Systems
+      become: yes
       ansible.builtin.copy:
         dest: /etc/yum.repos.d/grafana.repo
         content: |
