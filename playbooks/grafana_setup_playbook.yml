@@ -13,13 +13,21 @@
         mode: '0644'
       when: ansible_os_family == "Debian"
 
-        # TODO: Move to ansible.builtin.lineinfile
-    - name: Add the Grafana apt repository on Debian based systems
-      become: yes
-      ansible.builtin.shell:
-        cmd: |
-          echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+    - name: Add Grafana apt repository on Debian based systems
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/grafana.list
+        content: |
+          deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main
+        mode: '0644'
       when: ansible_os_family == "Debian"
+
+        # # TODO: Move to ansible.builtin.lineinfile
+    # - name: Add the Grafana apt repository on Debian based systems
+      # become: yes
+      # ansible.builtin.shell:
+        # cmd: |
+        #   echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+      # when: ansible_os_family == "Debian"
 
     - name: Install Grafana and dependencies on Debian based systems
       become: yes
