@@ -78,8 +78,7 @@
       when: ansible_os_family == "RedHat"
       notify: 
         - Start Grafana
-        - Open Firewalld Port 3000
-
+        - Open Firewall Port
 
       ##################### end RH compliance ########################
 
@@ -103,7 +102,7 @@
       ansible.builtin.debug:
         msg: "Grafana link: http://{{ grafana_host_ip.stdout | trim }}:3000"
 
-    - name: Open Firewalld Port 3000
+    - name: Open Firewall Port
       become: yes
       ansible.builtin.shell:
         cmd: |
