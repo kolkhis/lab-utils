@@ -65,6 +65,7 @@
           enabled=1
           gpgkey=file:///etc/pki/rpm-gpg/RPM_GPG_KEY_grafana
         mode: '0644'
+      notify: Start Grafana
       when: ansible_os_family == "RedHat"
 
     - name: Install Grafana and Dependencies on RedHat based systems
