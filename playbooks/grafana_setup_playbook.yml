@@ -104,6 +104,7 @@
         msg: "Grafana link: http://{{ grafana_host_ip.stdout | trim }}:3000"
 
     - name: Open Firewalld Port 3000
+      become: yes
       ansible.builtin.shell:
         cmd: |
           firewall-cmd --add-port=3000/tcp --permanent 
