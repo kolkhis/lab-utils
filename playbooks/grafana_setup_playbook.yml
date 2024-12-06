@@ -46,6 +46,7 @@
       # To comply with the "must work in ProLUG environment" requirement
 
     - name: Download the GPG key on RedHat based systems
+      become: yes
       ansible.builtin.get_url:
         url: https://rpm.grafana.com/gpg.key
         dest: /etc/pki/rpm-gpg/RPM_GPG_KEY_grafana
