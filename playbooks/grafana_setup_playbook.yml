@@ -1,20 +1,27 @@
 - name: Install Grafana on the system
   hosts: localhost
   tasks: 
+  # TODO(os detection): Handle cases where systems are of the RedHat family
+  # (ansible_os_family). ansible.builtin.package detects the native package manager.
+  # Can't use it to add repos tho
 
-    - name: Download Grafana GPG key
+  ######################### Debian-based Systems #############################
+    - name: Download Grafana GPG key for Debian based systems
       ansible.builtin.get_url:
         url: https://apt.grafana.com/gpg.key 
         dest: /usr/share/keyrings/grafana.key
         mode: '0644'
+      when: ansible_os_family == "Debian"
 
-    - name: Add the Grafana apt repository
+        # TODO: Move to ansible.builtin.lineinfile
+    - name: Add the Grafana apt repository on Debian based systems
       become: yes
       ansible.builtin.shell:
         cmd: |
           echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+      when: ansible_os_family == "Debian"
 
-    - name: Install Grafana and dependencies
+    - name: Install Grafana and dependencies on Debian based systems
       become: yes
       ansible.builtin.apt:
         name: 
@@ -25,6 +32,43 @@
         state: present
         update_cache: yes
       notify: Start Grafana
+      when: ansible_os_family == "Debian"
+
+      ########################## RedHat based Systems #########################
+      # To comply with the "must work in ProLUG environment" requirement
+
+    - name: Download the GPG key on RedHat based systems
+      ansible.builtin.get_url:
+        url: https://rpm.grafana.com/gpg.key
+        dest: /etc/pki/rpm-gpg/RPM_GPG_KEY_grafana
+        mode: '0644'
+      when: ansible_os_family == "RedHat"
+
+    - name: Add the Grafana yum repository for RedHat based Systems
+      ansible.builtin.copy:
+        dest: /etc/yum.repos.d/grafana.repo
+        content: |
+          [grafana]
+          name=Grafana Server
+          baseurl=https://rpm.grafana.com
+          repo_gpgcheck=1
+          enabled=1
+          gpgkey=file:///etc/pki/rpm-gpg/RPM_GPG_KEY_grafana
+        mode: '0644'
+      when: ansible_os_family == "RedHat"
+
+    - name: Install Grafana and Dependencies on RedHat based systems
+      become: yes
+      ansible.builtin.package:  # In case of older systems without dnf
+        name: 
+          - apt-transport-https
+          - software-properties-common
+          - unzip
+          - grafana-enterprise
+      when: ansible_os_family == "RedHat"
+
+
+      ##################### end RH compliance ########################
 
     - name: Save host IP
       ansible.builtin.shell:
