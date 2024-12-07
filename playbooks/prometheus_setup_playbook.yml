@@ -67,7 +67,7 @@
     - name: Deploy prometheus.yml into /etc/prometheus
       ansible.builtin.copy:
         dest: /etc/prometheus/prometheus.yml
-        contents: |
+        content: |
           # /etc/prometheus/prometheus.yml
           global:
             scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
@@ -128,7 +128,7 @@
       become: yes
       ansible.builtin.copy:
         dest: /etc/systemd/system/prometheus.service
-        contents: |
+        content: |
           # /etc/systemd/system/prometheus.service
           [Unit]
           Description=Prometheus
