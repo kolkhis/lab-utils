@@ -65,6 +65,7 @@
         mode: '0766'
 
     - name: Deploy prometheus.yml into /etc/prometheus
+      become: yes
       ansible.builtin.copy:
         dest: /etc/prometheus/prometheus.yml
         content: |
