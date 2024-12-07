@@ -62,7 +62,7 @@
       ansible.builtin.file:
         path: /etc/prometheus
         state: directory
-        mode: '0755'
+        mode: '0766'
 
     - name: Deploy prometheus.yml into /etc/prometheus
       ansible.builtin.copy:
@@ -121,6 +121,7 @@
         dest: /etc/prometheus/targets.json
         content: |
           []
+        mode: '0766'
       when: not targets_file.stat.exists
 
 
