@@ -1,5 +1,9 @@
 - name: Set up prometheus
   hosts: localhost  # Placeholder
+  vars: # TODO(vars): Utilize vars in playbook instead of hardcoded links/versions
+    prometheus_version: "3.0.1"
+    prometheus_tarball: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+    prometheus_extracted_directory: "/var/lib/prometheus"
   tasks:
 
     - name: Create a user account for Prometheus
@@ -104,6 +108,19 @@
         #   file_sd_configs:
         #     - files: 
         #         - '/etc/prometheus/targets.json'
+
+    - name: Check if targets.json exists
+      ansible.builtin.stat:
+        path: /etc/prometheus/targets.json
+      register: targets_file
+
+    - name: Create targets.json if it doesn't exist
+      ansible.builtin.copy:
+        dest: /etc/prometheus/targets.json
+        content: |
+          []
+      when: not targets_file.stat.exists
+
 
     - name: Deploy prometheus.service into /etc/systemd/system
       ansible.builtin.copy:
