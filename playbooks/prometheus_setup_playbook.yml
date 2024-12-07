@@ -172,10 +172,16 @@
         name: prometheus.service
         state: started
         enabled: true
-      register: sysctl_prom_output
-      notify: Check the status of prometheus
+      notify: Get the status of prometheus
+
+    - name: Get the status of prometheus
+      become: yes
+      ansible.builtin.shell:
+        cmd: "systemctl status prometheus.service"
+      register: prometheus_status
+      notify: Check the status of prometheus 
 
     - name: Check the status of prometheus
       ansible.builtin.debug:
-        msg: "{{ sysctl_prom_output.stdout | trim }}"
+        msg: "Prometheus Status:\n{{ prometheus_status.stdout }}"
 
