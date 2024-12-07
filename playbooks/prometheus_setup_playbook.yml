@@ -13,6 +13,7 @@
         shell: /sbin/nologin
 
     - name: Create the /var/lib/prometheus directory
+      become: yes
       ansible.builtin.file:
         path: /var/lib/prometheus
         state: directory
