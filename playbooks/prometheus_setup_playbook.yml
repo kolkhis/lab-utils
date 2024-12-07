@@ -17,7 +17,9 @@
       ansible.builtin.file:
         path: /var/lib/prometheus
         state: directory
-        mode: '0755'
+        owner: prometheus
+        group: prometheus
+        mode: '0766'
 
     - name: Download Prometheus tarball
       ansible.builtin.get_url:
@@ -49,13 +51,13 @@
     #     # tar -xzf /tmp/prometheus-3.0.1.linux-amd64.tar.gz -C /var/lib/prometheus --strip-components=1
 
 
-    - name: Change ownership of prometheus binary
-      become: yes
-      ansible.builtin.file:
-        path: /usr/bin/prometheus
-        owner: prometheus
-        group: prometheus
-        mode: '0755'
+    # - name: Change ownership of prometheus binary
+    #   become: yes
+    #   ansible.builtin.file:
+    #     path: /usr/bin/prometheus
+    #     owner: prometheus
+    #     group: prometheus
+    #     mode: '0755'
 
     - name: Create the /etc/prometheus directory for configuration
       become: yes
