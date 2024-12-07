@@ -25,12 +25,21 @@
         dest: /var/lib/prometheus
         extra_opts: [ '--strip-components=1' ]  # TODO(test): extra_opts may not work
 
+        # TODO(test): Test this remote src
     - name: Copy Prometheus binary to /usr/bin
       become: yes
-      ansible.builtin.shell:
-        cmd: |
-          cp /var/lib/prometheus/prometheus /usr/bin/prometheus
-        # tar -xzf /tmp/prometheus-3.0.1.linux-amd64.tar.gz -C /var/lib/prometheus --strip-components=1
+      ansible.builtin.copy:
+        remote_src: true
+        src: /var/lib/prometheus/prometheus
+        dest: /usr/bin/prometheus
+
+
+    # - name: Copy Prometheus binary to /usr/bin
+    #   become: yes
+    #   ansible.builtin.shell:
+    #     cmd: |
+    #       cp /var/lib/prometheus/prometheus /usr/bin/prometheus
+    #     # tar -xzf /tmp/prometheus-3.0.1.linux-amd64.tar.gz -C /var/lib/prometheus --strip-components=1
 
 
     - name: Change ownership of prometheus binary
