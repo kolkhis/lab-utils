@@ -25,6 +25,7 @@
         dest: /tmp/prometheus-3.0.1.linux-amd64.tar.gz
 
     - name: Extract the Prometheus tarball 
+      become: yes
       ansible.builtin.unarchive:
         remote_src: yes
         src: /tmp/prometheus-3.0.1.linux-amd64.tar.gz
@@ -49,6 +50,7 @@
 
 
     - name: Change ownership of prometheus binary
+      become: yes
       ansible.builtin.file:
         path: /usr/bin/prometheus
         owner: prometheus
@@ -56,6 +58,7 @@
         mode: '0755'
 
     - name: Create the /etc/prometheus directory for configuration
+      become: yes
       ansible.builtin.file:
         path: /etc/prometheus
         state: directory
@@ -125,6 +128,7 @@
 
 
     - name: Deploy prometheus.service into /etc/systemd/system
+      become: yes
       ansible.builtin.copy:
         dest: /etc/systemd/system/prometheus.service
         contents: |
