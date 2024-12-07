@@ -158,13 +158,14 @@
       ansible.builtin.shell:
         cmd: "hostname -I | awk '{print $1}'"
       register: prometheus_host_ip
+      notify: Start Prometheus
 
     - name: Save the prometheus host machine's network IP to facts
       ansible.builtin.set_fact:
         prometheus_host_ip: "{{ prometheus_host_ip.stdout | trim }}"
 
   handlers:
-    - name: restart prometheus
+    - name: Start Prometheus
       become: yes
       ansible.builtin.systemd:
         daemon_reload: true
