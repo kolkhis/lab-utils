@@ -113,11 +113,13 @@
       #         - '/etc/prometheus/targets.json'
 
     - name: Check if targets.json exists
+      become: yes
       ansible.builtin.stat:
         path: /etc/prometheus/targets.json
       register: targets_file
 
     - name: Create targets.json if it doesn't exist
+      become: yes
       ansible.builtin.copy:
         dest: /etc/prometheus/targets.json
         content: |
