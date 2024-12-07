@@ -73,7 +73,6 @@
             scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
             evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
             # scrape_timeout is set to the global default (10s).
-
           # Alertmanager configuration
           alerting:
             alertmanagers:
@@ -84,7 +83,6 @@
           rule_files:
             # - "first_rules.yml"
             # - "second_rules.yml"
-
           # A scrape configuration containing exactly one endpoint to scrape:
           # Here it's Prometheus itself.
           scrape_configs:
@@ -92,10 +90,8 @@
             - job_name: "prometheus"
               static_configs:
                 - targets: ["localhost:9090"]
-
               # metrics_path defaults to '/metrics'
               # scheme defaults to 'http'.
-            
             - job_name: 'Prometheus_node'
               static_configs:
                 - targets: 
@@ -104,15 +100,16 @@
               file_sd_configs:
                 - files:
                     - '/etc/prometheus/targets.json'
-        # TODO: Add nodes running node_exporter to targets ("hostname:9100")
-        # TODO (cont): Create script to dynamically generate a list of hosts using
-        #              either the Proxmox API or a bash script.
-        # 
-        # TODO (service discovery): Use file service discovery instead of hardcoded targets 
-        # - job name: 'node_exporter'
-        #   file_sd_configs:
-        #     - files: 
-        #         - '/etc/prometheus/targets.json'
+
+      # TODO: Add nodes running node_exporter to targets ("hostname:9100")
+      # TODO (cont): Create script to dynamically generate a list of hosts using
+      #              either the Proxmox API or a bash script.
+      # 
+      # TODO (service discovery): Use file service discovery instead of hardcoded targets 
+      # - job name: 'node_exporter'
+      #   file_sd_configs:
+      #     - files: 
+      #         - '/etc/prometheus/targets.json'
 
     - name: Check if targets.json exists
       ansible.builtin.stat:
