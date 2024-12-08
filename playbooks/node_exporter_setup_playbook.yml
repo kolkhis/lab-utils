@@ -85,13 +85,6 @@
       become: yes
       block:
 
-        - name: Reload daemons and start node_exporter
-          ansible.builtin.systemd:
-            name: node_exporter.service
-            state: started
-            enabled: true
-            daemon_reload: true
-
         # TODO(firewall): Open port 9100 if it's not open already
         - name: Check if firewalld is running
           ansible.builtin.systemd:
@@ -101,6 +94,20 @@
         - name: Output firewalld status
           ansible.builtin.debug:
             msg: "Firewalld Status: {{ firewalld_status.status['ActiveState'] }}"
+
+        - name: Open port 9100 if firewalld is running
+          ansible.builtin.shell:
+            cmd: |
+              sudo firewall-cmd --add-port=9100/tcp --permanent
+              sudo firewall-cmd --reload
+
+        - name: Reload daemons and start node_exporter
+          ansible.builtin.systemd:
+            name: node_exporter.service
+            state: started
+            enabled: true
+            daemon_reload: true
+
 
     - name: Save remote machine's IP to variable
       ansible.builtin.shell:
