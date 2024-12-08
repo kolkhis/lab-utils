@@ -1,12 +1,12 @@
 - name: Install Grafana on the system
   hosts: localhost
   tasks: 
-  # TODO(os detection): Handle cases where systems are of the RedHat family
-  # (ansible_os_family). ansible.builtin.package detects the native package manager.
-  # Can't use it to add repos tho
+  # TODO (provisioning): Set up default data source for Grafna with provisioning
+  # /etc/grafana/provisioning/datasources
+  # /etc/grafana/provisioning/dashboards
 
+  ######################### Debian-based Systems #############################
     - block:
-      ######################### Debian-based Systems #############################
         - name: Download Grafana GPG key for Debian based systems
           ansible.builtin.get_url:
             url: https://apt.grafana.com/gpg.key 
@@ -35,8 +35,6 @@
       when: ansible_os_family == "Debian"
 
       ########################## RedHat based Systems #########################
-      # To comply with the "must work in ProLUG environment" requirement
-
     - block:
         - name: Download the GPG key on RedHat based systems
           become: yes
@@ -68,16 +66,26 @@
             state: present
           notify: Start Grafana
 
+          # TODO (firewall): Move out of block
+        - name: Check if firewalld is running
+          ansible.builtin.systemd:
+            name: firewalld
+          register: firewalld_status
+
+        - name: Output firewalld status
+          ansible.builtin.debug:
+            msg: "Firewalld status: {{ firewalld_status.status['ActiveState'] }}"
+
         - name: Open Firewalld port 3000 
           become: yes
           ansible.builtin.shell:
             cmd: |
               firewall-cmd --add-port=3000/tcp --permanent 
               firewall-cmd --reload
-
+          when: firewalld_status.status['ActiveState'] == 'active' 
       when: ansible_os_family == "RedHat"
 
-      ##################### end RH compliance ########################
+      ##################### Universal ########################
 
     - name: Save host IP
       ansible.builtin.shell:
