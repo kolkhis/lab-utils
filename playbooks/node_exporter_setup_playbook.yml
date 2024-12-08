@@ -1,5 +1,5 @@
 - name: Install and configure node_exporter
-  hosts: none rn
+  hosts: localhost
   vars: 
     node_exporter_version: 1.8.2
     node_exporter_platform: "linux-amd64"  # TODO: Port code to work with this variable
