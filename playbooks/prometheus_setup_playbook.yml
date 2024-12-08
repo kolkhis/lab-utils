@@ -1,10 +1,15 @@
 - name: Set up prometheus
   hosts: localhost  # Placeholder
   vars: # TODO(vars): Utilize vars in playbook instead of hardcoded links/versions
+  # TODO: Set up default data source for Grafna with provisioning
+  # /etc/grafana/provisioning/datasources
+  # /etc/grafana/provisioning/dashboards
     prometheus_version: "3.0.1"
     prometheus_tarball: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
     prometheus_extracted_directory: "/var/lib/prometheus"
   tasks:
+      # TODO (): Create script to dynamically generate a list of hosts using
+      #              either the Proxmox API or a bash script.
 
     - name: Create a user account for Prometheus
       become: yes
@@ -19,7 +24,7 @@
         state: directory
         owner: prometheus
         group: prometheus
-        mode: '0766'
+        mode: '0755'
 
     - name: Download Prometheus tarball
       ansible.builtin.get_url:
@@ -34,7 +39,6 @@
         dest: /var/lib/prometheus
         extra_opts: [ '--strip-components=1' ]  # TODO(test): extra_opts may not work
 
-        # TODO(test): Test this remote src
     - name: Copy Prometheus binary to /usr/bin
       become: yes
       ansible.builtin.copy:
@@ -42,29 +46,12 @@
         src: /var/lib/prometheus/prometheus
         dest: /usr/bin/prometheus
 
-
-    # - name: Copy Prometheus binary to /usr/bin
-    #   become: yes
-    #   ansible.builtin.shell:
-    #     cmd: |
-    #       cp /var/lib/prometheus/prometheus /usr/bin/prometheus
-    #     # tar -xzf /tmp/prometheus-3.0.1.linux-amd64.tar.gz -C /var/lib/prometheus --strip-components=1
-
-
-    # - name: Change ownership of prometheus binary
-    #   become: yes
-    #   ansible.builtin.file:
-    #     path: /usr/bin/prometheus
-    #     owner: prometheus
-    #     group: prometheus
-    #     mode: '0755'
-
     - name: Create the /etc/prometheus directory for configuration
       become: yes
       ansible.builtin.file:
         path: /etc/prometheus
         state: directory
-        mode: '0766'
+        mode: '0755'
 
     - name: Deploy prometheus.yml into /etc/prometheus
       become: yes
@@ -99,20 +86,11 @@
               static_configs:
                 - targets: 
                     - 'localhost:9100'
-            - job_name: 'node_exporter'
+          # Node Exporter targets
+            - job_name: 'node'  
               file_sd_configs:
                 - files:
                     - '/etc/prometheus/targets.json'
-
-      # TODO: Add nodes running node_exporter to targets ("hostname:9100")
-      # TODO (cont): Create script to dynamically generate a list of hosts using
-      #              either the Proxmox API or a bash script.
-      # 
-      # TODO (service discovery): Use file service discovery instead of hardcoded targets 
-      # - job name: 'node_exporter'
-      #   file_sd_configs:
-      #     - files: 
-      #         - '/etc/prometheus/targets.json'
 
     - name: Check if targets.json exists
       become: yes
@@ -125,9 +103,31 @@
       ansible.builtin.copy:
         dest: /etc/prometheus/targets.json
         content: |
-          []
-        mode: '0766'
+          [
+              {
+                "targets": ["localhost:9100"],
+                  "labels": {
+                      "job": "node"
+                  }
+              }
+          ]
+        mode: '0755'
       when: not targets_file.stat.exists
+
+    - name: Create the /var/lib/prometheus/consoles directory to satisfy ExecStart
+      become: yes
+      ansible.builtin.file:
+        path: /var/lib/prometheus/consoles
+        state: directory
+        mode: '0755'
+
+    - name: Create the /var/lib/prometheus/console_libraries directory to satisfy ExecStart
+      become: yes
+      ansible.builtin.file:
+        path: /var/lib/prometheus/console_libraries
+        state: directory
+        mode: '0755'
+
 
 
     - name: Deploy prometheus.service into /etc/systemd/system
