@@ -1,9 +1,10 @@
 - name: Install Grafana on the system
   hosts: localhost
   tasks: 
-  # TODO (provisioning): Set up default data source for Grafna with provisioning
+  # TODO (provisioning): Set up default Prometheus data source for Grafana with provisioning
   # /etc/grafana/provisioning/datasources
   # /etc/grafana/provisioning/dashboards
+  # Create in Prometheus playbook?
 
   ######################### Debian-based Systems #############################
     - block:
@@ -49,11 +50,14 @@
             dest: /etc/yum.repos.d/grafana.repo
             content: |
               [grafana]
-              name=Grafana Server
+              name=Grafana Enterprise
               baseurl=https://rpm.grafana.com
               repo_gpgcheck=1
               enabled=1
+              gpgcheck=1
               gpgkey=file:///etc/pki/rpm-gpg/RPM_GPG_KEY_grafana
+              sslverify=1
+              sslcacert=/etc/pki/tls/certs/ca-bundle.crt
             mode: '0644'
 
         - name: Install Grafana and Dependencies on RedHat based systems
@@ -66,26 +70,26 @@
             state: present
           notify: Start Grafana
 
-          # TODO (firewall): Move out of block
-        - name: Check if firewalld is running
-          ansible.builtin.systemd:
-            name: firewalld
-          register: firewalld_status
-
-        - name: Output firewalld status
-          ansible.builtin.debug:
-            msg: "Firewalld status: {{ firewalld_status.status['ActiveState'] }}"
-
-        - name: Open Firewalld port 3000 
-          become: yes
-          ansible.builtin.shell:
-            cmd: |
-              firewall-cmd --add-port=3000/tcp --permanent 
-              firewall-cmd --reload
-          when: firewalld_status.status['ActiveState'] == 'active' 
       when: ansible_os_family == "RedHat"
 
       ##################### Universal ########################
+
+    - name: Check if firewalld is running
+      ansible.builtin.systemd:
+        name: firewalld
+      register: firewalld_status
+
+    - name: Output firewalld status
+      ansible.builtin.debug:
+        msg: "Firewalld status: {{ firewalld_status.status['ActiveState'] }}"
+
+    - name: Open Firewalld port 3000 
+      become: yes
+      ansible.builtin.shell:
+        cmd: |
+          firewall-cmd --add-port=3000/tcp --permanent 
+          firewall-cmd --reload
+      when: firewalld_status.status['ActiveState'] == 'active' 
 
     - name: Save host IP
       ansible.builtin.shell:
