@@ -9,50 +9,52 @@
   tasks:
 
     - name: Creation, download, and extraction of node_exporter
+      become: yes
       block:
         - name: Create /opt/node_exporter directory
-          become: yes
           ansible.builtin.file:
             path: "{{ node_exporter_dir }}"
             state: directory
             mode: '0755'
 
         - name: Create /etc/sysconfig directory
-          become: yes
           ansible.builtin.file:
             path: /etc/sysconfig
             state: directory
             mode: '0755'
 
         - name: Download the given version of node_exporter
-          become: yes
           ansible.builtin.get_url:
             url: https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
             dest: "{{ node_exporter_dir }}"
           
         - name: Extract node exporter
-          become: yes
           ansible.builtin.unarchive:
             src: "{{ node_exporter_dir }}/{{ node_exporter_tarball }}"
             dest: "{{ node_exporter_dir }}"
 
-        # TODO: Move to get_url and unarchive modules
+        - name: Create a user account for node_exporter
+          ansible.builtin.user:
+            name: node_exporter
+            shell: /sbin/nologin
 
-    # - name: Download and extract latest version of node_exporter 
-    #   become: yes
-    #   ansible.builtin.shell:
-    #     cmd: |
-    #       curl -sLo {{ node_exporter_dir }}/{{ node_exporter_tarball }} https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
-    #       tar -xzf {{ node_exporter_dir }}/{{ node_exporter_tarball }} -C {{ node_exporter_dir }}
+        - name: Create /var/lib/node_exporter/textfile_collector
+          ansible.builtin.file:
+            path: /var/lib/node_exporter/textfile_collector
+            state: directory
+            owner: node_exporter
+            group: node_exporter
+            mode: '0755'
+
 
     - name: Clone and copy configuration files
+      become: yes
       block:
         - name: Clone the node_exporter configuration files repo 
           ansible.builtin.git:
             repo: "https://github.com/prometheus/node_exporter.git"
             dest: "{{ node_exporter_dir }}/config_files"
 
-          # TODO: Do we need sysconfig? no.
         - name: Copy the node_exporter unit files into systemd directory
           become: yes
           ansible.builtin.copy:
@@ -71,39 +73,28 @@
             dest: /usr/sbin/node_exporter
 
 
-            ###############################
-    - name: Create /var/lib/node_exporter/textfile_collector
+
+
+    - name: Systemd service commands 
       become: yes
-      ansible.builtin.file:
-        path: /var/lib/node_exporter/textfile_collector
-        state: directory
-        mode: '0755'
+      block:
 
-        # Create a user account for node_exporter
-    - name: Create a user account for node_exporter
-      ansible.builtin.user:
-        name: node_exporter
-        shell: /sbin/nologin
+        - name: Reload daemons and start node_exporter
+          ansible.builtin.systemd:
+            name: node_exporter.service
+            state: started
+            enabled: true
+            daemon_reload: true
 
-    - name: Give ownership of node_exporter directories to the node_exporter user account and group
-      become: yes
-      ansible.builtin.file:
-        owner: node_exporter
-        group: node_exporter
-        path: "{{ item }}"
-      loop:
-        - /var/lib/node_exporter/textfile_collector
-        # - /etc/sysconfig/node_exporter
+        # TODO(firewall): Open port 9100 if it's not open already
+        - name: Check if firewalld is running
+          ansible.builtin.systemd:
+            name: firewalld
+          register: firewalld_status
 
-    # TODO(firewall): Check if firewalld is running, open port 9100 if it is.  
-
-    - name: Reload daemons and start node_exporter
-      become: yes
-      ansible.builtin.systemd:
-        name: node_exporter.service
-        state: started
-        enabled: true
-        daemon_reload: true
+        - name: Output firewalld status
+          ansible.builtin.debug:
+            msg: "Firewalld Status: {{ firewalld_status.status['ActiveState'] }}"
 
     - name: Save remote machine's IP to variable
       ansible.builtin.shell:
