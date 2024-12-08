@@ -101,7 +101,7 @@
 
     - name: TEST - Output the node's IP
       ansible.builtin.debug:
-        msg: "http://{{ node_exporter_target }}:9100/metrics"
+        msg: "http://{{ node_exporter_target }}/metrics"
 
 # PLAY 2: Configuring Prometheus to scrape the new target(s)
 # - name: Add node_exporter targets to Prometheus
