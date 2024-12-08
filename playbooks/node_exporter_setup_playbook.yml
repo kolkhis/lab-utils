@@ -2,10 +2,10 @@
   hosts: none rn
   vars: 
     node_exporter_version: 1.8.2
+    node_exporter_platform: "linux-amd64"  # TODO: Port code to work with this variable
     node_exporter_dir: "/opt/node_exporter"
     node_exporter_tarball: "node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
     node_exporter_extracted_dir: "{{ node_exporter_dir }}/node_exporter-{{ node_exporter_version }}.linux-amd64"
-
   tasks:
     - name: Create /opt/node_exporter directory
       become: yes
@@ -21,12 +21,33 @@
         state: directory
         mode: '0755'
 
-    - name: Download and extract latest version of node_exporter 
+    - name: Download the given version of node_exporter
       become: yes
-      ansible.builtin.shell:
-        cmd: |
-          curl -sLo {{ node_exporter_dir }}/{{ node_exporter_tarball }} https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
-          tar -xzf {{ node_exporter_dir }}/{{ node_exporter_tarball }} -C {{ node_exporter_dir }}
+      ansible.builtin.get_url:
+        url: https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+        dest: "{{ node_exporter_dir }}"
+      
+    - name: Create directory to extract tarball
+      become: yes
+      ansible.builtin.file:
+        path: "{{ node_exporter_extracted_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Extract node exporter
+      become: yes
+      ansible.builtin.unarchive:
+        src: "{{ node_exporter_dir }}/{{ node_exporter_tarball }}"
+        dest: "{{ node_exporter_extracted_dir }}"
+
+        # TODO: Move to get_url and unarchive modules
+
+    # - name: Download and extract latest version of node_exporter 
+    #   become: yes
+    #   ansible.builtin.shell:
+    #     cmd: |
+    #       curl -sLo {{ node_exporter_dir }}/{{ node_exporter_tarball }} https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+    #       tar -xzf {{ node_exporter_dir }}/{{ node_exporter_tarball }} -C {{ node_exporter_dir }}
 
     - name: Clone the node_exporter configuration files repo 
       ansible.builtin.git:
@@ -34,7 +55,7 @@
         dest: "{{ node_exporter_dir }}/config_files"
 
 
-      # TODO: Use the ansible.builtin.git module
+      # TODO: Move to copy module with remote_src: yes
     - name: Clone the node_exporter configuration files repository
       become: yes
       ansible.builtin.shell:
@@ -81,6 +102,7 @@
         - /etc/sysconfig/node_exporter
         - /var/lib/node_exporter/textfile_collector
 
+    # TODO(firwall): Check if firewalld is running, open port 9100 if it is.  
 
     - name: Reload daemons and start node_exporter
       become: yes
@@ -99,22 +121,25 @@
       ansible.builtin.set_fact:
         node_exporter_target: "{{ node_exporter_ip.stdout | trim }}:9100"
 
-# PLAY 2: Configuring Prometheus to scrape the new target(s)
-- name: Add node_exporter targets to Prometheus
-  hosts: localhost
-  vars:
-    node_exporter_target: hostvars['']['node_exporter_target']
-  tasks:
-
-    - name: Gather the node_exporter_targets
-      ansible.builtin.set_fact:
-        node_exporter_targets: >-
-          {{
-            ansible_play_hosts_all | map('extract', hostvars, 'node_exporter_target') | list
-          }}
-
-    - name: Debug collected targets
+    - name: TEST - Output the node's IP
       ansible.builtin.debug:
-        msg: "{{ node_exporter_targets }}"
+        msg: "http://{{ node_exporter_target }}:9100/metrics"
+# PLAY 2: Configuring Prometheus to scrape the new target(s)
+# - name: Add node_exporter targets to Prometheus
+#   hosts: localhost
+#   vars:
+#     node_exporter_target: hostvars['']['node_exporter_target']
+#   tasks:
+
+#     - name: Gather the node_exporter_targets
+#       ansible.builtin.set_fact:
+#         node_exporter_targets: >-
+#           {{
+#             ansible_play_hosts_all | map('extract', hostvars, 'node_exporter_target') | list
+#           }}
+
+#     - name: Debug collected targets
+#       ansible.builtin.debug:
+#         msg: "{{ node_exporter_targets }}"
 
 
