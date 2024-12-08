@@ -71,6 +71,9 @@
             remote_src: true
             src: "{{ node_exporter_extracted_dir }}/node_exporter"
             dest: /usr/sbin/node_exporter
+            owner: node_exporter
+            group: node_exporter
+            mode: '0755'
 
         - name: Copy sysconfig file to /etc/sysconfig
           ansible.builtin.copy:
@@ -100,6 +103,7 @@
             cmd: |
               sudo firewall-cmd --add-port=9100/tcp --permanent
               sudo firewall-cmd --reload
+          when: firewalld_status.status['ActiveState'] == 'active'
 
         - name: Reload daemons and start node_exporter
           ansible.builtin.systemd:
