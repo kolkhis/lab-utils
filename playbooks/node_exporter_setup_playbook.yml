@@ -7,38 +7,34 @@
     node_exporter_tarball: "node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
     node_exporter_extracted_dir: "{{ node_exporter_dir }}/node_exporter-{{ node_exporter_version }}.linux-amd64"
   tasks:
-    - name: Create /opt/node_exporter directory
-      become: yes
-      ansible.builtin.file:
-        path: "{{ node_exporter_dir }}"
-        state: directory
-        mode: '0755'
 
-    - name: Create /etc/sysconfig directory
-      become: yes
-      ansible.builtin.file:
-        path: /etc/sysconfig
-        state: directory
-        mode: '0755'
+    - name: Creation, download, and extraction of node_exporter
+      block:
+        - name: Create /opt/node_exporter directory
+          become: yes
+          ansible.builtin.file:
+            path: "{{ node_exporter_dir }}"
+            state: directory
+            mode: '0755'
 
-    - name: Download the given version of node_exporter
-      become: yes
-      ansible.builtin.get_url:
-        url: https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
-        dest: "{{ node_exporter_dir }}"
-      
-    - name: Create directory to extract tarball
-      become: yes
-      ansible.builtin.file:
-        path: "{{ node_exporter_extracted_dir }}"
-        state: directory
-        mode: '0755'
+        - name: Create /etc/sysconfig directory
+          become: yes
+          ansible.builtin.file:
+            path: /etc/sysconfig
+            state: directory
+            mode: '0755'
 
-    - name: Extract node exporter
-      become: yes
-      ansible.builtin.unarchive:
-        src: "{{ node_exporter_dir }}/{{ node_exporter_tarball }}"
-        dest: "{{ node_exporter_extracted_dir }}"
+        - name: Download the given version of node_exporter
+          become: yes
+          ansible.builtin.get_url:
+            url: https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+            dest: "{{ node_exporter_dir }}"
+          
+        - name: Extract node exporter
+          become: yes
+          ansible.builtin.unarchive:
+            src: "{{ node_exporter_dir }}/{{ node_exporter_tarball }}"
+            dest: "{{ node_exporter_dir }}"
 
         # TODO: Move to get_url and unarchive modules
 
@@ -49,36 +45,33 @@
     #       curl -sLo {{ node_exporter_dir }}/{{ node_exporter_tarball }} https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
     #       tar -xzf {{ node_exporter_dir }}/{{ node_exporter_tarball }} -C {{ node_exporter_dir }}
 
-    - name: Clone the node_exporter configuration files repo 
-      ansible.builtin.git:
-        repo: "https://github.com/prometheus/node_exporter.git"
-        dest: "{{ node_exporter_dir }}/config_files"
+    - name: Clone and copy configuration files
+      block:
+        - name: Clone the node_exporter configuration files repo 
+          ansible.builtin.git:
+            repo: "https://github.com/prometheus/node_exporter.git"
+            dest: "{{ node_exporter_dir }}/config_files"
+
+          # TODO: Do we need sysconfig? no.
+        - name: Copy the node_exporter unit files into systemd directory
+          become: yes
+          ansible.builtin.copy:
+            remote_src: true
+            src: "{{ node_exporter_extracted_dir }}/config_files/examples/systemd/{{ item }}"
+            dest: "/etc/systemd/system/{{ item }}"
+          loop: 
+            - "node_exporter.socket"
+            - "node_exporter.service"
+
+        - name: Copy the node_exporter binary to /usr/sbin
+          become: yes
+          ansible.builtin.copy:
+            remote_src: true
+            src: "{{ node_exporter_extracted_dir }}/node_exporter"
+            dest: /usr/sbin/node_exporter
 
 
-      # TODO: Move to copy module with remote_src: yes
-    - name: Clone the node_exporter configuration files repository
-      become: yes
-      ansible.builtin.shell:
-        cmd: |
-          cp {{ node_exporter_extracted_dir }}/config_files/examples/systemd/node_exporter.socket /etc/systemd/system/node_exporter.socket
-          cp {{ node_exporter_extracted_dir }}/config_files/examples/systemd/node_exporter.service /etc/systemd/system/node_exporter.service
-          cp {{ node_exporter_extracted_dir }}/node_exporter /usr/sbin/
-          cp {{ node_exporter_extracted_dir }}/config_files/examples/systemd/sysconfig.node_exporter /etc/sysconfig/node_exporter
-
-        # # TODO: Change to use vars
-    # - name: Download and extract latest version of node_exporter 
-      # become: yes
-      # ansible.builtin.shell:
-        # cmd: |
-        #   curl -sLo /opt/node_exporter/node_exporter-1.8.2.linux-amd64.tar.gz https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz
-        #   tar -xzf /opt/node_exporter/node_exporter-1.8.2.linux-amd64.tar.gz
-        #   cd node_exporter-1.8.2.linux-amd64
-        #   git clone https://github.com/prometheus/node_exporter.git /opt/node_exporter/node_exporter-1.8.2.linux-amd64/config_files
-        #   cp /opt/node_exporter/node_exporter-*.*.linux-amd64/config_files/examples/systemd/node_exporter.socket /etc/systemd/system/node_exporter.socket
-        #   cp /opt/node_exporter/node_exporter-*.*.linux-amd64/config_files/examples/systemd/node_exporter.service /etc/systemd/system/node_exporter.service
-        #   cp /opt/node/node_exporter/node_exporter-*/node_exporter /usr/sbin/
-        #   cp /opt/node_exporter/node_exporter-*/config_files/examples/systemd/sysconfig.node_exporter /etc/sysconfig/node_exporter
-
+            ###############################
     - name: Create /var/lib/node_exporter/textfile_collector
       become: yes
       ansible.builtin.file:
@@ -99,10 +92,10 @@
         group: node_exporter
         path: "{{ item }}"
       loop:
-        - /etc/sysconfig/node_exporter
         - /var/lib/node_exporter/textfile_collector
+        # - /etc/sysconfig/node_exporter
 
-    # TODO(firwall): Check if firewalld is running, open port 9100 if it is.  
+    # TODO(firewall): Check if firewalld is running, open port 9100 if it is.  
 
     - name: Reload daemons and start node_exporter
       become: yes
@@ -124,6 +117,7 @@
     - name: TEST - Output the node's IP
       ansible.builtin.debug:
         msg: "http://{{ node_exporter_target }}:9100/metrics"
+
 # PLAY 2: Configuring Prometheus to scrape the new target(s)
 # - name: Add node_exporter targets to Prometheus
 #   hosts: localhost
