@@ -17,6 +17,12 @@
             state: directory
             mode: '0755'
 
+        - name: Create /etc/sysconfig directory
+          ansible.builtin.file:
+            path: /etc/sysconfig
+            state: directory
+            mode: '0755'
+
         - name: Download the given version of node_exporter
           ansible.builtin.get_url:
             url: https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
@@ -65,6 +71,12 @@
             remote_src: true
             src: "{{ node_exporter_extracted_dir }}/node_exporter"
             dest: /usr/sbin/node_exporter
+
+        - name: Copy sysconfig file to /etc/sysconfig
+          ansible.builtin.copy:
+            remote_src: true
+            src: "{{ node_exporter_dir }}/config_files/examples/systemd/sysconfig.node_exporter"
+            dest: "/etc/sysconfig/node_exporter"
 
 
 
