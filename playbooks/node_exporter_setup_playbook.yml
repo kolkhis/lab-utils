@@ -53,7 +53,7 @@
           become: yes
           ansible.builtin.copy:
             remote_src: true
-            src: "{{ node_exporter_extracted_dir }}/config_files/examples/systemd/{{ item }}"
+            src: "{{ node_exporter_dir }}/config_files/examples/systemd/{{ item }}"
             dest: "/etc/systemd/system/{{ item }}"
           loop: 
             - "node_exporter.socket"
