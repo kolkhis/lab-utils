@@ -56,7 +56,6 @@
             dest: "{{ node_exporter_dir }}/config_files"
 
         - name: Copy the node_exporter unit files into systemd directory
-          become: yes
           ansible.builtin.copy:
             remote_src: true
             src: "{{ node_exporter_dir }}/config_files/examples/systemd/{{ item }}"
@@ -66,7 +65,6 @@
             - "node_exporter.service"
 
         - name: Copy the node_exporter binary to /usr/sbin
-          become: yes
           ansible.builtin.copy:
             remote_src: true
             src: "{{ node_exporter_extracted_dir }}/node_exporter"
@@ -122,11 +120,11 @@
       ansible.builtin.set_fact:
         node_exporter_target: "{{ node_exporter_ip.stdout | trim }}:9100"
 
-    - name: TEST - Output the node's IP
+    - name: Output the node's metrics IP endpoint
       ansible.builtin.debug:
         msg: "http://{{ node_exporter_target }}/metrics"
 
-# PLAY 2: Configuring Prometheus to scrape the new target(s)
+# # PLAY 2: Configuring Prometheus to scrape the new target(s)
 # - name: Add node_exporter targets to Prometheus
 #   hosts: localhost
 #   vars:
