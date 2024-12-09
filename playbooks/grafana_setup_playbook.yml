@@ -1,16 +1,17 @@
 - name: Install Grafana on the system
   hosts: localhost
-  tasks: 
+  tasks:
   # TODO (provisioning): Set up default Prometheus data source for Grafana with provisioning
   # /etc/grafana/provisioning/datasources
   # /etc/grafana/provisioning/dashboards
   # Create in Prometheus playbook?
+  # TODO(targets): Create default targets.json
 
   ######################### Debian-based Systems #############################
     - block:
         - name: Download Grafana GPG key for Debian based systems
           ansible.builtin.get_url:
-            url: https://apt.grafana.com/gpg.key 
+            url: https://apt.grafana.com/gpg.key
             dest: /usr/share/keyrings/grafana.key
             mode: '0644'
 
@@ -24,7 +25,7 @@
         - name: Install Grafana and dependencies on Debian based systems
           become: yes
           ansible.builtin.apt:
-            name: 
+            name:
               - apt-transport-https
               - software-properties-common
               - unzip
@@ -63,7 +64,7 @@
         - name: Install Grafana and Dependencies on RedHat based systems
           become: yes
           ansible.builtin.package:  # In case of older systems without dnf
-            name: 
+            name:
               - dnf-plugins-core
               - unzip
               - grafana-enterprise
@@ -74,6 +75,53 @@
 
       ##################### Universal ########################
 
+    - name: Provisioning datasources and dashboards
+      block:
+        - name: Ensure provisioning directories exist (should be created by default)
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: directory
+            mode: '0755'
+          loop:
+            - /etc/grafana
+            - /etc/grafana/provisioning
+            - /etc/grafana/provisioning/dashboards
+            - /etc/grafana/provisioning/datasources
+
+        - name: Create Prometheus datasource provisioning file if it doesn't exist
+          ansible.builtin.copy:
+            dest: /etc/grafana/provisioning/datasources/prometheus.yml
+            content: |
+              # /etc/grafana/provisioning/datasources/prometheus.yaml
+              apiVersion: 1
+              datasources:
+                - name: Prometheus
+                  type: prometheus
+                  access: proxy
+                  url: http://localhost:9090
+                  isDefault: true
+                  editable: false
+            force: no  # Don't overwrite if exists
+            owner: grafana
+            group: grafana
+            mode: '0640'
+
+        - name: Create Prometheus datasource provisioning file if it doesn't exist
+          ansible.builtin.copy:
+            dest: /etc/grafana/provisioning/datasources/prometheus.yml
+            content: |
+              # /etc/grafana/provisioning/datasources/prometheus.yaml
+              apiVersion: 1
+              datasources:
+                - name: Prometheus
+                  type: prometheus
+                  access: proxy
+                  url: http://localhost:9090
+                  isDefault: true
+                  editable: false
+            force: no  # Don't overwrite if exists
+            mode: '0755'
+
     - name: Check if firewalld is running
       ansible.builtin.systemd:
         name: firewalld
@@ -83,20 +131,19 @@
       ansible.builtin.debug:
         msg: "Firewalld status: {{ firewalld_status.status['ActiveState'] }}"
 
-    - name: Open Firewalld port 3000 
+    - name: Open Firewalld port 3000
       become: yes
       ansible.builtin.shell:
         cmd: |
-          firewall-cmd --add-port=3000/tcp --permanent 
+          firewall-cmd --add-port=3000/tcp --permanent
           firewall-cmd --reload
-      when: firewalld_status.status['ActiveState'] == 'active' 
+      when: firewalld_status.status['ActiveState'] == 'active'
 
     - name: Save host IP
       ansible.builtin.shell:
         cmd: "hostname -I | awk '{ print $1 }'"
       register: grafana_host_ip
       notify: Generate Grafana link
-
 
   handlers:
     - name: Start Grafana
@@ -111,4 +158,4 @@
       ansible.builtin.debug:
         msg: "Grafana link: http://{{ grafana_host_ip.stdout | trim }}:3000"
 
-      
+
