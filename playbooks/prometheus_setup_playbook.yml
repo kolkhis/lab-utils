@@ -4,6 +4,8 @@
   # TODO: Set up default data source for Grafna with provisioning
   # /etc/grafana/provisioning/datasources
   # /etc/grafana/provisioning/dashboards
+  # TODO(firewall): Check if firewalld is running, open port 9090 
+
     prometheus_version: "3.0.1"
     prometheus_tarball: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
     prometheus_extracted_directory: "/var/lib/prometheus"
@@ -11,149 +13,154 @@
       # TODO (): Create script to dynamically generate a list of hosts using
       #              either the Proxmox API or a bash script.
 
-    - name: Create a user account for Prometheus
+    - name: User account setup, download, extraction, and directory creation
       become: yes
-      ansible.builtin.user:
-        name: prometheus
-        shell: /sbin/nologin
+      block:
 
-    - name: Create the /var/lib/prometheus directory
+        - name: Create a user account for Prometheus
+          ansible.builtin.user:
+            name: prometheus
+            shell: /sbin/nologin
+
+        - name: Create the /var/lib/prometheus directory
+          ansible.builtin.file:
+            path: /var/lib/prometheus
+            state: directory
+            owner: prometheus
+            group: prometheus
+            mode: '0755'
+
+        - name: Download Prometheus tarball
+          ansible.builtin.get_url:
+            url: https://github.com/prometheus/prometheus/releases/download/v3.0.1/prometheus-3.0.1.linux-amd64.tar.gz
+            dest: /tmp/prometheus-3.0.1.linux-amd64.tar.gz
+
+        - name: Extract the Prometheus tarball 
+          ansible.builtin.unarchive:
+            remote_src: yes
+            src: /tmp/prometheus-3.0.1.linux-amd64.tar.gz
+            dest: /var/lib/prometheus
+            extra_opts: [ '--strip-components=1' ]  # TODO(test): extra_opts may not work
+
+        - name: Copy Prometheus binary to /usr/bin
+          ansible.builtin.copy:
+            remote_src: true
+            src: /var/lib/prometheus/prometheus
+            dest: /usr/bin/prometheus
+
+        - name: Create the /etc/prometheus directory for configuration
+          ansible.builtin.file:
+            path: /etc/prometheus
+            state: directory
+            mode: '0755'
+
+    - name: Configuration of prometheus
       become: yes
-      ansible.builtin.file:
-        path: /var/lib/prometheus
-        state: directory
-        owner: prometheus
-        group: prometheus
-        mode: '0755'
+      block:
 
-    - name: Download Prometheus tarball
-      ansible.builtin.get_url:
-        url: https://github.com/prometheus/prometheus/releases/download/v3.0.1/prometheus-3.0.1.linux-amd64.tar.gz
-        dest: /tmp/prometheus-3.0.1.linux-amd64.tar.gz
+        - name: Check if targets.json exists
+          ansible.builtin.stat:
+            path: /etc/prometheus/targets.json
+          register: targets_file
 
-    - name: Extract the Prometheus tarball 
-      become: yes
-      ansible.builtin.unarchive:
-        remote_src: yes
-        src: /tmp/prometheus-3.0.1.linux-amd64.tar.gz
-        dest: /var/lib/prometheus
-        extra_opts: [ '--strip-components=1' ]  # TODO(test): extra_opts may not work
-
-    - name: Copy Prometheus binary to /usr/bin
-      become: yes
-      ansible.builtin.copy:
-        remote_src: true
-        src: /var/lib/prometheus/prometheus
-        dest: /usr/bin/prometheus
-
-    - name: Create the /etc/prometheus directory for configuration
-      become: yes
-      ansible.builtin.file:
-        path: /etc/prometheus
-        state: directory
-        mode: '0755'
-
-    - name: Deploy prometheus.yml into /etc/prometheus
-      become: yes
-      ansible.builtin.copy:
-        dest: /etc/prometheus/prometheus.yml
-        content: |
-          # /etc/prometheus/prometheus.yml
-          global:
-            scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
-            evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
-            # scrape_timeout is set to the global default (10s).
-          # Alertmanager configuration
-          alerting:
-            alertmanagers:
-              - static_configs:
-                  - targets:
-                    # - alertmanager:9093
-          # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
-          rule_files:
-            # - "first_rules.yml"
-            # - "second_rules.yml"
-          # A scrape configuration containing exactly one endpoint to scrape:
-          # Here it's Prometheus itself.
-          scrape_configs:
-            # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
-            - job_name: "prometheus"
-              static_configs:
-                - targets: ["localhost:9090"]
-              # metrics_path defaults to '/metrics'
-              # scheme defaults to 'http'.
-            - job_name: 'Prometheus_node'
-              static_configs:
-                - targets: 
-                    - 'localhost:9100'
-          # Node Exporter targets
-            - job_name: 'node'  
-              file_sd_configs:
-                - files:
-                    - '/etc/prometheus/targets.json'
-
-    - name: Check if targets.json exists
-      become: yes
-      ansible.builtin.stat:
-        path: /etc/prometheus/targets.json
-      register: targets_file
-
-    - name: Create targets.json if it doesn't exist
-      become: yes
-      ansible.builtin.copy:
-        dest: /etc/prometheus/targets.json
-        content: |
-          [
-              {
-                "targets": ["localhost:9100"],
-                  "labels": {
-                      "job": "node"
+        - name: Create targets.json if it doesn't exist
+          ansible.builtin.copy:
+            dest: /etc/prometheus/targets.json
+            content: |
+              [
+                  {
+                    "targets": ["localhost:9100"],
+                      "labels": {
+                          "job": "node",
+                          "team": "control_plane"
+                      }
                   }
-              }
-          ]
-        mode: '0755'
-      when: not targets_file.stat.exists
+              ]
+            mode: '0755'
+            force: no  # don't overwrite if it exists
+          when: not targets_file.stat.exists
 
-    - name: Create the /var/lib/prometheus/consoles directory to satisfy ExecStart
+        - name: Deploy prometheus.yml into /etc/prometheus with file-based service discovery
+          ansible.builtin.copy:
+            dest: /etc/prometheus/prometheus.yml
+            content: |
+              # /etc/prometheus/prometheus.yml
+              global:
+                scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+                evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+                # scrape_timeout is set to the global default (10s).
+              # Alertmanager configuration
+              alerting:
+                alertmanagers:
+                  - static_configs:
+                      - targets:
+                        # - alertmanager:9093
+              # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+              rule_files:
+                # - "first_rules.yml"
+                # - "second_rules.yml"
+              # A scrape configuration containing exactly one endpoint to scrape:
+              # Here it's Prometheus itself.
+              scrape_configs:
+                # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+                - job_name: "prometheus"
+                  static_configs:
+                    - targets: ["localhost:9090"]
+                  # metrics_path defaults to '/metrics'
+                  # scheme defaults to 'http'.
+                - job_name: 'Prometheus_node'
+                  static_configs:
+                    - targets: 
+                        - 'localhost:9100'
+              # Node Exporter targets
+                - job_name: 'node'  
+                  file_sd_configs:
+                    - files:
+                        - '/etc/prometheus/targets.json'
+
+
+
+    - name: Create and satisfy a default service unit file in /etc/systemd/system
       become: yes
-      ansible.builtin.file:
-        path: /var/lib/prometheus/consoles
-        state: directory
-        mode: '0755'
+      block:
 
-    - name: Create the /var/lib/prometheus/console_libraries directory to satisfy ExecStart
-      become: yes
-      ansible.builtin.file:
-        path: /var/lib/prometheus/console_libraries
-        state: directory
-        mode: '0755'
+        - name: Deploy prometheus.service into /etc/systemd/system
+          ansible.builtin.copy:
+            dest: /etc/systemd/system/prometheus.service
+            content: |
+              # /etc/systemd/system/prometheus.service
+              [Unit]
+              Description=Prometheus
+              Wants=network-online.target
+              After=network-online.target
+
+              [Service]
+              User=prometheus
+              Group=prometheus
+              Type=simple
+              ExecStart=/usr/bin/prometheus \
+               --config.file /etc/prometheus/prometheus.yml \
+               --storage.tsdb.path /var/lib/prometheus/ \
+               --web.console.templates=/var/lib/prometheus/consoles \
+               --web.console.libraries=/var/lib/prometheus/console_libraries
+
+              [Install]
+              WantedBy=multi-user.target
+
+        - name: Create the /var/lib/prometheus/consoles directory to satisfy default ExecStart
+          ansible.builtin.file:
+            path: /var/lib/prometheus/consoles
+            state: directory
+            mode: '0755'
+
+        - name: Create the /var/lib/prometheus/console_libraries directory to satisfy default ExecStart
+          ansible.builtin.file:
+            path: /var/lib/prometheus/console_libraries
+            state: directory
+            mode: '0755'
 
 
-
-    - name: Deploy prometheus.service into /etc/systemd/system
-      become: yes
-      ansible.builtin.copy:
-        dest: /etc/systemd/system/prometheus.service
-        content: |
-          # /etc/systemd/system/prometheus.service
-          [Unit]
-          Description=Prometheus
-          Wants=network-online.target
-          After=network-online.target
-
-          [Service]
-          User=prometheus
-          Group=prometheus
-          Type=simple
-          ExecStart=/usr/bin/prometheus \
-           --config.file /etc/prometheus/prometheus.yml \
-           --storage.tsdb.path /var/lib/prometheus/ \
-           --web.console.templates=/var/lib/prometheus/consoles \
-           --web.console.libraries=/var/lib/prometheus/console_libraries
-
-          [Install]
-          WantedBy=multi-user.target
-
+    # TODO(firewall): Check if firewalld is enabled. If so, open port 9090 for Web UI querying
 
       ##### Saving IP to facts
     - name: Save the prometheus host machine's network IP to a variable
@@ -165,6 +172,10 @@
     - name: Save the prometheus host machine's network IP to facts
       ansible.builtin.set_fact:
         prometheus_host_ip: "{{ prometheus_host_ip.stdout | trim }}"
+
+    - name: Output link to the Web UI query page
+      ansible.builtin.debug:
+        msg: "Prometheus Query Link: http://{{ prometheus_host_ip }}:9090"
 
   handlers:
     - name: Start Prometheus
