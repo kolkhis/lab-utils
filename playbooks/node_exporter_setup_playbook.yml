@@ -1,6 +1,6 @@
 - name: Install and configure node_exporter
   hosts: localhost
-  vars: 
+  vars:
     node_exporter_version: 1.8.2
     node_exporter_platform: "linux-amd64"  # TODO: Port code to work with this variable
     node_exporter_dir: "/opt/node_exporter"
@@ -9,7 +9,7 @@
   tasks:
 
     - name: Creation, download, and extraction of node_exporter
-      become: yes
+      become: true
       block:
         - name: Create /opt/node_exporter directory
           ansible.builtin.file:
@@ -25,9 +25,11 @@
 
         - name: Download the given version of node_exporter
           ansible.builtin.get_url:
-            url: https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+            url: |
+              https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
             dest: "{{ node_exporter_dir }}"
-          
+            mode: '0755'
+
         - name: Extract node exporter
           ansible.builtin.unarchive:
             src: "{{ node_exporter_dir }}/{{ node_exporter_tarball }}"
@@ -48,9 +50,10 @@
 
 
     - name: Clone and copy configuration files
-      become: yes
+      become: true
       block:
-        - name: Clone the node_exporter configuration files repo 
+
+        - name: Clone the node_exporter configuration files repo
           ansible.builtin.git:
             repo: "https://github.com/prometheus/node_exporter.git"
             dest: "{{ node_exporter_dir }}/config_files"
@@ -60,7 +63,8 @@
             remote_src: true
             src: "{{ node_exporter_dir }}/config_files/examples/systemd/{{ item }}"
             dest: "/etc/systemd/system/{{ item }}"
-          loop: 
+            mode: '0755'
+          loop:
             - "node_exporter.socket"
             - "node_exporter.service"
 
@@ -78,12 +82,11 @@
             remote_src: true
             src: "{{ node_exporter_dir }}/config_files/examples/systemd/sysconfig.node_exporter"
             dest: "/etc/sysconfig/node_exporter"
+            mode: '0755'
 
 
-
-
-    - name: Systemd service commands 
-      become: yes
+    - name: Systemd service commands
+      become: true
       block:
 
         # TODO(firewall): Open port 9100 if it's not open already
