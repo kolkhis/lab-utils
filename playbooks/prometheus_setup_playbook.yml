@@ -140,7 +140,8 @@
                     "targets": ["localhost:9100"],
                       "labels": {
                           "job": "node",
-                          "team": "control_plane"
+                          "team": "control_plane",
+                          "name": "{{ ansible_hostname }}"
                       }
                   }
               ]
