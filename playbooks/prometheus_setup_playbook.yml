@@ -54,32 +54,12 @@
             state: directory
             mode: '0755'
 
-    - name: Configuration of prometheus
+    - name: Deploy default configuration file prometheus.yml
       become: yes
       block:
-
-        - name: Check if targets.json exists
-          ansible.builtin.stat:
-            path: /etc/prometheus/targets.json
-          register: targets_file
-
-        - name: Create targets.json if it doesn't exist
-          ansible.builtin.copy:
-            dest: /etc/prometheus/targets.json
-            content: |
-              [
-                  {
-                    "targets": ["localhost:9100"],
-                      "labels": {
-                          "job": "node",
-                          "team": "control_plane"
-                      }
-                  }
-              ]
-            mode: '0755'
-            force: no  # don't overwrite if it exists
-          when: not targets_file.stat.exists
-
+        # TODO(prometheus.yml): Check for existence of config file. If one exists,
+        # save as a copy and write this one.  
+        # E.g., proetheus.yml exists -> old_prometheus.yml
         - name: Deploy prometheus.yml into /etc/prometheus with file-based service discovery
           ansible.builtin.copy:
             dest: /etc/prometheus/prometheus.yml
@@ -117,6 +97,54 @@
                   file_sd_configs:
                     - files:
                         - '/etc/prometheus/targets.json'
+
+    - name: Configuration of prometheus targets
+      become: yes
+      block:
+
+        - name: Check if targets.json exists
+          ansible.builtin.stat:
+            path: /etc/prometheus/targets.json
+          register: targets_file
+
+        - name: Get the contents of targets.json
+          ansible.builtin.slurp:
+            path: /etc/prometheus/targets.json
+          register: targets_file_contents_raw
+          when: targets_file.stat.exists
+
+        - name: Parse contents of targets.json
+          ansible.builtin.set_fact:
+            targets_file_contents: "{{ targets_file_contents_raw.content | b64decode | from_json }}"
+          when: targets_file.stat.exists
+
+        - name: Measure the length of targets
+          ansible.builtin.set_fact:
+            targets_length: "{{ targets_file_contents | length }}"
+          when: targets_file.stat.exists
+
+        - name: Output the length of the list of targets
+          ansible.builtin.debug:
+            msg: "Length of targets: {{ targets_length }}"
+          when: targets_file.stat.exists
+        # TODO(test): Test up to here. 
+
+        - name: Create targets.json if it doesn't exist
+          ansible.builtin.copy:
+            dest: /etc/prometheus/targets.json
+            content: |
+              [
+                  {
+                    "targets": ["localhost:9100"],
+                      "labels": {
+                          "job": "node",
+                          "team": "control_plane"
+                      }
+                  }
+              ]
+            mode: '0755'
+            force: no  # don't overwrite if it exists
+          when: not targets_file.stat.exists
 
 
 
@@ -185,4 +213,4 @@
         name: prometheus.service
         state: started
         enabled: true
-
+# https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_filters.html
