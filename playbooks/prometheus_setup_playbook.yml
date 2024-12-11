@@ -1,14 +1,13 @@
 - name: Set up prometheus
   hosts: localhost  # Placeholder
   vars: # TODO(vars): Utilize vars in playbook instead of hardcoded links/versions
+    prometheus_version: "3.0.1"
+    prometheus_tarball: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+    prometheus_extracted_directory: "/var/lib/prometheus"
   # TODO: Set up default data source for Grafna with provisioning
   # /etc/grafana/provisioning/datasources
   # /etc/grafana/provisioning/dashboards
   # TODO(firewall): Check if firewalld is running, open port 9090
-
-    prometheus_version: "3.0.1"
-    prometheus_tarball: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
-    prometheus_extracted_directory: "/var/lib/prometheus"
   tasks:
       # TODO (): Create script to dynamically generate a list of hosts using
       #              either the Proxmox API or a bash script.
@@ -41,7 +40,7 @@
             remote_src: true
             src: /tmp/prometheus-3.0.1.linux-amd64.tar.gz
             dest: /var/lib/prometheus
-            extra_opts: ['--strip-components=1']  # TODO(test): extra_opts may not work
+            extra_opts: ['--strip-components=1']
 
         - name: Copy Prometheus binary to /usr/bin
           ansible.builtin.copy:
@@ -90,15 +89,16 @@
                     - targets: ["localhost:9090"]
                   # metrics_path defaults to '/metrics'
                   # scheme defaults to 'http'.
-                - job_name: 'Prometheus_node'
-                  static_configs:
-                    - targets:
-                        - 'localhost:9100'
+                # - job_name: 'Prometheus_node'
+                #   static_configs:
+                #     - targets:
+                #         - 'localhost:9100'
               # Node Exporter targets
                 - job_name: 'node'
                   file_sd_configs:
                     - files:
                         - '/etc/prometheus/targets.json'
+            mode: '0755'
 
     - name: Configuration of prometheus targets
       become: true
@@ -109,6 +109,8 @@
             path: /etc/prometheus/targets.json
           register: targets_file
 
+        # TODO: Use this in node_exporter setup. Not needed here, only initial
+        # creation if doesn't exist.
         - name: Get the contents of targets.json
           ansible.builtin.slurp:
             path: /etc/prometheus/targets.json
@@ -129,7 +131,6 @@
           ansible.builtin.debug:
             msg: "Length of targets: {{ targets_length }}"
           when: targets_file.stat.exists
-        # TODO(test): Test up to here.
 
         - name: Create targets.json if it doesn't exist
           ansible.builtin.copy:
@@ -140,7 +141,7 @@
                     "targets": ["localhost:9100"],
                       "labels": {
                           "job": "node",
-                          "team": "control_plane",
+                          "team": "infra",
                           "hostname": "{{ ansible_hostname }}"
                       }
                   }
@@ -191,28 +192,30 @@
             mode: '0755'
 
 
-    # TODO(firewall): Check if firewalld is enabled. If so, open port 9090 for Web UI querying
-
       ##### Saving IP to facts
-    - name: Save the prometheus host machine's network IP to a variable
-      ansible.builtin.shell:
-        cmd: "hostname -I | awk '{print $1}'"
-      register: prometheus_host_ip
-      notify: Start Prometheus
+    # - name: Save the prometheus host machine's network IP to a variable
+    #   ansible.builtin.shell:
+    #     cmd: "hostname -I | awk '{print $1}'"
+    #   register: prometheus_host_ip
+    #   notify: Start Prometheus
 
     - name: Save the prometheus host machine's network IP to facts
       ansible.builtin.set_fact:
-        prometheus_host_ip: "{{ prometheus_host_ip.stdout | trim }}"
+        prometheus_host_ip: "{{ ansible_default_ipv4.address }}"
 
     - name: Output link to the Web UI query page
       ansible.builtin.debug:
-        msg: "Prometheus Query Link: http://{{ prometheus_host_ip }}:9090"
+        msg: "Prometheus Query Link: http://{{ ansible_default_ipv4.address }}:9090"
 
-  handlers:
-    - name: Start Prometheus
+    # TODO(firewall): Check if firewalld is enabled. If so, open port 9090 for Web UI querying
+    - name: Systemd service # and firewalld check
       become: true
-      ansible.builtin.systemd:
-        daemon_reload: true
-        name: prometheus.service
-        state: started
-        enabled: true
+      block:
+
+        - name: Start Prometheus
+          become: true
+          ansible.builtin.systemd:
+            daemon_reload: true
+            name: prometheus.service
+            state: started
+            enabled: true
