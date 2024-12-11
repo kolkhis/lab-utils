@@ -141,7 +141,7 @@
                       "labels": {
                           "job": "node",
                           "team": "control_plane",
-                          "name": "{{ ansible_hostname }}"
+                          "hostname": "{{ ansible_hostname }}"
                       }
                   }
               ]
