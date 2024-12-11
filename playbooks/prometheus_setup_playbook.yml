@@ -4,7 +4,7 @@
   # TODO: Set up default data source for Grafna with provisioning
   # /etc/grafana/provisioning/datasources
   # /etc/grafana/provisioning/dashboards
-  # TODO(firewall): Check if firewalld is running, open port 9090 
+  # TODO(firewall): Check if firewalld is running, open port 9090
 
     prometheus_version: "3.0.1"
     prometheus_tarball: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
@@ -14,7 +14,7 @@
       #              either the Proxmox API or a bash script.
 
     - name: User account setup, download, extraction, and directory creation
-      become: yes
+      become: true
       block:
 
         - name: Create a user account for Prometheus
@@ -34,19 +34,21 @@
           ansible.builtin.get_url:
             url: https://github.com/prometheus/prometheus/releases/download/v3.0.1/prometheus-3.0.1.linux-amd64.tar.gz
             dest: /tmp/prometheus-3.0.1.linux-amd64.tar.gz
+            mode: '0755'
 
-        - name: Extract the Prometheus tarball 
+        - name: Extract the Prometheus tarball
           ansible.builtin.unarchive:
-            remote_src: yes
+            remote_src: true
             src: /tmp/prometheus-3.0.1.linux-amd64.tar.gz
             dest: /var/lib/prometheus
-            extra_opts: [ '--strip-components=1' ]  # TODO(test): extra_opts may not work
+            extra_opts: ['--strip-components=1']  # TODO(test): extra_opts may not work
 
         - name: Copy Prometheus binary to /usr/bin
           ansible.builtin.copy:
             remote_src: true
             src: /var/lib/prometheus/prometheus
             dest: /usr/bin/prometheus
+            mode: '0755'
 
         - name: Create the /etc/prometheus directory for configuration
           ansible.builtin.file:
@@ -55,10 +57,10 @@
             mode: '0755'
 
     - name: Deploy default configuration file prometheus.yml
-      become: yes
+      become: true
       block:
         # TODO(prometheus.yml): Check for existence of config file. If one exists,
-        # save as a copy and write this one.  
+        # save as a copy and write this one.
         # E.g., proetheus.yml exists -> old_prometheus.yml
         - name: Deploy prometheus.yml into /etc/prometheus with file-based service discovery
           ansible.builtin.copy:
@@ -90,16 +92,16 @@
                   # scheme defaults to 'http'.
                 - job_name: 'Prometheus_node'
                   static_configs:
-                    - targets: 
+                    - targets:
                         - 'localhost:9100'
               # Node Exporter targets
-                - job_name: 'node'  
+                - job_name: 'node'
                   file_sd_configs:
                     - files:
                         - '/etc/prometheus/targets.json'
 
     - name: Configuration of prometheus targets
-      become: yes
+      become: true
       block:
 
         - name: Check if targets.json exists
@@ -127,7 +129,7 @@
           ansible.builtin.debug:
             msg: "Length of targets: {{ targets_length }}"
           when: targets_file.stat.exists
-        # TODO(test): Test up to here. 
+        # TODO(test): Test up to here.
 
         - name: Create targets.json if it doesn't exist
           ansible.builtin.copy:
@@ -143,13 +145,12 @@
                   }
               ]
             mode: '0755'
-            force: no  # don't overwrite if it exists
+            force: false  # don't overwrite if it exists
           when: not targets_file.stat.exists
 
 
-
     - name: Create and satisfy a default service unit file in /etc/systemd/system
-      become: yes
+      become: true
       block:
 
         - name: Deploy prometheus.service into /etc/systemd/system
@@ -174,6 +175,7 @@
 
               [Install]
               WantedBy=multi-user.target
+            mode: '0644'
 
         - name: Create the /var/lib/prometheus/consoles directory to satisfy default ExecStart
           ansible.builtin.file:
@@ -207,10 +209,9 @@
 
   handlers:
     - name: Start Prometheus
-      become: yes
+      become: true
       ansible.builtin.systemd:
         daemon_reload: true
         name: prometheus.service
         state: started
         enabled: true
-# https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_filters.html
