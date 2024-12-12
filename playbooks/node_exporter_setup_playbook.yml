@@ -165,16 +165,22 @@
         - name: Add to targets_file_contents if IP was not found
           ansible.builtin.set_fact:
             new_targets: |
-              "{{ targets_file_contents + [{'targets': [node_exporter_target_ip], 'labels': {'job': 'node', 'hostname': node_exporter_target_name }}] }}"
+              {{ targets_file_contents + [{'targets': [node_exporter_target_ip], 'labels': {'job': 'node', 'hostname': node_exporter_target_name}}] }}
           when: not target_found
 
         - name: Output the result of IP check
           ansible.builtin.debug:
             msg: "IP already in targets: {{ target_found }} -- New targets: {{ new_targets }}"
+          when: not target_found
 
-
-      # TODO: this
-    # - name: Write new contents of targets
+        - name: Write the new targets to targets.json
+          become: true
+          delegate_to: localhost
+          when: new_targets is defined
+          ansible.builtin.copy:
+            dest: /etc/prometheus/targets.json
+            content: "{{ new_targets | to_json }}"
+            mode: '0755'
 
 
     - name: Output the node's metrics IP endpoint
