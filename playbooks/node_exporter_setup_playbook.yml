@@ -113,15 +113,53 @@
             enabled: true
             daemon_reload: true
 
-
-    - name: Save remote machine's IP to variable
-      ansible.builtin.shell:
-        cmd: "hostname -I | awk '{print $1}'"
-      register: node_exporter_ip
-
-    - name: Save remote machine's IP to facts
+    - name: Save remote host's IP to facts
       ansible.builtin.set_fact:
-        node_exporter_target: "{{ node_exporter_ip.stdout | trim }}:9100"
+        node_exporter_target: "{{ ansible_default_ipv4.address }}:9100"
+
+    # TODO(Targets): Check for target.json on localhost
+    # Add new target for prometheus in /etc/prometheus/targets.json
+    - name: Configure new node as a Prometheus target
+      become: true
+      delegate_to: localhost
+      block:
+
+        - name: Check for targets.json
+          ansible.builtin.stat:
+            path: /etc/prometheus/targets.json
+          register: targets_file_stat
+
+        - name: Read contents of targets.json
+          ansible.builtin.slurp:
+            src: /etc/prometheus/targets.json
+          register: targets_file_contents_raw
+          when: targets_file_stat.stat.exists
+
+        - name: Parse the raw content from targets.json
+          ansible.builtin.set_fact:
+            targets_file_contents: "{{ targets_file_contents_raw | b64decode | from_json }}"
+
+        - name: Debug the contents of targets.json
+          ansible.builtin.debug:
+            msg: |
+              Contents: "{{ targets_file_contents }}"
+
+        - name: Debug the contents of targets.json
+          ansible.builtin.debug:
+            msg: |
+              Contents: "{{ targets_file_contents | dict2items }}"
+
+       # TODO(debug): Continue from here
+
+
+    # - name: Add new node to targets.json if not present
+    #   delegate_to: localhost
+    #   set_fact:
+    #     targets: "{{ targets + [{'targets': [new_target], 'labels': {'job': 'node_exporter'}}] }}"
+    #   when: not target_exists
+    #   vars:
+    #     new_target: "{{ ansible_host }}:9100"
+
 
     - name: Output the node's metrics IP endpoint
       ansible.builtin.debug:
