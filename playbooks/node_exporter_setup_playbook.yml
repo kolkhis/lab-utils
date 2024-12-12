@@ -138,16 +138,20 @@
         - name: Parse the raw content from targets.json
           ansible.builtin.set_fact:
             targets_file_contents: "{{ targets_file_contents_raw | b64decode | from_json }}"
+          when: targets_file_stat.stat.exists
 
         - name: Debug the contents of targets.json
           ansible.builtin.debug:
             msg: |
               Contents: "{{ targets_file_contents }}"
+          when: targets_file_stat.stat.exists
 
-        - name: Debug the contents of targets.json
+        - name: Debug the list of targets
           ansible.builtin.debug:
             msg: |
-              Contents: "{{ targets_file_contents | dict2items }}"
+              {{ item }}
+          loop: "{{ targets_file_contents }}"
+          # when: targets_file_stat.stat.exists
 
        # TODO(debug): Continue from here
 
