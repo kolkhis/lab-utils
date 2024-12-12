@@ -160,7 +160,7 @@
         - name: Check for the existence of the current node in targets.json
           ansible.builtin.set_fact:
             ip_found: true
-          when: "{{ node_exporter_target_ip }} in item.targets" # and {{ node_exporter_target_name }} in item.labels.hostname"
+          when: node_exporter_target_ip in item.targets # and {{ node_exporter_target_name }} in item.labels.hostname"
           loop: "{{ targets_file_contents }}"
 
         - name: Add to targets_file_contents if IP was not found
