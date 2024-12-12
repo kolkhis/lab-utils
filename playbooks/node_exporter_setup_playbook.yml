@@ -179,7 +179,7 @@
 
     - name: Output the node's metrics IP endpoint
       ansible.builtin.debug:
-        msg: "http://{{ node_exporter_target }}/metrics"
+        msg: "http://{{ node_exporter_target_ip }}/metrics"
 
 # # PLAY 2: Configuring Prometheus to scrape the new target(s)
 # - name: Add node_exporter targets to Prometheus
