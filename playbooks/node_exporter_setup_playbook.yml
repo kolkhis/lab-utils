@@ -115,11 +115,16 @@
 
     - name: Save remote host's IP to facts
       ansible.builtin.set_fact:
-        node_exporter_target: "{{ ansible_default_ipv4.address }}:9100"
+        node_exporter_target_ip: "{{ ansible_default_ipv4.address }}:9100"
+
+    - name: Save remote host's IP to facts
+      ansible.builtin.set_fact:
+        node_exporter_target_name: "{{ ansible_hostname }}"
+
 
     # TODO(Targets): Check for target.json on localhost
     # Add new target for prometheus in /etc/prometheus/targets.json
-    - name: Configure new node as a Prometheus target
+    - name: Read in data from targets.json 
       become: true
       delegate_to: localhost
       block:
@@ -135,34 +140,41 @@
           register: targets_file_contents_raw
           when: targets_file_stat.stat.exists
 
+    - name: Parse targets.json and add new target
+      block:
         - name: Parse the raw content from targets.json
           ansible.builtin.set_fact:
             targets_file_contents: "{{ targets_file_contents_raw | b64decode | from_json }}"
-          when: targets_file_stat.stat.exists
 
         - name: Debug the contents of targets.json
           ansible.builtin.debug:
             msg: |
               Contents: "{{ targets_file_contents }}"
-          when: targets_file_stat.stat.exists
 
         - name: Debug the list of targets
           ansible.builtin.debug:
             msg: |
               {{ item }}
           loop: "{{ targets_file_contents }}"
-          # when: targets_file_stat.stat.exists
 
-       # TODO(debug): Continue from here
+        - name: Check for the existence of the current node in targets.json
+          ansible.builtin.set_fact:
+            ip_found: true
+          when: "{{ node_exporter_target_ip }} in item.targets" #and {{ node_exporter_target_name }} in item.labels.hostname"
+          loop: "{{ targets_file_contents }}"
 
+        - name: Add to targets_file_contents if IP was not found
+          ansible.builtin.set_fact:
+            new_targets: "{{ targets_file_contents + [{'targets': [node_exporter_target_ip], 'labels': {'job': 'node', 'hostname': node_exporter_target_name }}] }}"
+          when: not ip_found
 
-    # - name: Add new node to targets.json if not present
-    #   delegate_to: localhost
-    #   set_fact:
-    #     targets: "{{ targets + [{'targets': [new_target], 'labels': {'job': 'node_exporter'}}] }}"
-    #   when: not target_exists
-    #   vars:
-    #     new_target: "{{ ansible_host }}:9100"
+        - name: Output the result
+          ansible.builtin.debug:
+            msg: "IP already in targets: {{ ip_found }} -- New targets: {{ new_targets }}"
+      when: targets_file_stat.stat.exists
+
+      # TODO: this
+    # - name: Write new contents of targets 
 
 
     - name: Output the node's metrics IP endpoint
