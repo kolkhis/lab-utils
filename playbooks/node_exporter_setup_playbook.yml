@@ -129,9 +129,7 @@
         node_exporter_target_name: "{{ ansible_hostname }}"
 
 
-    # TODO(Targets): Check for target.json on localhost
-    # Add new target for prometheus in /etc/prometheus/targets.json
-    - name: Read in data from targets.json 
+    - name: Read in data from targets.json
       become: true
       delegate_to: localhost
       block:
@@ -146,6 +144,7 @@
             src: /etc/prometheus/targets.json
           register: targets_file_contents_raw
           when: targets_file_stat.stat.exists
+
 
     - name: Parse targets.json and add new target
       vars:
@@ -169,16 +168,25 @@
           when: node_exporter_target_ip in item.targets or node_exporter_target_name in item.labels.hostname
           loop: "{{ targets_file_contents }}"
 
+        - name: Output the result of IP check
+          ansible.builtin.debug:
+            msg: "IP already in targets: {{ target_found }}"
+          when: not target_found
+
         - name: Add to targets_file_contents if IP was not found
           ansible.builtin.set_fact:
             new_targets: |
               {{ targets_file_contents + [{'targets': [node_exporter_target_ip], 'labels': {'job': 'node', 'hostname': node_exporter_target_name}}] }}
           when: not target_found
 
-        - name: Output the result of IP check
+        - name: Output the new targets if it was updated with the new node
           ansible.builtin.debug:
-            msg: "IP already in targets: {{ target_found }} -- New targets: {{ new_targets }}"
-          when: not target_found
+            msg:
+              - "IP didn't exist, added."
+              - "{{ item }}"
+          loop: "{{ new_targets }}"
+          when: new_targets is defined
+
 
         - name: Write the new targets to targets.json
           become: true
@@ -211,5 +219,3 @@
 #     - name: Debug collected targets
 #       ansible.builtin.debug:
 #         msg: "{{ node_exporter_targets }}"
-
-
