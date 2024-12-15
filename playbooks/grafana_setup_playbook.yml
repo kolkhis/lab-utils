@@ -57,7 +57,7 @@
             mode: '0644'
 
         - name: Install Grafana and Dependencies on RedHat based systems
-          ansible.builtin.package:  # In case of older systems without dnf
+          ansible.builtin.package:
             name:
               - dnf-plugins-core
               - unzip
@@ -92,7 +92,7 @@
                   url: http://localhost:9090
                   isDefault: true
                   editable: false
-            force: false  
+            force: false
             mode: '0755'
 
     - name: Check if firewalld is running
@@ -127,5 +127,3 @@
     - name: Generate Grafana link
       ansible.builtin.debug:
         msg: "Grafana link: http://{{ grafana_host_ip }}:3000"
-
-
