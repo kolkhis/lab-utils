@@ -4,10 +4,9 @@
   # TODO (provisioning): Set up default Prometheus data source for Grafana with provisioning
   # /etc/grafana/provisioning/datasources
   # /etc/grafana/provisioning/dashboards
-  # Create in Prometheus playbook?
-  # TODO(targets): Create default targets.json
 
-  ######################### Debian-based Systems #############################
+    - name: Install Grafana on Debian systems
+      when: ansible_os_family == "Debian"
     - block:
         - name: Download Grafana GPG key for Debian based systems
           ansible.builtin.get_url:
@@ -23,7 +22,7 @@
             mode: '0644'
 
         - name: Install Grafana and dependencies on Debian based systems
-          become: yes
+          become: true
           ansible.builtin.apt:
             name:
               - apt-transport-https
@@ -31,22 +30,23 @@
               - unzip
               - grafana-enterprise
             state: present
-            update_cache: yes
+            update_cache: true
           notify: Start Grafana
 
-      when: ansible_os_family == "Debian"
 
-      ########################## RedHat based Systems #########################
+    - name: Install Grafana on RedHat systems
+      when: ansible_os_family == "RedHat"
     - block:
+
         - name: Download the GPG key on RedHat based systems
-          become: yes
+          become: true
           ansible.builtin.get_url:
             url: https://rpm.grafana.com/gpg.key
             dest: /etc/pki/rpm-gpg/RPM_GPG_KEY_grafana
             mode: '0644'
 
         - name: Add the Grafana yum repository for RedHat based Systems
-          become: yes
+          become: true
           ansible.builtin.copy:
             dest: /etc/yum.repos.d/grafana.repo
             content: |
@@ -62,7 +62,7 @@
             mode: '0644'
 
         - name: Install Grafana and Dependencies on RedHat based systems
-          become: yes
+          become: true
           ansible.builtin.package:  # In case of older systems without dnf
             name:
               - dnf-plugins-core
@@ -71,9 +71,6 @@
             state: present
           notify: Start Grafana
 
-      when: ansible_os_family == "RedHat"
-
-      ##################### Universal ########################
 
     - name: Provisioning datasources and dashboards
       block:
@@ -101,25 +98,7 @@
                   url: http://localhost:9090
                   isDefault: true
                   editable: false
-            force: no  # Don't overwrite if exists
-            owner: grafana
-            group: grafana
-            mode: '0640'
-
-        - name: Create Prometheus datasource provisioning file if it doesn't exist
-          ansible.builtin.copy:
-            dest: /etc/grafana/provisioning/datasources/prometheus.yml
-            content: |
-              # /etc/grafana/provisioning/datasources/prometheus.yaml
-              apiVersion: 1
-              datasources:
-                - name: Prometheus
-                  type: prometheus
-                  access: proxy
-                  url: http://localhost:9090
-                  isDefault: true
-                  editable: false
-            force: no  # Don't overwrite if exists
+            force: false  
             mode: '0755'
 
     - name: Check if firewalld is running
@@ -132,7 +111,7 @@
         msg: "Firewalld status: {{ firewalld_status.status['ActiveState'] }}"
 
     - name: Open Firewalld port 3000
-      become: yes
+      become: true
       ansible.builtin.shell:
         cmd: |
           firewall-cmd --add-port=3000/tcp --permanent
@@ -147,7 +126,7 @@
 
   handlers:
     - name: Start Grafana
-      become: yes
+      become: true
       ansible.builtin.systemd:
         daemon_reload: true
         name: grafana-server
