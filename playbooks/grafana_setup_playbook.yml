@@ -1,6 +1,8 @@
 - name: Install Grafana on the system
   hosts: localhost
   tasks:
+  # TODO: Set up default dashboard?
+  # /etc/grafana/provisioning/dashboards
 
     - name: Install Grafana on Debian systems
       when: ansible_os_family == "Debian"
