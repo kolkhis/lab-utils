@@ -89,10 +89,10 @@
                     - targets: ["localhost:9090"]
                   # metrics_path defaults to '/metrics'
                   # scheme defaults to 'http'.
-                # - job_name: 'Prometheus_node'
-                #   static_configs:
-                #     - targets:
-                #         - 'localhost:9100'
+                - job_name: 'Prometheus_node'
+                  static_configs:
+                    - targets:
+                        - 'localhost:9100'
               # Node Exporter targets
                 - job_name: 'node'
                   file_sd_configs:
@@ -205,6 +205,28 @@
       become: true
       block:
 
+        - name: Check and register firewalld status
+          ansible.builtin.systemd:
+            name: firewalld
+          register: firewalld_systemd_status
+
+        - name: Set firewalld status as a fact
+          ansible.builtin.set_fact:
+            firewalld_active: "{{ firewalld_systemd_status.status['ActiveState'] == 'active' }}"
+
+        - name: Debug the state of firewalld
+          ansible.builtin.debug:
+            msg:
+              - "Firewalld status: {{ firewalld_systemd_status.status }}"
+              - "Firewalld_active: {{ firewalld_active }}"
+
+        - name: Expose port 9090 if firewalld is active
+          ansible.builtin.shell:
+            cmd: |
+              firewall-cmd --add-port=3000/tcp --permanent
+              firewall-cmd --reload
+          when: firewalld_active
+
         - name: Start Prometheus
           become: true
           ansible.builtin.systemd:
@@ -212,3 +234,4 @@
             name: prometheus.service
             state: started
             enabled: true
+
