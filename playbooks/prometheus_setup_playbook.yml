@@ -205,7 +205,6 @@
         - name: Debug the state of firewalld
           ansible.builtin.debug:
             msg:
-              - "Firewalld status: {{ firewalld_systemd_status.status }}"
               - "Firewalld_active: {{ firewalld_active }}"
 
         - name: Expose port 9090 if firewalld is active
