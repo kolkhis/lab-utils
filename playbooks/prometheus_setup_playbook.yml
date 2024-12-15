@@ -178,10 +178,6 @@
       ansible.builtin.set_fact:
         prometheus_host_ip: "{{ ansible_default_ipv4.address }}"
 
-    - name: Output link to the Web UI query page
-      ansible.builtin.debug:
-        msg: "Prometheus Query Link: http://{{ ansible_default_ipv4.address }}:9090"
-
     - name: Enable Prometheus systemd service and check firewalld
       become: true
       block:
@@ -214,3 +210,8 @@
             name: prometheus.service
             state: started
             enabled: true
+
+    - name: Output link to the Web UI query page
+      ansible.builtin.debug:
+        msg: "Prometheus Query Link: http://{{ ansible_default_ipv4.address }}:9090"
+
