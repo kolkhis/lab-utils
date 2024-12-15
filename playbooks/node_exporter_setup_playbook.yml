@@ -96,7 +96,6 @@
       become: true
       block:
 
-        # TODO(firewall): Open port 9100 if it's not open already
         - name: Check if firewalld is running
           ansible.builtin.systemd:
             name: firewalld
