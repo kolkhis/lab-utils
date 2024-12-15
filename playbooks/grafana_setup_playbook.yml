@@ -4,6 +4,7 @@
 
     - name: Install Grafana on Debian systems
       when: ansible_os_family == "Debian"
+      become: true
       block:
         - name: Download Grafana GPG key for Debian based systems
           ansible.builtin.get_url:
@@ -19,7 +20,6 @@
             mode: '0644'
 
         - name: Install Grafana and dependencies on Debian based systems
-          become: true
           ansible.builtin.apt:
             name:
               - apt-transport-https
@@ -32,17 +32,16 @@
 
     - name: Install Grafana on RedHat systems
       when: ansible_os_family == "RedHat"
+      become: true
       block:
 
         - name: Download the GPG key on RedHat based systems
-          become: true
           ansible.builtin.get_url:
             url: https://rpm.grafana.com/gpg.key
             dest: /etc/pki/rpm-gpg/RPM_GPG_KEY_grafana
             mode: '0644'
 
         - name: Add the Grafana yum repository for RedHat based Systems
-          become: true
           ansible.builtin.copy:
             dest: /etc/yum.repos.d/grafana.repo
             content: |
@@ -58,7 +57,6 @@
             mode: '0644'
 
         - name: Install Grafana and Dependencies on RedHat based systems
-          become: true
           ansible.builtin.package:  # In case of older systems without dnf
             name:
               - dnf-plugins-core
