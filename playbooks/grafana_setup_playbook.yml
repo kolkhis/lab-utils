@@ -1,13 +1,10 @@
 - name: Install Grafana on the system
   hosts: localhost
   tasks:
-  # TODO (provisioning): Set up default Prometheus data source for Grafana with provisioning
-  # /etc/grafana/provisioning/datasources
-  # /etc/grafana/provisioning/dashboards
 
     - name: Install Grafana on Debian systems
       when: ansible_os_family == "Debian"
-    - block:
+      block:
         - name: Download Grafana GPG key for Debian based systems
           ansible.builtin.get_url:
             url: https://apt.grafana.com/gpg.key
@@ -31,12 +28,11 @@
               - grafana-enterprise
             state: present
             update_cache: true
-          notify: Start Grafana
 
 
     - name: Install Grafana on RedHat systems
       when: ansible_os_family == "RedHat"
-    - block:
+      block:
 
         - name: Download the GPG key on RedHat based systems
           become: true
@@ -69,7 +65,6 @@
               - unzip
               - grafana-enterprise
             state: present
-          notify: Start Grafana
 
 
     - name: Provisioning datasources and dashboards
@@ -119,12 +114,9 @@
       when: firewalld_status.status['ActiveState'] == 'active'
 
     - name: Save host IP
-      ansible.builtin.shell:
-        cmd: "hostname -I | awk '{ print $1 }'"
-      register: grafana_host_ip
-      notify: Generate Grafana link
+      ansible.builtin.set_fact:
+        grafana_host_ip: "{{ ansible_default_ipv4.address }}"
 
-  handlers:
     - name: Start Grafana
       become: true
       ansible.builtin.systemd:
@@ -135,6 +127,6 @@
 
     - name: Generate Grafana link
       ansible.builtin.debug:
-        msg: "Grafana link: http://{{ grafana_host_ip.stdout | trim }}:3000"
+        msg: "Grafana link: http://{{ grafana_host_ip }}:3000"
 
 
