@@ -66,6 +66,7 @@
 
 
     - name: Provisioning datasources and dashboards
+      become: true
       block:
         - name: Ensure provisioning directories exist (should be created by default)
           ansible.builtin.file:
