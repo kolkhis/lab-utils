@@ -4,10 +4,9 @@
     prometheus_version: "3.0.1"
     prometheus_tarball: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
     prometheus_extracted_directory: "/var/lib/prometheus"
-  # TODO: Set up default data source for Grafna with provisioning
+  # TODO: Set up default data source for Grafana with provisioning
   # /etc/grafana/provisioning/datasources
   # /etc/grafana/provisioning/dashboards
-  # TODO(firewall): Check if firewalld is running, open port 9090
   tasks:
       # TODO (): Create script to dynamically generate a list of hosts using
       #              either the Proxmox API or a bash script.
@@ -58,9 +57,20 @@
     - name: Deploy default configuration file prometheus.yml
       become: true
       block:
-        # TODO(prometheus.yml): Check for existence of config file. If one exists,
-        # save as a copy and write this one.
-        # E.g., proetheus.yml exists -> old_prometheus.yml
+
+        - name: Check for an existing prometheus.yml
+          ansible.builtin.stat:
+            path: /etc/prometheus/prometheus.yml
+          register: prometheus_stat
+
+        - name: Handle existing prometheus.yml
+          ansible.builtin.copy:
+            remote_src: true
+            src: /etc/prometheus/prometheus.yml
+            dest: /etc/prometheus/old_prometheus.yml
+            mode: '0755'
+          when: prometheus_stat.stat.exists
+
         - name: Deploy prometheus.yml into /etc/prometheus with file-based service discovery
           ansible.builtin.copy:
             dest: /etc/prometheus/prometheus.yml
@@ -108,29 +118,6 @@
           ansible.builtin.stat:
             path: /etc/prometheus/targets.json
           register: targets_file
-
-        # TODO: Use this in node_exporter setup. Not needed here, only initial
-        # creation if doesn't exist.
-        - name: Get the contents of targets.json
-          ansible.builtin.slurp:
-            path: /etc/prometheus/targets.json
-          register: targets_file_contents_raw
-          when: targets_file.stat.exists
-
-        - name: Parse contents of targets.json
-          ansible.builtin.set_fact:
-            targets_file_contents: "{{ targets_file_contents_raw.content | b64decode | from_json }}"
-          when: targets_file.stat.exists
-
-        - name: Measure the length of targets
-          ansible.builtin.set_fact:
-            targets_length: "{{ targets_file_contents | length }}"
-          when: targets_file.stat.exists
-
-        - name: Output the length of the list of targets
-          ansible.builtin.debug:
-            msg: "Length of targets: {{ targets_length }}"
-          when: targets_file.stat.exists
 
         - name: Create targets.json if it doesn't exist
           ansible.builtin.copy:
@@ -200,8 +187,7 @@
       ansible.builtin.debug:
         msg: "Prometheus Query Link: http://{{ ansible_default_ipv4.address }}:9090"
 
-    # TODO(firewall): Check if firewalld is enabled. If so, open port 9090 for Web UI querying
-    - name: Systemd service # and firewalld check
+    - name: Enable Prometheus systemd service and check firewalld
       become: true
       block:
 
@@ -223,7 +209,7 @@
         - name: Expose port 9090 if firewalld is active
           ansible.builtin.shell:
             cmd: |
-              firewall-cmd --add-port=3000/tcp --permanent
+              firewall-cmd --add-port=9090/tcp --permanent
               firewall-cmd --reload
           when: firewalld_active
 
@@ -234,4 +220,3 @@
             name: prometheus.service
             state: started
             enabled: true
-
