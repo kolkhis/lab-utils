@@ -55,6 +55,17 @@
             group: node_exporter
             mode: '0755'
 
+      # TODO: Refactor to use basic service file with minimal ExecStart
+              # [Unit]
+              # Description=Node Exporter Startup
+              # Wants=network-online.target
+              # After=network-online.target
+
+              # [Service]
+              # ExecStart=/opt/node_exporter/node_exporter-1.5.0.linux-amd64/node_exporter
+
+              # [Install]
+              # WantedBy=default.target
 
     - name: Clone and copy configuration files
       become: true
