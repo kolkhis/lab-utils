@@ -53,7 +53,6 @@
         #   when: ansible_os_family == 'Debian'
 
         - name: Save machine's report to a yaml file
-          delegate_to: localhost
           ansible.builtin.copy:
             dest: /var/tmp/remote_config_report.yaml
             content: |
@@ -73,6 +72,11 @@
               {% endfor %}
             mode: '0755'
 
+        - name: Read in report as a yaml file
+          ansible.builtin.slurp:
+            src: /var/tmp/remote_config_report.yaml
+          register: remote_report_contents_raw
+
     - name: Check differences between the new report and the baseline
       delegate_to: localhost
       block:
@@ -85,10 +89,10 @@
           ansible.builtin.set_fact:
             baseline_report: "{{ baseline_file_contents_raw.content | b64decode | from_yaml }}"
 
-        - name: Read in the newly generated report
-          ansible.builtin.slurp:
-            src: /var/tmp/remote_config_report.yaml
-          register: remote_report_contents_raw
+        # - name: Read in the newly generated report
+        #   ansible.builtin.slurp:
+        #     src: /var/tmp/remote_config_report.yaml
+        #   register: remote_report_contents_raw
 
         - name: Parse contents of new report
           ansible.builtin.set_fact:
