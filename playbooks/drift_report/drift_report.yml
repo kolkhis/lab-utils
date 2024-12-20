@@ -1,6 +1,6 @@
 ---
 - name: Generate and send drift report to webhook
-  hosts: localhost
+  hosts: servers
   vars:
     baseline_file: /var/tmp/baseline.yaml
   tasks:
@@ -40,10 +40,17 @@
               {{ item.item }}: {{ item.stdout if item.rc == 0 else 'inactive or errored' }}
               {% endfor %}
 
-        - name: Get a list of installed packages
+        - name: Get a list of installed packages with rpm
           ansible.builtin.shell:
             cmd: "rpm -qa --qf '%{NAME}%{VERSION}\n'" # Strip the unnecessary info
           register: installed_packages
+          when: ansible_os_family == 'RedHat'
+
+        # - name: Get a list of installed packages with dpkg
+        #   ansible.builtin.shell:
+        #     cmd: "dpkg-query --show -f='${Package}${Version}\n'" # Strip the unnecessary info
+        #   register: installed_packages
+        #   when: ansible_os_family == 'Debian'
 
         - name: Save machine's report to a yaml file
           delegate_to: localhost
@@ -54,10 +61,12 @@
               {% for file in file_checksums.split('\n') %}
                 {{ file }}
               {% endfor %}
+
               services:
               {% for service in service_states.split('\n') %}
                 {{ service }}
               {% endfor %}
+
               installed_packages:
               {% for package in installed_packages.stdout.split('\n') %}
                 - {{ package }}
@@ -74,7 +83,7 @@
 
         - name: Parse contents of baseline report
           ansible.builtin.set_fact:
-            baseline_report: "{{ baseline_file_contents_raw | b64decode | from_yaml }}"
+            baseline_report: "{{ baseline_file_contents_raw.content | b64decode | from_yaml }}"
 
         - name: Read in the newly generated report
           ansible.builtin.slurp:
@@ -83,16 +92,19 @@
 
         - name: Parse contents of new report
           ansible.builtin.set_fact:
-            remote_report: "{{ remote_report_contents_raw | b64decode | from_yaml }}"
+            remote_report: "{{ remote_report_contents_raw.content | b64decode | from_yaml }}"
 
+            # TODO: FIX: THIS.
         - name: Compare the two and write to a file
           ansible.builtin.copy:
             dest: /var/tmp/drift_report.yaml
             content: |
               files:
               {{ remote_report.files | difference(baseline_report.files) }}
+
               services:
               {{ remote_report.services | difference(baseline_report.services) }}
+
               installed_packages:
               {{ remote_report.installed_packages | difference(baseline_report.installed_packages) }}
             mode: '0755'

@@ -61,10 +61,12 @@
           {% for file in file_checksums.split('\n') %}
             {{ file }}
           {% endfor %}
+
           services:
           {% for service in service_states.split('\n') %}
             {{ service }}
           {% endfor %}
+
           installed_packages:
           {% for package in installed_packages.stdout.split('\n') %}
             - {{ package }}
