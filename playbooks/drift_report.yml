@@ -31,12 +31,13 @@
             - sshd
             - firewalld
           register: services_status
+          failed_when: false  # returns nonzero if service is inactive
 
         - name: Set and format the service states
           ansible.builtin.set_fact:
             service_states: |
               {% for item in services_status.results %}
-              {{ item.item }}: {{ item.stdout }}
+              {{ item.item }}: {{ item.stdout if item.rc == 0 else 'inactive or errored' }}
               {% endfor %}
 
         - name: Get a list of installed packages
@@ -45,7 +46,8 @@
           register: installed_packages
 
         - name: Save machine's report to a yaml file
-          ansible.builtin.fetch:
+          delegate_to: localhost
+          ansible.builtin.copy:
             dest: /var/tmp/remote_config_report.yaml
             content: |
               files:
@@ -70,11 +72,9 @@
             src: /var/tmp/baseline.yaml
           register: baseline_file_contents_raw
 
-        - name: Parse contents of new report
+        - name: Parse contents of baseline report
           ansible.builtin.set_fact:
-            new_report: "{{ baseline_file_contents_raw | b64decode | from_yaml }}"
-          register: baseline_report
-
+            baseline_report: "{{ baseline_file_contents_raw | b64decode | from_yaml }}"
 
         - name: Read in the newly generated report
           ansible.builtin.slurp:
@@ -83,8 +83,7 @@
 
         - name: Parse contents of new report
           ansible.builtin.set_fact:
-            new_report: "{{ remote_report_contents_raw | b64decode | from_yaml }}"
-          register: remote_report
+            remote_report: "{{ remote_report_contents_raw | b64decode | from_yaml }}"
 
         - name: Compare the two and write to a file
           ansible.builtin.copy:
