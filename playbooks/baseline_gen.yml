@@ -1,0 +1,73 @@
+---
+- name: Generate a baseline for configuration files to be used on a good system
+  hosts: localhost
+  gather_facts: true
+  tasks:
+    - name: Gather stats of critical system files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+        checksum_algorithm: sha256
+      loop:
+        - /etc/passwd
+        - /etc/ssh/sshd_config
+        - /etc/hosts
+        - /etc/group
+      register: file_stats
+
+    - name: Set checksums into facts
+      ansible.builtin.set_fact:
+        file_checksums: |
+          {% for item in file_stats.results %}
+          {{ item.stat.path }}: {{ item.stat.checksum }}
+          {% endfor %}
+
+    - name: Check active services
+      ansible.builtin.shell:
+        cmd: "systemctl is-active {{ item }}"
+      with_items:
+        - sshd
+        - firewalld
+      register: services_status
+
+    - name: Set and format the service states
+      ansible.builtin.set_fact:
+        service_states: |
+          {% for item in services_status.results %}
+          {{ item.item }}: {{ item.stdout }}
+          {% endfor %}
+
+    - name: Get a list of installed packages
+      ansible.builtin.shell:
+        cmd: "rpm -qa --qf '%{NAME}%{VERSION}\n'" # Strip the unnecessary info
+      register: installed_packages
+
+    # - name: Save baseline to a yaml file
+    #   ansible.builtin.copy:
+    #     dest: /var/tmp/baseline.yaml
+    #     content: |
+    #       Files:
+    #       {{ file_checksums }}
+    #       Services:
+    #       {{ service_states }}
+    #       Installed Packages:
+    #       {{ installed_packages.stdout }}
+    #     mode: '0755'
+
+    - name: Save baseline to a yaml file
+      ansible.builtin.copy:
+        dest: /var/tmp/baseline.yaml
+        content: |
+          files:
+          {% for file in file_checksums.split('\n') %}
+            {{ file }}
+          {% endfor %}
+          services:
+          {% for service in service_states.split('\n') %}
+            {{ service }}
+          {% endfor %}
+          installed_packages:
+          {% for package in installed_packages.stdout.split('\n') %}
+            - {{ package }}
+          {% endfor %}
+        mode: '0755'
+
