@@ -141,11 +141,8 @@
         body_format: json
         body:
           content: |
-            ## Kolkhis - Drift report for {{ remote_node_ip }}  
-            ## Files that are changed  
-            - {{ diff_files }}  
-            ## Services states that are different  
-            - {{ diff_services }}  
-            ## Installed packages that are different  
-            - {{ diff_installed_packages }}  
+            ### Kolkhis - Drift report for {{ remote_node_ip }}  
+            - Files: - {{ diff_files }}  
+            - Services: - {{ diff_services }}  
+            - Additional packages: - {{ diff_installed_packages | length }}  
 
