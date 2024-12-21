@@ -1,6 +1,6 @@
 ---
 - name: Generate and send drift report to webhook
-  hosts: servers
+  hosts: ubuntu
   vars:
     baseline_file: /var/tmp/baseline.yaml
   tasks:
@@ -31,7 +31,7 @@
             - sshd
             - firewalld
           register: services_status
-          failed_when: false  # returns nonzero if service is inactive
+          failed_when: false # returns nonzero if service is inactive
 
         - name: Set and format the service states
           ansible.builtin.set_fact:
@@ -70,12 +70,16 @@
               {% for package in installed_packages.stdout.split('\n') %}
                 - {{ package }}
               {% endfor %}
-            mode: '0755'
+            mode: "0755"
 
         - name: Read in report as a yaml file
           ansible.builtin.slurp:
             src: /var/tmp/remote_config_report.yaml
           register: remote_report_contents_raw
+
+        - name: Set fact for remote host ip
+          ansible.builtin.set_fact:
+            remote_node_ip: "{{ ansible_host }}"
 
     - name: Check differences between the new report and the baseline
       delegate_to: localhost
@@ -98,10 +102,9 @@
           ansible.builtin.set_fact:
             remote_report: "{{ remote_report_contents_raw.content | b64decode | from_yaml }}"
 
-            # TODO: FIX: THIS.
         - name: Compare the two and write to a file
           ansible.builtin.copy:
-            dest: /var/tmp/drift_report.yaml
+            dest: "/var/tmp/{{ remote_node_ip }}-drift_report.yaml"
             content: |
               files:
               {{ remote_report.files | difference(baseline_report.files) }}
@@ -111,5 +114,29 @@
 
               installed_packages:
               {{ remote_report.installed_packages | difference(baseline_report.installed_packages) }}
-            mode: '0755'
+            mode: "0755"
 
+            # TODO: FIX: Drift file contents are lists. Convert to VALID YAML.
+        - name: slurp diff file contents
+          delegate_to: localhost
+          ansible.builtin.slurp:
+            src: "/var/tmp/{{ remote_node_ip }}-drift_report.yaml"
+          register: drift_file_contents_raw
+
+        - name: Parse diff file contents
+          ansible.builtin.set_fact:
+            drift_file_contents: "{{ drift_file_contents_raw | b64decode }}"
+
+
+    - name: Send drift report to the webhook
+      ansible.builtin.uri:
+        url: |
+          https://discord.com/api/webhooks/1317659221604433951/uyKpuq8fNNNSEyCra4n33PakIBk-XtTn1WrwTpHs9BcgkIu7URPV_Gd5HJCRX0_EJVUT
+        method: POST
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body: >-
+          {
+            "content": "Kolkhis\nDrift report for node {{ remote_node_ip }}\n{{drift_file_contents}}",
+          }

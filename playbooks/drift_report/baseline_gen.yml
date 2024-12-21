@@ -1,8 +1,9 @@
 ---
 - name: Generate a baseline for configuration files to be used on a good system
-  hosts: localhost
+  hosts: ubuntu_control # localhost
   gather_facts: true
   tasks:
+
     - name: Gather stats of critical system files
       ansible.builtin.stat:
         path: "{{ item }}"
@@ -28,6 +29,12 @@
         - sshd
         - firewalld
       register: services_status
+      failed_when: false # Don't fail if return code is > 0.
+
+    - name: Debug the services
+      ansible.builtin.debug:
+        msg: 
+          - "Services: {{ services_status }}"
 
     - name: Set and format the service states
       ansible.builtin.set_fact:
@@ -40,18 +47,13 @@
       ansible.builtin.shell:
         cmd: "rpm -qa --qf '%{NAME}%{VERSION}\n'" # Strip the unnecessary info
       register: installed_packages
+      when: ansible_os_family == 'RedHat'
 
-    # - name: Save baseline to a yaml file
-    #   ansible.builtin.copy:
-    #     dest: /var/tmp/baseline.yaml
-    #     content: |
-    #       Files:
-    #       {{ file_checksums }}
-    #       Services:
-    #       {{ service_states }}
-    #       Installed Packages:
-    #       {{ installed_packages.stdout }}
-    #     mode: '0755'
+    - name: Get a list of installed packages with dpkg
+      ansible.builtin.shell:
+        cmd: "dpkg-query --show -f='${Package}${Version}\n'" # Strip the unnecessary info
+      register: installed_packages
+      when: ansible_os_family == 'Debian'
 
     - name: Save baseline to a yaml file
       ansible.builtin.copy:
@@ -72,4 +74,22 @@
             - {{ package }}
           {% endfor %}
         mode: '0755'
+
+    - name: Set fact for control node IP
+      ansible.builtin.set_fact:
+        ubuntu_control_ip: "{{ ansible_host }}"
+
+    - name: Pull down baseline file to local machine
+      ansible.builtin.fetch:
+        src: /var/tmp/baseline.yaml
+        dest: /root/ansible_madness/baseline
+
+    - name: Move the baseline report locally to /var/tmp
+      delegate_to: localhost
+      ansible.builtin.copy:
+        remote_src: true
+        src: "/root/ansible_madness/baseline/{{ ubuntu_control_ip }}/var/tmp/baseline.yaml"
+        dest: /var/tmp/baseline.yaml
+
+
 
