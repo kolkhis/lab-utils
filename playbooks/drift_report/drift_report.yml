@@ -107,6 +107,7 @@
           ansible.builtin.set_fact:
             remote_report: "{{ remote_report_contents_raw.content | b64decode | from_yaml }}"
 
+        # TODO: Make this write out valid yaml
         - name: Compare the two and write to a file
           ansible.builtin.copy:
             dest: "/var/tmp/{{ remote_node_ip }}-drift_report.yaml"
