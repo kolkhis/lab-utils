@@ -102,6 +102,15 @@
           ansible.builtin.set_fact:
             remote_report: "{{ remote_report_contents_raw.content | b64decode | from_yaml }}"
 
+        - name: Set the differences in facts
+          ansible.builtin.set_fact:
+            diff_files: |
+              {{ "No drift" if (remote_report.files | difference(baseline_report.files) | length == 0) else remote_report.files | difference(baseline_report.files) | join(', ') }}
+            diff_services: |
+              {{ "No drift" if (remote_report.services | difference(baseline_report.services) | length == 0) else remote_report.services | difference(baseline_report.services) | join(', ') }}
+            diff_installed_packages: |
+              {{ "No drift" if (remote_report.installed_packages | difference(baseline_report.installed_packages) | length == 0) else remote_report.installed_packages | difference(baseline_report.installed_packages) | join(', ') }}
+
         - name: Compare the two and write to a file
           ansible.builtin.copy:
             dest: "/var/tmp/{{ remote_node_ip }}-drift_report.yaml"
@@ -116,17 +125,40 @@
               {{ remote_report.installed_packages | difference(baseline_report.installed_packages) }}
             mode: "0755"
 
-            # TODO: FIX: Drift file contents are lists. Convert to VALID YAML.
-        - name: slurp diff file contents
-          delegate_to: localhost
-          ansible.builtin.slurp:
-            src: "/var/tmp/{{ remote_node_ip }}-drift_report.yaml"
-          register: drift_file_contents_raw
+            # # TODO: FIX: Drift file contents are lists. Convert to VALID YAML.
+        # - name: slurp diff file contents
+          # delegate_to: localhost
+          # ansible.builtin.slurp:
+            # src: "/var/tmp/{{ remote_node_ip }}-drift_report.yaml"
+          # register: drift_file_contents_raw
+
+        # - name: Parse diff file contents
+        #   ansible.builtin.set_fact:
+        #     drift_file_contents: "{{ drift_file_contents_raw | b64decode }}"
+
 
         - name: Parse diff file contents
           ansible.builtin.set_fact:
-            drift_file_contents: "{{ drift_file_contents_raw | b64decode }}"
+            drift_file_contents: |
+              {
+                "Files that are changed": {{ diff_files | default('None') }}
+                "Services states that are different": {{ diff_services | default('None') }}
+                "Installed packages that are different": {{ diff_installed_packages | default('None') }}
+              }
 
+        # - name: Debug drift file contents fact
+        #   ansible.builtin.debug:
+        #     var: drift_file_contents
+          
+
+        # - name: set json payload
+        #   ansible.builtin.set_fact:
+        #     json_payload: |
+        #       {
+        #         "content": "Kolkhis\n Files that are changed: {{ diff_files | default('None') }}\n
+        #         Services states that are different: {{ diff_services | default('None') }}\n
+        #         Installed packages that are different: {{ diff_installed_packages | default('None') }}
+        #       }
 
     - name: Send drift report to the webhook
       ansible.builtin.uri:
@@ -136,7 +168,12 @@
         headers:
           Content-Type: "application/json"
         body_format: json
-        body: >-
-          {
-            "content": "Kolkhis\nDrift report for node {{ remote_node_ip }}\n{{drift_file_contents}}",
-          }
+        body:
+          content: |
+            ## Kolkhis - Drift report for {{ remote_node_ip }}  
+            ## Files that are changed  
+            - {{ diff_files }}  
+            ## Services states that are different  
+            - {{ diff_services }}  
+            ## Installed packages that are different  
+            - {{ diff_installed_packages }}  
