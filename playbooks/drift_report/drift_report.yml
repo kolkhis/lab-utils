@@ -82,9 +82,14 @@
             src: /var/tmp/remote_config_report.yaml
           register: remote_report_contents_raw
 
+        - name: Parse contents of new report
+          ansible.builtin.set_fact:
+            remote_report: "{{ remote_report_contents_raw.content | b64decode | from_yaml }}"
+
         - name: Set fact for remote host ip
           ansible.builtin.set_fact:
             remote_node_ip: "{{ ansible_host }}"
+
 
     - name: Check differences between the new report and the baseline
       delegate_to: localhost
@@ -97,15 +102,6 @@
         - name: Parse contents of baseline report
           ansible.builtin.set_fact:
             baseline_report: "{{ baseline_file_contents_raw.content | b64decode | from_yaml }}"
-
-        - name: Read in the newly generated report
-          ansible.builtin.slurp:
-            src: /var/tmp/remote_config_report.yaml
-          register: remote_report_contents_raw
-
-        - name: Parse contents of new report
-          ansible.builtin.set_fact:
-            remote_report: "{{ remote_report_contents_raw.content | b64decode | from_yaml }}"
 
         # TODO: Make this write out valid yaml
         - name: Compare the two and write to a file
@@ -125,11 +121,23 @@
         - name: Set the differences in facts
           ansible.builtin.set_fact:
             diff_files: |
-              {{ "No drift" if (remote_report.files | difference(baseline_report.files) | length == 0) else remote_report.files | difference(baseline_report.files) | join(', ') }}
+              {{ "No drift" if (
+              remote_report.files | difference(baseline_report.files) | length == 0) else
+              remote_report.files | difference(baseline_report.files) | join(', ')
+              }}
             diff_services: |
-              {{ "No drift" if (remote_report.services | difference(baseline_report.services) | length == 0) else remote_report.services | difference(baseline_report.services) | join(', ') }}
+              {{
+                "No drift" if (
+                remote_report.services | difference(baseline_report.services) | length == 0) else
+                remote_report.services | difference(baseline_report.services) | join(', ')
+              }}
             diff_installed_packages: |
-              {{ "No drift" if (remote_report.installed_packages | difference(baseline_report.installed_packages) | length == 0) else remote_report.installed_packages | difference(baseline_report.installed_packages) | join(', ') }}
+              {{
+                "No drift" if (
+                remote_report.installed_packages | difference(baseline_report.installed_packages) | length == 0)
+                else
+                remote_report.installed_packages | difference(baseline_report.installed_packages) | join(', ')
+              }}
 
     - name: Send drift report to the webhook
       ansible.builtin.uri:
@@ -141,8 +149,10 @@
         body_format: json
         body:
           content: |
-            ### Kolkhis - Drift report for {{ remote_node_ip }}  
-            - Files: - {{ diff_files }}  
-            - Services: - {{ diff_services }}  
-            - Additional packages: - {{ diff_installed_packages | length }}  
-
+            ### Kolkhis - Drift report for {{ remote_node_ip }} - Date: {{ ansible_date_time.date }}  
+            - Files: {{ diff_files }}  
+            - Services: {{ diff_services }}  
+            - Additional packages: {{ diff_installed_packages | length }}  
+                {% if diff_installed_packages | length != 0 %}
+                - See `/var/tmp/{{ remote_node_ip }}-drive_report.yaml` on the control node or the host for a full list.  
+                {% endif %}
