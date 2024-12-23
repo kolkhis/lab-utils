@@ -154,5 +154,5 @@
             - Services: {{ diff_services }}  
             - Additional packages: {{ diff_installed_packages | length }}  
                 {% if diff_installed_packages | length != 0 %}
-                - See `/var/tmp/{{ remote_node_ip }}-drive_report.yaml` on the control node or the host for a full list.  
+                - See `/var/tmp/{{ remote_node_ip }}-drive_report.yaml` on the control node for a full list.  
                 {% endif %}
