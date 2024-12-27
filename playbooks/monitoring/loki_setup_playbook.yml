@@ -130,5 +130,5 @@
         - name: Output the status of loki
           ansible.builtin.debug:
             msg:
-              - "Loki status: {{ loki_systemd_output_raw.state.ActiveState }}"
+              - "Loki status: {{ loki_systemd_output_raw.status.ActiveState }}"
               - "Loki endpoint for promtail: http://{{ ansible_default_ipv4.address }}:3100/loki/api/v1/push"
