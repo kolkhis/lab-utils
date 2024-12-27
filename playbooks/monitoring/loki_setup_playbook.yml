@@ -1,0 +1,42 @@
+---
+- name: Install, configure, and deploy Loki
+  hosts: localhost
+  vars:
+    loki_version: 2.9.7
+    loki_platform: linux-amd64
+    loki_archive: "loki-{{ loki_platform }}.zip"
+    gh_release_page: https://github.com/grafana/loki/releases/download
+    loki_download_link: "{{ gh_release_page }}/v{{ loki_version }}/loki-{{ loki_platform }}.zip"
+  tasks:
+
+    - name: Set up the environment
+      become: true
+      block:
+
+        - name: Make sure unzip is on the system
+          ansible.builtin.package:
+            name: unzip
+            state: present
+
+        - name: Make a directory to install Loki into
+          ansible.builtin.file:
+            path: /opt/loki
+            mode: '0755'
+            state: directory
+
+        - name: Download the loki archive
+          ansible.builtin.get_url:
+            dest: /opt/loki
+            url: "{{ loki_download_link }}"
+            mode: '0755'
+
+        - name: Extract the loki archive
+          ansible.builtin.unarchive:
+            remote_src: true
+            src: "/opt/loki/{{ loki_archive }}"
+            dest: /opt/loki
+            mode: '0755'
+
+
+
+
