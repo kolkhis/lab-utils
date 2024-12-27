@@ -71,7 +71,7 @@
                       max_size_mb: 100
 
               limits_config:
-                metric_aggregation_enabled: true
+                #metric_aggregation_enabled: true
               schema_config:
                 configs:
                   - from: 2020-10-24
@@ -81,14 +81,14 @@
                     index:
                       prefix: index_
                       period: 24h
-              pattern_ingester:
-                enabled: true
-                metric_aggregation:
-                  loki_address: localhost:3100
+              # pattern_ingester:
+              #   enabled: true
+              #   metric_aggregation:
+              #     loki_address: localhost:3100
               ruler:
                 alertmanager_url: http://localhost:9093
               frontend:
-                encoding: protobuf
+                # encoding: protobuf
               # Disable sending stats to grafana labs
               analytics:
                 reporting_enabled: false
