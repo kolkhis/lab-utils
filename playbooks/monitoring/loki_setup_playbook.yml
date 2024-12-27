@@ -93,6 +93,24 @@
               analytics:
                 reporting_enabled: false
 
+        - name: Put the loki service file in /etc/systemd/system
+          ansible.builtin.copy:
+            dest: /etc/systemd/system/loki.service
+            mode: '0755'
+            content: |
+              # /etc/systemd/system/loki.service
+              [Unit]
+              Description=Loki Startup
+              Wants=network-online.target
+              After=network-online.target
+
+              [Service]
+              ExecStart=/opt/loki/loki-linux-amd64 -config.file=/opt/loki/loki-local-config.yaml
+
+              [Install]
+              WantedBy=default.target
+
+
     - name: Systemd operations and output
       become: true
       block:
