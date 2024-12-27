@@ -2,7 +2,7 @@
 - name: Install, configure, and deploy Loki
   hosts: localhost
   vars:
-    loki_version: 2.9.7
+    loki_version: 3.3.2
     loki_platform: linux-amd64
     loki_archive: "loki-{{ loki_platform }}.zip"
     gh_release_page: https://github.com/grafana/loki/releases/download
