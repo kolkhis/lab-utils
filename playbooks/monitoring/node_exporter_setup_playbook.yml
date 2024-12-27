@@ -39,6 +39,7 @@
 
         - name: Extract node exporter
           ansible.builtin.unarchive:
+            remote_src: true
             src: "{{ node_exporter_dir }}/{{ node_exporter_tarball }}"
             dest: "{{ node_exporter_dir }}"
 
