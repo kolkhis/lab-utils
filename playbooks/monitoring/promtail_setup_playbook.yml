@@ -57,6 +57,7 @@
                         - localhost
                       labels:
                         job: syslog
+                        host: {{ ansible_hostname }}
                         __path__: /var/log/syslog
 
                 - job_name: auth
@@ -65,6 +66,7 @@
                         - localhost
                       labels:
                         job: auth
+                        host: {{ ansible_hostname }}
                         __path__: /var/log/auth.log
 
         - name: Ensure the service file is in /etc/systemd/system
@@ -83,8 +85,8 @@
               [Install]
               WantedBy=default.target
 
-    - name: Systemd service 
-      become: yes
+    - name: Systemd service
+      become: true
       block:
         - name: Do a daemon reload and enable/start promtail
           ansible.builtin.systemd:
