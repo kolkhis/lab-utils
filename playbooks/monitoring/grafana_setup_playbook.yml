@@ -83,7 +83,7 @@
 
         - name: Create Prometheus datasource provisioning file if it doesn't exist
           ansible.builtin.copy:
-            dest: /etc/grafana/provisioning/datasources/prometheus.yml
+            dest: /etc/grafana/provisioning/datasources/prometheus.yaml
             content: |
               # /etc/grafana/provisioning/datasources/prometheus.yaml
               apiVersion: 1
@@ -99,7 +99,7 @@
 
         - name: Create Loki datasource provisioning file if it doesn't exist
           ansible.builtin.copy:
-            dest: /etc/grafana/provisioning/datasources/loki.yml
+            dest: /etc/grafana/provisioning/datasources/loki.yaml
             content: |
               # /etc/grafana/provisioning/datasources/loki.yaml
               apiVersion: 1
@@ -120,7 +120,7 @@
 
     - name: Output firewalld status
       ansible.builtin.debug:
-        msg: "Firewalld status: {{ firewalld_status.status['ActiveState'] }}"
+        msg: "Firewalld status: {{ firewalld_status.status.ActiveState }}"
 
     - name: Open Firewalld port 3000
       become: true
@@ -128,7 +128,7 @@
         cmd: |
           firewall-cmd --add-port=3000/tcp --permanent
           firewall-cmd --reload
-      when: firewalld_status.status['ActiveState'] == 'active'
+      when: firewalld_status.status.ActiveState == 'active'
 
     - name: Save host IP
       ansible.builtin.set_fact:
