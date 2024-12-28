@@ -97,6 +97,22 @@
             force: false
             mode: '0755'
 
+        - name: Create Loki datasource provisioning file if it doesn't exist
+          ansible.builtin.copy:
+            dest: /etc/grafana/provisioning/datasources/loki.yml
+            content: |
+              # /etc/grafana/provisioning/datasources/loki.yaml
+              apiVersion: 1
+              datasources:
+                - name: Loki
+                  type: loki
+                  access: proxy
+                  url: http://localhost:3100
+                  isDefault: true
+                  editable: false
+            force: false
+            mode: '0755'
+
     - name: Check if firewalld is running
       ansible.builtin.systemd:
         name: firewalld
