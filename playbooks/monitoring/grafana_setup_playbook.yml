@@ -95,7 +95,7 @@
                   isDefault: true
                   editable: false
             force: false
-            mode: '0755'
+            mode: '0644'
 
         - name: Create Loki datasource provisioning file if it doesn't exist
           ansible.builtin.copy:
@@ -108,10 +108,10 @@
                   type: loki
                   access: proxy
                   url: http://localhost:3100
-                  isDefault: true
+                  isDefault: false
                   editable: false
             force: false
-            mode: '0755'
+            mode: '0644'
 
     - name: Check if firewalld is running
       ansible.builtin.systemd:
