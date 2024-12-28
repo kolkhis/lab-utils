@@ -83,21 +83,24 @@
               [Install]
               WantedBy=default.target
 
-    - name: Do a daemon reload and enable/start promtail
-      ansible.builtin.systemd:
-        daemon_reload: true
-        enabled: true
-        name: promtail
-        state: started
+    - name: Systemd service 
+      become: yes
+      block:
+        - name: Do a daemon reload and enable/start promtail
+          ansible.builtin.systemd:
+            daemon_reload: true
+            enabled: true
+            name: promtail
+            state: started
 
-    - name: Get the status of promtail
-      ansible.builtin.systemd:
-        name: promtail
-      register: promtail_systemd_status
+        - name: Get the status of promtail
+          ansible.builtin.systemd:
+            name: promtail
+          register: promtail_systemd_status
 
-    - name: Output the status of promtail
-      ansible.builtin.debug:
-        msg: "promtail status: {{ promtail_systemd_status.status.ActiveState }}"
+        - name: Output the status of promtail
+          ansible.builtin.debug:
+            msg: "promtail status: {{ promtail_systemd_status.status.ActiveState }}"
 
 # server:
 #   http_listen_port: 9080
