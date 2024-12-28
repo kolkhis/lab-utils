@@ -37,7 +37,7 @@
 
         - name: Write out a default config file
           ansible.builtin.copy:
-            dest: /opt/promtail/promtail-loki-config.yaml
+            dest: /opt/promtail/promtail-local-config.yaml
             mode: '0644'
             content: |
               server:
