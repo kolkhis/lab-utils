@@ -1,0 +1,121 @@
+- name: Install, configure, and deploy promtail
+  hosts: localhost # placeholder
+  vars:
+    promtail_version: 3.3.2
+    promtail_platform: linux-amd64
+    promtail_release_page: https://github.com/grafana/loki/releases/
+    promtail_download_link: "{{ promtail_release_page }}/v{{ promtail_version }}/promtail-{{ promtail_platform }}.zip"
+    # https://github.com/grafana/loki/releases/download/v3.3.2/promtail-linux-amd64.zip
+  tasks:
+
+    - name: Set up the environment
+      become: true
+      block:
+        - name: Create the /opt/promtail directory
+          ansible.builtin.file:
+            path: /opt/promtail
+            state: directory
+            mode: '0755'
+
+        - name: Download the promtail archive
+          ansible.builtin.get_url:
+            url: "{{ promtail_download_link }}"
+            dest: /opt/promtail
+            mode: '0755'
+
+        - name: Make sure unzip is on the system
+          ansible.builtin.package:
+            name: unzip
+            state: present
+
+        - name: Unarchive promtail
+          ansible.builtin.unarchive:
+            remote_src: true
+            src: "/opt/promtail/promtail-{{ promtail_platform }}.zip"
+            dest: /opt/promtail
+            mode: '0755'
+
+        - name: Write out a default config file
+          ansible.builtin.copy:
+            dest: /opt/promtail/promtail_loki_config.yaml
+            mode: '0644'
+            content: |
+              server:
+                http_listen_port: 9080
+                grpc_listen_port: 0
+
+              positions:
+                filename: /tmp/positions.yaml
+
+              clients:
+                - url: http://192.168.4.53:3100/loki/api/v1/push
+
+              scrape_configs:
+                - job_name: syslog
+                  static_configs:
+                    - targets:
+                        - localhost
+                      labels:
+                        job: syslog
+                        __path__: /var/log/syslog
+
+                - job_name: auth
+                  static_configs:
+                    - targets:
+                        - localhost
+                      labels:
+                        job: auth
+                        __path__: /var/log/auth.log
+
+        - name: Ensure the service file is in /etc/systemd/system
+          ansible.builtin.copy:
+            dest: /etc/systemd/system/promtail.service
+            mode: '0644'
+            content: |
+              [Unit]
+              Description=Promtail Service Startup
+              Wants=network-online.target
+              After=network-online.target
+
+              [Service]
+              ExecStart=/opt/promtail/promtail-linux-amd64 -config.file=/opt/promtail/promtail-local-config.yaml
+
+              [Install]
+              WantedBy=default.target
+
+    - name: Do a daemon reload and enable/start promtail
+      ansible.builtin.systemd:
+        daemon_reload: true
+        enabled: true
+        name: promtail
+        state: started
+
+    - name: Get the status of promtail
+      ansible.builtin.systemd:
+        name: promtail
+      register: promtail_systemd_status
+
+    - name: Output the status of promtail
+      ansible.builtin.debug:
+        msg: "promtail status: {{ promtail_systemd_status.status.ActiveState }}"
+
+# server:
+#   http_listen_port: 9080
+#   grpc_listen_port: 0
+ 
+# positions:
+#   filename: /tmp/positions.yaml
+ 
+# clients:
+#   - url: http://localhost:3100/loki/api/v1/push
+ 
+# scrape_configs:
+# - job_name: system
+#   static_configs:
+#   - targets:
+#       - localhost
+#     labels:
+#       job: varlogs
+#       __path__: /var/log/*log
+#       stream: stdout
+
