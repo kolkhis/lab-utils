@@ -49,9 +49,10 @@
                 grpc_listen_port: 9096
                 log_level: debug
                 grpc_server_max_concurrent_streams: 1000
+                http_listen_address: 0.0.0.0
 
               common:
-                instance_addr: 127.0.0.1
+                instance_addr: 0.0.0.0
                 path_prefix: /tmp/loki
                 storage:
                   filesystem:
