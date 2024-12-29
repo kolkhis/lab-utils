@@ -1,0 +1,38 @@
+#!/bin/bash
+
+[ -n "$1" ] && IP=$1
+: "${IP:="$(hostname -I | awk '{print $1}' | tr -d ' ')"}"
+
+declare -A PORTS
+
+PORTS=(
+    [Node_exporter]=9100 
+    [Grafana]=3000
+    [Loki]=3100
+    [Promtail]=9080
+    [Prometheus]=9090
+    [InfluxDB2]=8086
+)
+
+
+printf "Ports:\n"
+for idx in "${!PORTS[@]}"; do
+    printf "%s: %s\n" "$idx" "${PORTS[$idx]}";
+    if [[ "$idx" =~ Prometheus|Grafana|Promtail ]]; then
+        printf "%s link: %s\n" "$idx" "http://${IP}:${PORTS[$idx]}"
+    elif [[ $idx =~ Loki ]]; then
+        printf "%s Ready link: %s/ready\n" "$idx" "http://${IP}:${PORTS[$idx]}"
+    fi
+
+done
+
+printf '\n'
+printf "Remember, you can check what is using a port with 'lsof'\n"
+printf "Ex: sudo lsof -i :9096\n\n"
+
+printf "If you need to query Loki manually, use curl:\n
+    curl http://%s/loki/api/v1/query_range \\ 
+        --data-urlencode 'query={job=\"all\" \\ 
+        --data-urlencode 'limit=10'
+    " "${IP}:${PORTS[Loki]}"
+
