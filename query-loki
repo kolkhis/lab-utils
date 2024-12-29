@@ -3,27 +3,27 @@
 while [[ $1 =~ ^- ]]; do
     case $1 in
         -h|--host)
-            [ -n "$2" ] && LOKI_HOST=$2;
+            [ -n "$2" ] && LOKI_HOST=$2 || printf >&2 -- "'-h' Used but no host provided. Using default.\n";
             shift;
             shift;
             ;;
         -p|--port)
-            [ -n "$2" ] && LOKI_PORT=$2;
+            [ -n "$2" ] && LOKI_PORT=$2 || printf >&2 -- "'-p' used but no port provided. Using default.\n";
             shift;
             shift;
             ;;
         -q|--query)
-            [ -n "$2" ] && QUERY=$2;
+            [ -n "$2" ] && QUERY=$2 || printf >&2 -- "'-q' used but no query was provided. Using default.\n";
             shift;
             shift;
             ;;
         (-l|--limit)
-            [ -n "$2" ] && LIMIT=$2;
+            [ -n "$2" ] && LIMIT=$2 || printf >&2 -- "'-l' used but no limit was provided. Using default.\n";
             shift;
             shift;
             ;;
         (-j|--job)
-            [ -n "$2" ] && QUERY="{job=\"$2\"}";
+            [ -n "$2" ] && QUERY="{job=\"$2\"}" || printf >&2 -- "'-j' used but no job name was provided.\n";
             shift;
             shift;
             ;;
