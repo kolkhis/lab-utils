@@ -122,7 +122,7 @@
         - name: Set up dashboard provisioning
           ansible.builtin.copy:
             mode: '0644'
-            dest: /etc/grafana/provisioning/dashboards/
+            dest: /etc/grafana/provisioning/dashboards/default.yaml
             force: false
             content: |
               apiVersion: 1
