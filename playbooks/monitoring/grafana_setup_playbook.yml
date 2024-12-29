@@ -114,7 +114,7 @@
             mode: '0644'
 
         - name: Create directory for dashboards
-          ansible.builin.file:
+          ansible.builtin.file:
             path: /var/lib/grafana/dashboards
             state: directory
             mode: '0755'
