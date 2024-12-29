@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+: "${QUERY:="{job=\"all\"}"}"
+: "${LOKI_SERVER:="http://192.168.4.53:3100"}"
+: "${LIMIT:=10}"
+: "${LOKI_QUERY_ENDPOINT:="$LOKI_SERVER/loki/api/v1/query_range"}"
+
+
+while [[ $1 =~ ^- ]]; do
+    case $1 in
+        -q|--query)
+            [ -n "$2" ] && QUERY=$2;
+            shift;
+            shift;
+            ;;
+        (-l|--limit)
+            [ -n "$2" ] && LIMIT=$2;
+            shift;
+            shift;
+            ;;
+        (-j|--job)
+            [ -n "$2" ] && QUERY="{job=\"$2\"}";
+            shift;
+            shift;
+            ;;
+        (-h|--help)
+            printf "Hits the Loki query endpoint with the given query.\n"
+            printf "The output is valid JSON.\n\n"
+            printf -- "Usage: query_loki [ -q '{job=\"all\"}' ] [ -l 10 ]\n"
+            printf -- "Usage: query_loki [ -j \"all\" ] [ -l 10 ]\n\n"
+            printf -- "Options:\n"
+            printf -- "-j|--job\tSpecify the job to query.\n\n"
+            printf -- "-q|--query\tSpecify the whole query to use. \n\t\tDefault is '{job=\"all\"}'\n\n"
+            printf -- "-l|--limit\tSpecify the limit to use. \n\t\tDefault is 10.\n\n"
+            printf -- "-h|--help\tPrint this help message and exit.\n\n"
+            printf "Pipe output through _jq_ to make it look nice.\n\n"
+            printf "Ex.: query_loki -j 'all' | jq '.'\n"
+            exit 0;
+            ;;
+        *)
+            printf "No arguments given\n";
+            ;;
+    esac
+done
+
+curl "$LOKI_QUERY_ENDPOINT" \
+    --data-urlencode "query=$QUERY" \
+    --data-urlencode "limit=$LIMIT" # | jq -r '.streams[].entries[] | .line'
+
