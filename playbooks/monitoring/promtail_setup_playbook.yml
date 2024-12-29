@@ -6,7 +6,9 @@
     promtail_release_page: https://github.com/grafana/loki/releases/download
     promtail_download_link: "{{ promtail_release_page }}/v{{ promtail_version }}/promtail-{{ promtail_platform }}.zip"
     # https://github.com/grafana/loki/releases/download/v3.3.2/promtail-linux-amd64.zip
+
   tasks:
+    # TODO: Find out why Loki isn't showing the data on grafana
 
     - name: Set up the environment
       become: true
@@ -43,6 +45,7 @@
               server:
                 http_listen_port: 9080
                 grpc_listen_port: 0
+                log_level: debug
 
               positions:
                 filename: /tmp/positions.yaml
@@ -68,6 +71,15 @@
                         job: auth
                         host: {{ ansible_hostname }}
                         __path__: /var/log/auth.log
+
+                - job_name: all
+                  static_configs:
+                    - targets:
+                        - localhost
+                      labels:
+                        job: all
+                        host: {{ ansible_hostname }}
+                        __path__: /var/log/*.log
 
         - name: Ensure the service file is in /etc/systemd/system
           ansible.builtin.copy:
@@ -103,24 +115,4 @@
         - name: Output the status of promtail
           ansible.builtin.debug:
             msg: "promtail status: {{ promtail_systemd_status.status.ActiveState }}"
-
-# server:
-#   http_listen_port: 9080
-#   grpc_listen_port: 0
- 
-# positions:
-#   filename: /tmp/positions.yaml
- 
-# clients:
-#   - url: http://localhost:3100/loki/api/v1/push
- 
-# scrape_configs:
-# - job_name: system
-#   static_configs:
-#   - targets:
-#       - localhost
-#     labels:
-#       job: varlogs
-#       __path__: /var/log/*log
-#       stream: stdout
 
