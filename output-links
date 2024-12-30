@@ -32,7 +32,7 @@ printf "Ex: sudo lsof -i :9096\n\n"
 
 printf "If you need to query Loki manually, use curl:\n
     curl http://%s/loki/api/v1/query_range \\ 
-        --data-urlencode 'query={job=\"all\" \\ 
+        --data-urlencode 'query={job=\"all\"}' \\ 
         --data-urlencode 'limit=10'
     " "${IP}:${PORTS[Loki]}"
 
