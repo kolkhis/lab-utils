@@ -54,6 +54,8 @@
                 - url: http://192.168.4.53:3100/loki/api/v1/push
 
               scrape_configs:
+
+                {% if ansible_os_family == 'Debian' %}
                 - job_name: syslog
                   static_configs:
                     - targets:
@@ -71,6 +73,28 @@
                         job: auth
                         host: {{ ansible_hostname }}
                         __path__: /var/log/auth.log
+                {% endif %}
+
+                {% if ansible_os_family == 'RedHat' %}
+                - job_name: syslog
+                  static_configs:
+                    - targets:
+                        - localhost
+                      labels:
+                        job: syslog-rhel
+                        host: {{ ansible_hostname }}
+                        __path__: /var/log/messages
+
+                - job_name: auth
+                  static_configs:
+                    - targets:
+                        - localhost
+                      labels:
+                        job: auth
+                        host: {{ ansible_hostname }}
+                        __path__: /var/log/secure
+
+                {% endif %}
 
                 - job_name: all
                   static_configs:
@@ -80,6 +104,7 @@
                         job: all
                         host: {{ ansible_hostname }}
                         __path__: /var/log/*.log
+
 
         - name: Ensure the service file is in /etc/systemd/system
           ansible.builtin.copy:
