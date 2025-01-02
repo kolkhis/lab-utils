@@ -38,6 +38,9 @@
             mode: '0755'
 
         - name: Write out a default config file
+          vars:
+            syslog_file: "{% if ansible_os_family == 'Debian' %}/var/log/syslog{% else %}/var/log/messages{% endif %}"
+            auth_file: "{% if ansible_os_family == 'Debian' %}/var/log/auth.log{% else %}/var/log/secure{% endif %}"
           ansible.builtin.copy:
             dest: /opt/promtail/promtail-local-config.yaml
             mode: '0644'
@@ -55,7 +58,6 @@
 
               scrape_configs:
 
-                {% if ansible_os_family == 'Debian' %}
                 - job_name: syslog
                   static_configs:
                     - targets:
@@ -63,7 +65,7 @@
                       labels:
                         job: syslog
                         host: {{ ansible_hostname }}
-                        __path__: /var/log/syslog
+                        __path__: {{ syslog_file }}
 
                 - job_name: auth
                   static_configs:
@@ -72,29 +74,7 @@
                       labels:
                         job: auth
                         host: {{ ansible_hostname }}
-                        __path__: /var/log/auth.log
-                {% endif %}
-
-                {% if ansible_os_family == 'RedHat' %}
-                - job_name: syslog
-                  static_configs:
-                    - targets:
-                        - localhost
-                      labels:
-                        job: syslog-rhel
-                        host: {{ ansible_hostname }}
-                        __path__: /var/log/messages
-
-                - job_name: auth
-                  static_configs:
-                    - targets:
-                        - localhost
-                      labels:
-                        job: auth
-                        host: {{ ansible_hostname }}
-                        __path__: /var/log/secure
-
-                {% endif %}
+                        __path__: {{ auth_file }}
 
                 - job_name: all
                   static_configs:
