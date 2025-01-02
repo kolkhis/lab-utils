@@ -15,13 +15,13 @@ PORTS=(
 )
 
 
-printf "Ports:\n"
+printf "\nPorts:\n"
 for idx in "${!PORTS[@]}"; do
-    printf "%s: %s\n" "$idx" "${PORTS[$idx]}";
+    printf "\t%s:\t%s\n" "$idx" "${PORTS[$idx]}";
     if [[ "$idx" =~ Prometheus|Grafana|Promtail ]]; then
-        printf "%s link: %s\n" "$idx" "http://${IP}:${PORTS[$idx]}"
+        printf "\t- %s link: %s\n" "$idx" "http://${IP}:${PORTS[$idx]}"
     elif [[ $idx =~ Loki ]]; then
-        printf "%s Ready link: %s/ready\n" "$idx" "http://${IP}:${PORTS[$idx]}"
+        printf "\t- %s Ready link: %s/ready\n" "$idx" "http://${IP}:${PORTS[$idx]}"
     fi
 
 done
@@ -33,6 +33,6 @@ printf "Ex: sudo lsof -i :9096\n\n"
 printf "If you need to query Loki manually, use curl:\n
     curl http://%s/loki/api/v1/query_range \\ 
         --data-urlencode 'query={job=\"all\"}' \\ 
-        --data-urlencode 'limit=10'
-    " "${IP}:${PORTS[Loki]}"
+        --data-urlencode 'limit=10'\n
+" "${IP}:${PORTS[Loki]}"
 
