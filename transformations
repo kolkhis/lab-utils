@@ -1,5 +1,6 @@
 #!/bin/bash
 # shellcheck disable=SC2016
+# TODO: Add function to colorize bash syntax in output
 
 cat <<- 'EOC'
 Pass arguments to this script to see how they will transform.
