@@ -5,10 +5,7 @@
     promtail_platform: linux-amd64
     promtail_release_page: https://github.com/grafana/loki/releases/download
     promtail_download_link: "{{ promtail_release_page }}/v{{ promtail_version }}/promtail-{{ promtail_platform }}.zip"
-    # https://github.com/grafana/loki/releases/download/v3.3.2/promtail-linux-amd64.zip
-
   tasks:
-    # TODO: Find out why Loki isn't showing the data on grafana
 
     - name: Set up the environment
       become: true
@@ -41,6 +38,7 @@
           vars:
             syslog_file: "{% if ansible_os_family == 'Debian' %}/var/log/syslog{% else %}/var/log/messages{% endif %}"
             auth_file: "{% if ansible_os_family == 'Debian' %}/var/log/auth.log{% else %}/var/log/secure{% endif %}"
+            os_label: "{% if ansible_of_family == 'Debian' %}debian{% else %}rhel{% endif %}"
           ansible.builtin.copy:
             dest: /opt/promtail/promtail-local-config.yaml
             mode: '0644'
@@ -64,6 +62,7 @@
                         - localhost
                       labels:
                         job: syslog
+                        os_family: {{ os_label }}
                         host: {{ ansible_hostname }}
                         __path__: {{ syslog_file }}
 
@@ -73,6 +72,7 @@
                         - localhost
                       labels:
                         job: auth
+                        os_family: {{ os_label }}
                         host: {{ ansible_hostname }}
                         __path__: {{ auth_file }}
 
@@ -82,6 +82,7 @@
                         - localhost
                       labels:
                         job: all
+                        os_family: {{ os_label }}
                         host: {{ ansible_hostname }}
                         __path__: /var/log/*.log
 
@@ -102,7 +103,7 @@
               [Install]
               WantedBy=default.target
 
-    - name: Systemd service
+    - name: Start promtail and output its status
       become: true
       block:
         - name: Do a daemon reload and enable/start promtail
@@ -120,4 +121,3 @@
         - name: Output the status of promtail
           ansible.builtin.debug:
             msg: "promtail status: {{ promtail_systemd_status.status.ActiveState }}"
-
