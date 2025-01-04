@@ -1,0 +1,864 @@
+---
+- name: Set up prometheus
+  hosts: control
+  vars:
+    prometheus_version: "3.0.1"
+    prometheus_extracted_directory: "/var/lib/prometheus"
+    prometheus_platform: "linux-amd64"
+    github_download_page: "https://github.com/prometheus/prometheus/releases/download"
+    prometheus_download_link: |
+      {{ github_download_page }}/v{{ prometheus_version }}/prometheus-{{ prometheus_version}}.{{ prometheus_platform }}.tar.gz
+    prometheus_tarball: "/tmp/prometheus-{{ prometheus_version }}.{{ prometheus_platform }}.tar.gz"
+
+  tasks:
+      # TODO (): Create script to dynamically generate a list of hosts using
+      #              either the Proxmox API or a bash script.
+
+    - name: User account setup, download, extraction, and directory creation
+      become: true
+      block:
+
+        - name: Create a user account for Prometheus
+          ansible.builtin.user:
+            name: prometheus
+            shell: /sbin/nologin
+
+        - name: Create the /var/lib/prometheus directory
+          ansible.builtin.file:
+            path: /var/lib/prometheus
+            state: directory
+            owner: prometheus
+            group: prometheus
+            mode: '0755'
+
+        - name: Download Prometheus tarball
+          ansible.builtin.get_url:
+            url: "{{ prometheus_download_link }}"
+            dest: "{{ prometheus_tarball }}"
+            mode: '0755'
+
+        - name: Extract the Prometheus tarball
+          ansible.builtin.unarchive:
+            remote_src: true
+            src: "{{ prometheus_tarball }}"
+            dest: /var/lib/prometheus
+            extra_opts: ['--strip-components=1']
+
+        - name: Copy Prometheus binary to /usr/bin
+          ansible.builtin.copy:
+            remote_src: true
+            src: /var/lib/prometheus/prometheus
+            dest: /usr/bin/prometheus
+            mode: '0755'
+
+        - name: Create the /etc/prometheus directory for configuration
+          ansible.builtin.file:
+            path: /etc/prometheus
+            state: directory
+            mode: '0755'
+
+    - name: Deploy default configuration file prometheus.yml
+      become: true
+      block:
+
+        - name: Check for an existing prometheus.yml
+          ansible.builtin.stat:
+            path: /etc/prometheus/prometheus.yml
+          register: prometheus_stat
+
+        - name: Handle existing prometheus.yml
+          ansible.builtin.copy:
+            remote_src: true
+            src: /etc/prometheus/prometheus.yml
+            dest: /etc/prometheus/old_prometheus.yml
+            mode: '0755'
+          when: prometheus_stat.stat.exists
+
+        - name: Deploy prometheus.yml into /etc/prometheus with file-based service discovery
+          ansible.builtin.copy:
+            dest: /etc/prometheus/prometheus.yml
+            content: |
+              # /etc/prometheus/prometheus.yml
+              global:
+                scrape_interval: 15s # Default is every 1 minute.
+                evaluation_interval: 15s # Default is every 1 minute.
+                # scrape_timeout global default (10s).
+              alerting:
+                alertmanagers:
+                  - static_configs:
+                      - targets:
+                        # - alertmanager:9093
+              rule_files:
+                # - "first_rules.yml"
+              scrape_configs:
+                - job_name: "prometheus"
+                  static_configs:
+                    - targets: ["localhost:9090"]
+                  # metrics_path defaults to '/metrics'
+                  # scheme defaults to 'http'.
+                - job_name: 'Prometheus_node'
+                  static_configs:
+                    - targets:
+                        - 'localhost:9100'
+                - job_name: 'node'
+                  file_sd_configs:
+                    - files:
+                        - '/etc/prometheus/targets.json'
+            mode: '0755'
+
+    - name: Configuration of prometheus targets
+      become: true
+      block:
+
+        - name: Check if targets.json exists
+          ansible.builtin.stat:
+            path: /etc/prometheus/targets.json
+          register: targets_file
+
+        - name: Create targets.json if it doesn't exist
+          ansible.builtin.copy:
+            dest: /etc/prometheus/targets.json
+            content: |
+              [
+                  {
+                    "targets": ["localhost:9100"],
+                      "labels": {
+                          "job": "node",
+                          "team": "infra",
+                          "hostname": "{{ ansible_hostname }}"
+                      }
+                  }
+              ]
+            mode: '0755'
+            force: false
+          when: not targets_file.stat.exists
+
+
+    - name: Create and satisfy a default service unit file in /etc/systemd/system
+      become: true
+      block:
+
+        - name: Deploy prometheus.service into /etc/systemd/system
+          ansible.builtin.copy:
+            dest: /etc/systemd/system/prometheus.service
+            content: |
+              # /etc/systemd/system/prometheus.service
+              [Unit]
+              Description=Prometheus
+              Wants=network-online.target
+              After=network-online.target
+
+              [Service]
+              User=prometheus
+              Group=prometheus
+              Type=simple
+              ExecStart=/usr/bin/prometheus \
+               --config.file /etc/prometheus/prometheus.yml \
+               --storage.tsdb.path /var/lib/prometheus/ \
+               --web.console.templates=/var/lib/prometheus/consoles \
+               --web.console.libraries=/var/lib/prometheus/console_libraries
+
+              [Install]
+              WantedBy=multi-user.target
+            mode: '0644'
+
+        - name: Create the /var/lib/prometheus/consoles directory to satisfy default ExecStart
+          ansible.builtin.file:
+            path: /var/lib/prometheus/consoles
+            state: directory
+            mode: '0755'
+
+        - name: Create the /var/lib/prometheus/console_libraries directory to satisfy default ExecStart
+          ansible.builtin.file:
+            path: /var/lib/prometheus/console_libraries
+            state: directory
+            mode: '0755'
+
+
+    - name: Save the prometheus host machine's network IP to facts
+      ansible.builtin.set_fact:
+        prometheus_host_ip: "{{ ansible_default_ipv4.address }}"
+
+    - name: Enable Prometheus systemd service and check firewalld
+      become: true
+      block:
+
+        - name: Check and register firewalld status
+          ansible.builtin.systemd:
+            name: firewalld
+          register: firewalld_systemd_status
+
+        - name: Set firewalld status as a fact
+          ansible.builtin.set_fact:
+            firewalld_active: "{{ firewalld_systemd_status.status['ActiveState'] == 'active' }}"
+
+        - name: Debug the state of firewalld
+          ansible.builtin.debug:
+            msg:
+              - "Firewalld_active: {{ firewalld_active }}"
+
+        - name: Expose port 9090 if firewalld is active
+          ansible.builtin.shell:
+            cmd: |
+              firewall-cmd --add-port=9090/tcp --permanent
+              firewall-cmd --reload
+          when: firewalld_active
+
+        - name: Start Prometheus
+          become: true
+          ansible.builtin.systemd:
+            daemon_reload: true
+            name: prometheus.service
+            state: started
+            enabled: true
+
+    - name: Output link to the Web UI query page
+      ansible.builtin.debug:
+        msg: "Prometheus Query Link: http://{{ ansible_default_ipv4.address }}:9090"
+
+
+
+- name: Install, configure, and deploy Loki
+  hosts: control
+  vars:
+    loki_version: 3.3.2
+    loki_platform: linux-amd64
+    loki_archive: "loki-{{ loki_platform }}.zip"
+    gh_release_page: https://github.com/grafana/loki/releases/download
+    loki_download_link: "{{ gh_release_page }}/v{{ loki_version }}/loki-{{ loki_platform }}.zip"
+  tasks:
+
+    - name: Set up the environment
+      become: true
+      block:
+
+        - name: Make sure unzip is on the system
+          ansible.builtin.package:
+            name: unzip
+            state: present
+
+        - name: Make a directory to install Loki into
+          ansible.builtin.file:
+            path: /opt/loki
+            mode: '0755'
+            state: directory
+
+        - name: Download the loki archive
+          ansible.builtin.get_url:
+            dest: /opt/loki
+            url: "{{ loki_download_link }}"
+            mode: '0755'
+
+        - name: Extract the loki archive
+          ansible.builtin.unarchive:
+            remote_src: true
+            src: "/opt/loki/{{ loki_archive }}"
+            dest: /opt/loki
+            mode: '0755'
+
+        - name: Create the loki configuration file
+          ansible.builtin.copy:
+            mode: '0644'
+            dest: /opt/loki/loki-local-config.yaml
+            content: |
+              auth_enabled: false
+
+              server:
+                http_listen_port: 3100
+                grpc_listen_port: 9096
+                log_level: debug
+                grpc_server_max_concurrent_streams: 1000
+                http_listen_address: 0.0.0.0
+
+              common:
+                instance_addr: 0.0.0.0
+                path_prefix: /tmp/loki
+                storage:
+                  filesystem:
+                    chunks_directory: /tmp/loki/chunks
+                    rules_directory: /tmp/loki/rules
+                replication_factor: 1
+                ring:
+                  kvstore:
+                    store: inmemory
+
+              query_range:
+                results_cache:
+                  cache:
+                    embedded_cache:
+                      enabled: true
+                      max_size_mb: 100
+
+              schema_config:
+                configs:
+                  - from: 2024-12-26
+                    store: tsdb
+                    object_store: filesystem
+                    schema: v13
+                    index:
+                      prefix: index_
+                      period: 24h
+
+              ruler:
+                alertmanager_url: http://localhost:9093
+
+              # By default, Loki will send anonymous, but uniquely-identifiable usage and configuration
+              # analytics to Grafana Labs. These statistics are sent to https://stats.grafana.org/
+              #
+              # Statistics help us better understand how Loki is used, and they show us performance
+              # levels for most users. This helps us prioritize features and documentation.
+              # For more information on what's sent, look at
+              # https://github.com/grafana/loki/blob/main/pkg/analytics/stats.go
+              # Refer to the buildReport method to see what goes into a report.
+              #
+              # If you would like to disable reporting, uncomment the following lines:
+              analytics:
+                reporting_enabled: false
+
+        - name: Put the loki service file in /etc/systemd/system
+          ansible.builtin.copy:
+            mode: '0644'
+            dest: /etc/systemd/system/loki.service
+            content: |
+              # /etc/systemd/system/loki.service
+              [Unit]
+              Description=Loki Startup
+              Wants=network-online.target
+              After=network-online.target
+
+              [Service]
+              ExecStart=/opt/loki/loki-linux-amd64 -config.file=/opt/loki/loki-local-config.yaml
+
+              [Install]
+              WantedBy=default.target
+
+
+    - name: Systemd operations and output
+      become: true
+      block:
+
+        - name: Start and enable loki
+          ansible.builtin.systemd:
+            name: loki
+            state: started
+            enabled: true
+            daemon_reload: true
+
+        - name: Get the status of loki on the node
+          ansible.builtin.systemd:
+            name: loki
+          register: loki_systemd_output_raw
+
+        - name: Output the status of loki
+          ansible.builtin.debug:
+            msg:
+              - "Loki status: {{ loki_systemd_output_raw.status.ActiveState }}"
+              - "Loki endpoint for promtail: http://{{ ansible_default_ipv4.address }}:3100/loki/api/v1/push"
+
+
+- name: Install Grafana on the system
+  hosts: control
+  tasks:
+
+    - name: Install Grafana on Debian systems
+      when: ansible_os_family == "Debian"
+      become: true
+      block:
+        - name: Download Grafana GPG key for Debian based systems
+          ansible.builtin.get_url:
+            url: https://apt.grafana.com/gpg.key
+            dest: /usr/share/keyrings/grafana.key
+            mode: '0644'
+
+        - name: Add Grafana apt repository on Debian based systems
+          ansible.builtin.copy:
+            dest: /etc/apt/sources.list.d/grafana.list
+            content: |
+              deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main
+            mode: '0644'
+
+        - name: Install Grafana and dependencies on Debian based systems
+          ansible.builtin.apt:
+            name:
+              - apt-transport-https
+              - software-properties-common
+              - unzip
+              - grafana-enterprise
+            state: present
+            update_cache: true
+
+
+    - name: Install Grafana on RedHat systems
+      when: ansible_os_family == "RedHat"
+      become: true
+      block:
+
+        - name: Download the GPG key on RedHat based systems
+          ansible.builtin.get_url:
+            url: https://rpm.grafana.com/gpg.key
+            dest: /etc/pki/rpm-gpg/RPM_GPG_KEY_grafana
+            mode: '0644'
+
+        - name: Add the Grafana yum repository for RedHat based Systems
+          ansible.builtin.copy:
+            dest: /etc/yum.repos.d/grafana.repo
+            content: |
+              [grafana]
+              name=Grafana Enterprise
+              baseurl=https://rpm.grafana.com
+              repo_gpgcheck=1
+              enabled=1
+              gpgcheck=1
+              gpgkey=file:///etc/pki/rpm-gpg/RPM_GPG_KEY_grafana
+              sslverify=1
+              sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+            mode: '0644'
+
+        - name: Install Grafana and Dependencies on RedHat based systems
+          ansible.builtin.package:
+            name:
+              - dnf-plugins-core
+              - unzip
+              - grafana-enterprise
+            state: present
+
+
+    - name: Provisioning datasources and dashboards
+      become: true
+      block:
+        - name: Ensure provisioning directories exist (should be created by default)
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: directory
+            mode: '0755'
+          loop:
+            - /etc/grafana
+            - /etc/grafana/provisioning
+            - /etc/grafana/provisioning/dashboards
+            - /etc/grafana/provisioning/datasources
+
+        - name: Create Prometheus datasource provisioning file if it doesn't exist
+          ansible.builtin.copy:
+            dest: /etc/grafana/provisioning/datasources/prometheus.yaml
+            content: |
+              # /etc/grafana/provisioning/datasources/prometheus.yaml
+              apiVersion: 1
+              datasources:
+                - name: Prometheus
+                  type: prometheus
+                  access: proxy
+                  url: http://localhost:9090
+                  isDefault: true
+                  editable: false
+            force: false
+            mode: '0644'
+
+        - name: Create Loki datasource provisioning file if it doesn't exist
+          ansible.builtin.copy:
+            dest: /etc/grafana/provisioning/datasources/loki.yaml
+            content: |
+              # /etc/grafana/provisioning/datasources/loki.yaml
+              apiVersion: 1
+              datasources:
+                - name: Loki
+                  type: loki
+                  access: proxy
+                  url: http://localhost:3100
+                  isDefault: false
+                  editable: false
+            force: false
+            mode: '0644'
+
+        - name: Create directory for dashboards
+          ansible.builtin.file:
+            path: /var/lib/grafana/dashboards
+            state: directory
+            mode: '0755'
+
+        - name: Set up dashboard provisioning
+          ansible.builtin.copy:
+            mode: '0644'
+            dest: /etc/grafana/provisioning/dashboards/default.yaml
+            force: false
+            content: |
+              apiVersion: 1
+              providers:
+                - name: 'default'
+                  orgId: 1
+                  folder: ''
+                  type: file
+                  options:
+                    path: /var/lib/grafana/dashboards
+
+    - name: Check if firewalld is running
+      ansible.builtin.systemd:
+        name: firewalld
+      register: firewalld_status
+
+    - name: Output firewalld status
+      ansible.builtin.debug:
+        msg: "Firewalld status: {{ firewalld_status.status.ActiveState }}"
+
+    - name: Open Firewalld port 3000
+      become: true
+      ansible.builtin.shell:
+        cmd: |
+          firewall-cmd --add-port=3000/tcp --permanent
+          firewall-cmd --reload
+      when: firewalld_status.status.ActiveState == 'active'
+
+    - name: Save host IP
+      ansible.builtin.set_fact:
+        grafana_host_ip: "{{ ansible_default_ipv4.address }}"
+
+    - name: Start Grafana
+      become: true
+      ansible.builtin.systemd:
+        daemon_reload: true
+        name: grafana-server
+        state: started
+        enabled: true
+
+    - name: Generate Grafana link
+      ansible.builtin.debug:
+        msg: "Grafana link: http://{{ grafana_host_ip }}:3000"
+
+
+- name: Install and configure node_exporter
+  hosts: all
+  vars:
+    node_exporter_version: 1.8.2
+    node_exporter_platform: "linux-amd64"
+    node_exporter_dir: "/opt/node_exporter"
+    node_exporter_tarball: "node_exporter-{{ node_exporter_version }}.{{ node_exporter_platform }}.tar.gz"
+    node_exporter_extracted_dir: "{{ node_exporter_dir }}/node_exporter-{{ node_exporter_version }}.{{ node_exporter_platform }}"
+    github_download_page: https://github.com/prometheus/node_exporter/releases/download
+    node_exporter_download_link: |
+      {{ github_download_page }}/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.{{ node_exporter_platform }}.tar.gz
+
+  tasks:
+
+    - name: Creation, download, and extraction of node_exporter
+      become: true
+      block:
+        - name: Create /opt/node_exporter directory
+          ansible.builtin.file:
+            path: "{{ node_exporter_dir }}"
+            state: directory
+            mode: '0755'
+
+        - name: Create /etc/sysconfig directory
+          ansible.builtin.file:
+            path: /etc/sysconfig
+            state: directory
+            mode: '0755'
+
+        - name: Download the given version of node_exporter
+          ansible.builtin.get_url:
+            url: "{{ node_exporter_download_link }}"
+            dest: "{{ node_exporter_dir }}"
+            mode: '0755'
+
+        - name: Output the download link being used
+          ansible.builtin.debug:
+            msg: "Downloading node_exporter from: {{ node_exporter_download_link }}"
+
+        - name: Extract node exporter
+          ansible.builtin.unarchive:
+            remote_src: true
+            src: "{{ node_exporter_dir }}/{{ node_exporter_tarball }}"
+            dest: "{{ node_exporter_dir }}"
+
+        - name: Create a user account for node_exporter
+          ansible.builtin.user:
+            name: node_exporter
+            shell: /sbin/nologin
+
+        - name: Create /var/lib/node_exporter/textfile_collector
+          ansible.builtin.file:
+            path: /var/lib/node_exporter/textfile_collector
+            state: directory
+            owner: node_exporter
+            group: node_exporter
+            mode: '0755'
+
+      # TODO: Refactor to use basic service file with minimal ExecStart
+              # [Unit]
+              # Description=Node Exporter Startup
+              # Wants=network-online.target
+              # After=network-online.target
+
+              # [Service]
+              # ExecStart=/opt/node_exporter/node_exporter-1.5.0.linux-amd64/node_exporter
+
+              # [Install]
+              # WantedBy=default.target
+
+    - name: Clone and copy configuration files
+      become: true
+      block:
+
+        - name: Clone the node_exporter configuration files repo
+          ansible.builtin.git:
+            repo: "https://github.com/prometheus/node_exporter.git"
+            dest: "{{ node_exporter_dir }}/config_files"
+
+        - name: Copy the node_exporter unit files into systemd directory
+          ansible.builtin.copy:
+            remote_src: true
+            src: "{{ node_exporter_dir }}/config_files/examples/systemd/{{ item }}"
+            dest: "/etc/systemd/system/{{ item }}"
+            mode: '0755'
+          loop:
+            - "node_exporter.socket"
+            - "node_exporter.service"
+
+        - name: Copy the node_exporter binary to /usr/sbin
+          ansible.builtin.copy:
+            remote_src: true
+            src: "{{ node_exporter_extracted_dir }}/node_exporter"
+            dest: /usr/sbin/node_exporter
+            owner: node_exporter
+            group: node_exporter
+            mode: '0755'
+
+        - name: Copy sysconfig file to /etc/sysconfig
+          ansible.builtin.copy:
+            remote_src: true
+            src: "{{ node_exporter_dir }}/config_files/examples/systemd/sysconfig.node_exporter"
+            dest: "/etc/sysconfig/node_exporter"
+            mode: '0755'
+
+
+    - name: Systemd service commands
+      become: true
+      block:
+
+        - name: Check if firewalld is running
+          ansible.builtin.systemd:
+            name: firewalld
+          register: firewalld_status
+
+        - name: Output firewalld status
+          ansible.builtin.debug:
+            msg: "Firewalld Status: {{ firewalld_status.status['ActiveState'] }}"
+
+        - name: Open port 9100 if firewalld is running
+          ansible.builtin.shell:
+            cmd: |
+              sudo firewall-cmd --add-port=9100/tcp --permanent
+              sudo firewall-cmd --reload
+          when: firewalld_status.status['ActiveState'] == 'active'
+
+        - name: Reload daemons and start node_exporter
+          ansible.builtin.systemd:
+            name: node_exporter.service
+            state: started
+            enabled: true
+            daemon_reload: true
+
+    - name: Save remote host's IP to facts
+      ansible.builtin.set_fact:
+        node_exporter_target_ip: "{{ ansible_default_ipv4.address }}:9100"
+
+    - name: Save remote host's IP to facts
+      ansible.builtin.set_fact:
+        node_exporter_target_name: "{{ ansible_hostname }}"
+
+
+    - name: Read in data from targets.json
+      become: true
+      delegate_to: localhost
+      block:
+
+        - name: Check for targets.json
+          ansible.builtin.stat:
+            path: /etc/prometheus/targets.json
+          register: targets_file_stat
+
+        - name: Read contents of targets.json
+          ansible.builtin.slurp:
+            src: /etc/prometheus/targets.json
+          register: targets_file_contents_raw
+          when: targets_file_stat.stat.exists
+
+
+    - name: Parse targets.json and add new target
+      vars:
+        target_found: false
+      when: targets_file_stat.stat.exists
+      block:
+
+        - name: Parse the raw content from targets.json
+          ansible.builtin.set_fact:
+            targets_file_contents: "{{ targets_file_contents_raw.content | b64decode | from_json }}"
+
+        - name: Debug the list of targets
+          ansible.builtin.debug:
+            msg: |
+              {{ item }}
+          loop: "{{ targets_file_contents }}"
+
+        - name: Check for the existence of the current node in targets.json
+          ansible.builtin.set_fact:
+            target_found: true
+          when: node_exporter_target_ip in item.targets or node_exporter_target_name in item.labels.hostname
+          loop: "{{ targets_file_contents }}"
+
+        - name: Output the result of IP check
+          ansible.builtin.debug:
+            msg: "IP already in targets: {{ target_found }}"
+          when: not target_found
+
+        - name: Add to targets_file_contents if IP was not found
+          ansible.builtin.set_fact:
+            new_targets: |
+              {{ targets_file_contents + [{'targets': [node_exporter_target_ip], 'labels': {'job': 'node', 'hostname': node_exporter_target_name}}] }}
+          when: not target_found
+
+        - name: Output the new targets if it was updated with the new node
+          ansible.builtin.debug:
+            msg:
+              - "IP didn't exist, added."
+              - "{{ item }}"
+          loop: "{{ new_targets }}"
+          when: new_targets is defined
+
+
+        - name: Write the new targets to targets.json
+          become: true
+          delegate_to: localhost
+          when: new_targets is defined
+          ansible.builtin.copy:
+            dest: /etc/prometheus/targets.json
+            content: "{{ new_targets | to_json }}"
+            mode: '0755'
+
+
+    - name: Output the node's metrics IP endpoint
+      ansible.builtin.debug:
+        msg: "http://{{ node_exporter_target_ip }}/metrics"
+
+- name: Install, configure, and deploy promtail
+  hosts: all
+  vars:
+    promtail_version: 3.3.2
+    promtail_platform: linux-amd64
+    promtail_release_page: https://github.com/grafana/loki/releases/download
+    promtail_download_link: "{{ promtail_release_page }}/v{{ promtail_version }}/promtail-{{ promtail_platform }}.zip"
+  tasks:
+
+    - name: Set up the environment
+      become: true
+      block:
+        - name: Create the /opt/promtail directory
+          ansible.builtin.file:
+            path: /opt/promtail
+            state: directory
+            mode: '0755'
+
+        - name: Download the promtail archive
+          ansible.builtin.get_url:
+            url: "{{ promtail_download_link }}"
+            dest: /opt/promtail
+            mode: '0755'
+
+        - name: Make sure unzip is on the system
+          ansible.builtin.package:
+            name: unzip
+            state: present
+
+        - name: Unarchive promtail
+          ansible.builtin.unarchive:
+            remote_src: true
+            src: "/opt/promtail/promtail-{{ promtail_platform }}.zip"
+            dest: /opt/promtail
+            mode: '0755'
+
+        - name: Write out a default config file
+          vars:
+            syslog_file: "{% if ansible_os_family == 'Debian' %}/var/log/syslog{% else %}/var/log/messages{% endif %}"
+            auth_file: "{% if ansible_os_family == 'Debian' %}/var/log/auth.log{% else %}/var/log/secure{% endif %}"
+            os_label: "{% if ansible_of_family == 'Debian' %}debian{% else %}rhel{% endif %}"
+          ansible.builtin.copy:
+            dest: /opt/promtail/promtail-local-config.yaml
+            mode: '0644'
+            content: |
+              server:
+                http_listen_port: 9080
+                grpc_listen_port: 0
+                log_level: debug
+
+              positions:
+                filename: /tmp/positions.yaml
+
+              clients:
+                - url: http://192.168.4.53:3100/loki/api/v1/push
+
+              scrape_configs:
+
+                - job_name: syslog
+                  static_configs:
+                    - targets:
+                        - localhost
+                      labels:
+                        job: syslog
+                        os_family: {{ os_label }}
+                        host: {{ ansible_hostname }}
+                        __path__: {{ syslog_file }}
+
+                - job_name: auth
+                  static_configs:
+                    - targets:
+                        - localhost
+                      labels:
+                        job: auth
+                        os_family: {{ os_label }}
+                        host: {{ ansible_hostname }}
+                        __path__: {{ auth_file }}
+
+                - job_name: all
+                  static_configs:
+                    - targets:
+                        - localhost
+                      labels:
+                        job: all
+                        os_family: {{ os_label }}
+                        host: {{ ansible_hostname }}
+                        __path__: /var/log/*.log
+
+
+        - name: Ensure the service file is in /etc/systemd/system
+          ansible.builtin.copy:
+            dest: /etc/systemd/system/promtail.service
+            mode: '0644'
+            content: |
+              [Unit]
+              Description=Promtail Service Startup
+              Wants=network-online.target
+              After=network-online.target
+
+              [Service]
+              ExecStart=/opt/promtail/promtail-linux-amd64 -config.file=/opt/promtail/promtail-local-config.yaml
+
+              [Install]
+              WantedBy=default.target
+
+    - name: Start promtail and output its status
+      become: true
+      block:
+        - name: Do a daemon reload and enable/start promtail
+          ansible.builtin.systemd:
+            daemon_reload: true
+            enabled: true
+            name: promtail
+            state: started
+
+        - name: Get the status of promtail
+          ansible.builtin.systemd:
+            name: promtail
+          register: promtail_systemd_status
+
+        - name: Output the status of promtail
+          ansible.builtin.debug:
+            msg: "promtail status: {{ promtail_systemd_status.status.ActiveState }}"
