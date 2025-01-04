@@ -1,6 +1,6 @@
 ---
 - name: Install, configure, and deploy Loki
-  hosts: localhost
+  hosts: control
   vars:
     loki_version: 3.3.2
     loki_platform: linux-amd64

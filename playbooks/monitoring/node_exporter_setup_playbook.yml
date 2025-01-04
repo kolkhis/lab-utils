@@ -1,5 +1,8 @@
+---
+ # Run this from the machine hosting Prometheus to correctly
+ # append it as a target for Prometheus to scrape.
 - name: Install and configure node_exporter
-  hosts: localhost
+  hosts: all
   vars:
     node_exporter_version: 1.8.2
     node_exporter_platform: "linux-amd64"

@@ -1,5 +1,5 @@
 - name: Install, configure, and deploy promtail
-  hosts: localhost # placeholder
+  hosts: all
   vars:
     promtail_version: 3.3.2
     promtail_platform: linux-amd64

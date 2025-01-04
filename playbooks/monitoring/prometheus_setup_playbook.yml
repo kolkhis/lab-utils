@@ -1,6 +1,6 @@
 - name: Set up prometheus
-  hosts: localhost
-  vars: # TODO(vars): Utilize vars in playbook instead of hardcoded links/versions
+  hosts: control
+  vars:
     prometheus_version: "3.0.1"
     prometheus_extracted_directory: "/var/lib/prometheus"
     prometheus_platform: "linux-amd64"
