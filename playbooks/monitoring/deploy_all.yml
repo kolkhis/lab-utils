@@ -1,6 +1,9 @@
 ---
 - name: Set up prometheus
   hosts: localhost
+  tags:
+    - control
+    - core
   vars:
     prometheus_version: "3.0.1"
     prometheus_extracted_directory: "/var/lib/prometheus"
@@ -217,9 +220,11 @@
         msg: "Prometheus Query Link: http://{{ ansible_default_ipv4.address }}:9090"
 
 
-
 - name: Install, configure, and deploy Loki
   hosts: localhost
+  tags:
+    - control
+    - core
   vars:
     loki_version: 3.3.2
     loki_platform: linux-amd64
@@ -358,6 +363,9 @@
 
 - name: Install Grafana on the system
   hosts: localhost
+  tags:
+    - control
+    - core
   tasks:
 
     - name: Install Grafana on Debian systems
@@ -525,6 +533,9 @@
 
 
 - name: Install and configure node_exporter
+  tags:
+    - core
+    - collector
   hosts: all
   vars:
     node_exporter_version: 1.8.2
@@ -741,6 +752,9 @@
 
 - name: Install, configure, and deploy promtail
   hosts: all
+  tags:
+    - core
+    - collector
   vars:
     promtail_version: 3.3.2
     promtail_platform: linux-amd64
