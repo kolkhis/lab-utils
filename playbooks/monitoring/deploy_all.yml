@@ -1,6 +1,6 @@
 ---
 - name: Set up prometheus
-  hosts: control
+  hosts: localhost
   vars:
     prometheus_version: "3.0.1"
     prometheus_extracted_directory: "/var/lib/prometheus"
@@ -219,7 +219,7 @@
 
 
 - name: Install, configure, and deploy Loki
-  hosts: control
+  hosts: localhost
   vars:
     loki_version: 3.3.2
     loki_platform: linux-amd64
@@ -357,7 +357,7 @@
 
 
 - name: Install Grafana on the system
-  hosts: control
+  hosts: localhost
   tasks:
 
     - name: Install Grafana on Debian systems
@@ -779,7 +779,7 @@
           vars:
             syslog_file: "{% if ansible_os_family == 'Debian' %}/var/log/syslog{% else %}/var/log/messages{% endif %}"
             auth_file: "{% if ansible_os_family == 'Debian' %}/var/log/auth.log{% else %}/var/log/secure{% endif %}"
-            os_label: "{% if ansible_of_family == 'Debian' %}debian{% else %}rhel{% endif %}"
+            os_label: "{% if ansible_os_family == 'Debian' %}debian{% else %}rhel{% endif %}"
           ansible.builtin.copy:
             dest: /opt/promtail/promtail-local-config.yaml
             mode: '0644'
