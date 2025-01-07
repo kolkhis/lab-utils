@@ -1,6 +1,6 @@
 ---
 - name: Set up prometheus
-  hosts: localhost
+  hosts: control
   tags:
     - control
     - core
@@ -16,6 +16,9 @@
   tasks:
       # TODO (): Create script to dynamically generate a list of hosts using
       #              either the Proxmox API or a bash script.
+    - name: Set fact for control node IP
+      ansible.builtin.set_fact:
+        control_node_ip: "{{ ansible_default_ipv4.address }}"
 
     - name: User account setup, download, extraction, and directory creation
       become: true
@@ -221,7 +224,7 @@
 
 
 - name: Install, configure, and deploy Loki
-  hosts: localhost
+  hosts: control
   tags:
     - control
     - core
@@ -362,7 +365,7 @@
 
 
 - name: Install Grafana on the system
-  hosts: localhost
+  hosts: control
   tags:
     - control
     - core
@@ -679,7 +682,7 @@
 
     - name: Read in data from targets.json
       become: true
-      delegate_to: localhost
+      delegate_to: control
       block:
 
         - name: Check for targets.json
@@ -738,7 +741,7 @@
 
         - name: Write the new targets to targets.json
           become: true
-          delegate_to: localhost
+          delegate_to: control
           when: new_targets is defined
           ansible.builtin.copy:
             dest: /etc/prometheus/targets.json
