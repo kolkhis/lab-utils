@@ -8,7 +8,7 @@
     - name: Add control node IP as a global host variable
       ansible.builtin.add_host:
         name: control_node
-        hostname: control_node
+        hostname: "{{ ansible_default_ipv4.address }}"
         ansible_host: "{{ ansible_default_ipv4.address }}"
         control_node_ip: "{{ ansible_default_ipv4.address }}"
 
