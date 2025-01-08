@@ -724,7 +724,7 @@
         - name: Check for the existence of the current node in targets.json
           ansible.builtin.set_fact:
             target_found: true
-          when: node_exporter_target_ip in item.targets or node_exporter_target_name in item.labels.hostname
+          when: node_exporter_target_ip in item.targets
           loop: "{{ targets_file_contents }}"
 
         - name: Output the result of IP check
