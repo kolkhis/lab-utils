@@ -62,6 +62,27 @@ ansible-playbook -i hosts.ini -K deploy_all.yml --tags=collector
 ```
 
 
+## Skipping Annoying SSH Fingerprint Errors
+
+If you've never used your control node to SSH into a new node yet, you can use
+`ssh-keyscan` to grab the host's fingerprint and append it to the
+`~/.ssh/known_hosts` file.  
+
+For example:
+```bash
+for ip in {101..105}; do
+    ssh-keyscan -H 192.168.4.$ip >> ~/.ssh/known_hosts
+done
+```
+That will take the range `192.168.4.101-105` and get the fingerprints of all those
+hosts and append them to the `known_hosts` file, preventing you from being prompted
+to type `yes`.   
+
+As a one-liner:
+```bash
+for ip in {101..105}; do ssh-keyscan -H 192.168.4.$ip >> ~/.ssh/known_hosts; done
+```
+
 
 
 
