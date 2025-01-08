@@ -1,6 +1,19 @@
 ---
+- name: Set the control node
+  hosts: localhost
+  vars:
+    comment: |
+      This is so that we can use the control node's IP in configuration files, mainly Promtail, which needs an IP for the Loki API endpoint.
+  tasks:
+    - name: Add control node IP as a global host variable
+      ansible.builtin.add_host:
+        name: control_node
+        hostname: control_node
+        ansible_host: "{{ ansible_default_ipv4.address }}"
+        control_node_ip: "{{ ansible_default_ipv4.address }}"
+
 - name: Set up prometheus
-  hosts: control
+  hosts: control_node
   tags:
     - control
     - core
@@ -14,11 +27,6 @@
     prometheus_tarball: "/tmp/prometheus-{{ prometheus_version }}.{{ prometheus_platform }}.tar.gz"
 
   tasks:
-      # TODO (): Create script to dynamically generate a list of hosts using
-      #              either the Proxmox API or a bash script.
-    - name: Set fact for control node IP
-      ansible.builtin.set_fact:
-        control_node_ip: "{{ ansible_default_ipv4.address }}"
 
     - name: User account setup, download, extraction, and directory creation
       become: true
@@ -224,7 +232,7 @@
 
 
 - name: Install, configure, and deploy Loki
-  hosts: control
+  hosts: control_node
   tags:
     - control
     - core
@@ -365,7 +373,7 @@
 
 
 - name: Install Grafana on the system
-  hosts: control
+  hosts: control_node
   tags:
     - control
     - core
@@ -810,7 +818,7 @@
                 filename: /tmp/positions.yaml
 
               clients:
-                - url: http://192.168.4.53:3100/loki/api/v1/push
+                - url: http://{{ hostvars.control_node.control_node_ip }}:3100/loki/api/v1/push
 
               scrape_configs:
 
