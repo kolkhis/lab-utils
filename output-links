@@ -24,20 +24,19 @@ PORTS=(
 )
 
 
-printf "\nPorts:\n"
+printf "\nDefault Ports:\n"
 for idx in "${!PORTS[@]}"; do
     printf "\t%s:\t%s\n" "$idx" "${PORTS[$idx]}";
     if [[ "$idx" =~ Prometheus|Grafana|Promtail ]]; then
         if check-service "$idx"; then
             printf "\t- %s link: %s\n" "$idx" "http://${IP}:${PORTS[$idx]}"
         else
-            printf "\tThe %s service is not running on this node.\n" "$idx"
-            printf "\tThe link will be http://<host-ip>:%s\n" "${PORTS[$idx]}"
+            printf "\t- The %s service is not running on this node.\n" "$idx"
+            printf "\t- The link will be http://<host-ip>:%s\n" "${PORTS[$idx]}"
         fi
     elif [[ $idx =~ Loki ]] && check-service "$idx"; then
         printf "\t- %s Ready link: %s/ready\n" "$idx" "http://${IP}:${PORTS[$idx]}"
     fi
-
 done
 
 printf '\n'
