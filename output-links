@@ -3,6 +3,15 @@
 [ -n "$1" ] && IP=$1
 : "${IP:="$(hostname -I | awk '{print $1}' | tr -d ' ')"}"
 
+
+check-service() {
+    if pgrep -i "$1"; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 declare -A PORTS
 
 PORTS=(
@@ -19,8 +28,13 @@ printf "\nPorts:\n"
 for idx in "${!PORTS[@]}"; do
     printf "\t%s:\t%s\n" "$idx" "${PORTS[$idx]}";
     if [[ "$idx" =~ Prometheus|Grafana|Promtail ]]; then
-        printf "\t- %s link: %s\n" "$idx" "http://${IP}:${PORTS[$idx]}"
-    elif [[ $idx =~ Loki ]]; then
+        if check-service "$idx"; then
+            printf "\t- %s link: %s\n" "$idx" "http://${IP}:${PORTS[$idx]}"
+        else
+            printf "\tThe %s service is not running on this node.\n" "$idx"
+            printf "\tThe link will be http://<host-ip>:%s\n" "${PORTS[$idx]}"
+        fi
+    elif [[ $idx =~ Loki ]] && check-service "$idx"; then
         printf "\t- %s Ready link: %s/ready\n" "$idx" "http://${IP}:${PORTS[$idx]}"
     fi
 
