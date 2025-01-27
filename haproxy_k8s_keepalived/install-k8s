@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC1090
 # TODO: add error handling
 
 OS_FAMILY=$(cat /etc/*release | grep -i "ID_LIKE" | awk -F= '{print $2}')
@@ -43,20 +44,81 @@ if [[ $OS_FAMILY == "debian" ]]; then
 
     sudo sysctl --system
 
-    # enable kubectl bash completion 
-    if dpkg -l | grep -qi 'bash-completion'; then
-        echo 'source <(kubectl completion bash)' >> ~/.bashrc
-    fi
-
     kubeadm version
     kubelet --version
     kubectl version --client
-    # TODO: check for kubectl alias?
+
+    # enable kubectl bash completion 
+    if dpkg -l | grep -qi 'bash-completion'; then
+        source <(kubectl completion bash)
+        { 
+            printf 'source <(kubectl completion bash)\n';
+            printf 'alias k=kubectl\n';
+            printf 'complete -o default -F __start_kubectl k\n';
+        } >> ~/.bashrc
+    fi
 
 fi
 
 
 if [[ $OS_FAMILY == "rhel" ]]; then
+    printf "Performing RHEL-based installation.\n"
+
+    # set selinux to permissive
+    if [[ $(getenforce | tr '[:upper:]' '[:lower:]') == enforcing ]]; then
+        sudo setenforce 0
+        sudo sed -i -E 's/^(SELINUX=)enforcing$/\1permissive/' /etc/selinux/config
+    fi
     :
+
+    # install deps
+    sudo dnf install -y yum-utils device-mapper-persistent-data lvm2
+
+    # download gpg key
+    printf "Downloading RPM repository GPG key...\n"
+    if ! curl -o /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes \
+        https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg; then
+        printf >&2 "Error while downloading GPG key!\n" && exit 1
+    fi
+    chmod 644 /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes
+
+    cat <<- 'EOF' | sudo tee /etc/yum.repos.d/kubernetes.repo
+    [kubernetes]
+    name=Kubernetes
+    baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el9-x86_64
+    enabled=1
+    gpgcheck=1
+    repo_gpgcheck=0
+    gpgkey=/etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes
+	EOF
+
+    sudo dnf install kubelet kubectl kubeadm -y
+    sudo systemctl enable --now kubelet
+
+    cat <<- 'EOF' | sudo tee /etc/modules-load.d/k8s.conf
+		br_netfilter
+	EOF
+    sudo modprobe br_netfilter
+
+	cat <<- 'EOF' | sudo tee /etc/sysctl.d/k8s.conf
+		net.bridge.bridge-nf-call-ip6tables = 1
+		net.bridge.bridge-nf-call-iptables = 1
+	EOF
+
+    sudo sysctl --system
+
+    kubeadm version
+    kubectl version --client
+    kubelet --version
+    
+    if rpm -qa | grep -i 'bash-completion'; then
+        source <(kubectl completion bash)
+        { 
+            printf 'source <(kubectl completion bash)\n';
+            printf 'alias k=kubectl\n';
+            printf 'complete -o default -F __start_kubectl k\n';
+        } >> ~/.bashrc
+    fi
+
 fi
 
