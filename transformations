@@ -2,6 +2,7 @@
 # shellcheck disable=SC2016
 # TODO: Add function to colorize bash syntax in output
 
+printf "--------------- Parameter Transformations ---------------\n"
 cat <<- 'EOC'
 Pass arguments to this script to see how they will transform.
 
@@ -33,31 +34,41 @@ ${*@Q} - Quotes the entire combined string
 ${@@A} - Returns an assignment statement to recreate the array.
 ${*@A} - Returns an assignment statement to recreate the string.
 
-tl;dr: @ applies to each individually, * combines and applies to the combined string.
-[@] and [*] will use values only in dictionaries. Use ${!arr[@|*]} to use keys.
+Arrays tl;dr: 
+    $@ / ${@} applies to each individually
+    $* / ${*} combines and applies to the combined string.
+[@] and [*] will only use values in dictionaries. Use ${!arr[@|*]} to use keys.
+
 EOC
 
 
-[[ -z $1 ]] && exit 0 || arg=$1
+{ [[ -z $1 ]] &&
+    printf "No arguments found for examples. Exiting.\n" && exit 0; 
+} || {
+    : "${arg:=$1}"
+}
 
-printf 'all_args_lower=("${@@L}") # Will return an array'
 
+printf -- "--------------- First Argument ---------------\n"
 printf '${arg@L} - lowercase: %s\n' "${arg@L}"
 printf '${arg@Q} - quoted: %s\n' "${arg@Q}"
 printf '${arg@K} - quoted, key/value: %s\n' "${arg@K}"
 printf '${arg@a} - attributes: %s\n' "${arg@a}"
 printf '${arg@u} - TitleCase: %s\n' "${arg@u}"
 printf '${arg@U} - Uppercase: %s\n' "${arg@U}"
-printf '${@^} - Capitalizes each parameter: %s\n' "${@^}"
-printf '${*^} - Capitalizes only the first letter of the combined string: %s\n' "${*^}"
-printf '${@^^} - Uppercases each parameter completely: %s\n' "${@^^}"
-printf '${*^^} - Uppercases the entire combined string: %s\n' "${*^^}"
-printf '${@,} - Lowercases the first character of each parameter: %s\n' "${@,}"
-printf '${*,} - Lowercases only the first character of the combined string: %s\n' "${*,}"
-printf '${@@Q} - Quotes each parameter individually: %s\n' "${@@Q}"
-printf '${*@Q} - Quotes the entire combined string: %s\n' "${*@Q}"
-printf '${*@Q} - Quotes the entire combined string: %s\n' "${*@Q}"
-printf '${@@A} - Returns an array that contains statements to recreate each variable: %s\n' "${@@A}"
-printf '${*@A} - Returns an assignment statement to recreate the variables: %s\n' "${*@A}"
+printf -- "------------- Array of Arguments -------------\n"
+printf '${@^} - Capitalize each parameter: %s\n' "${@^}"
+printf '${*^} - Capitalize only the first letter of the combined string: %s\n' "${*^}"
+printf '${@^^} - Uppercase each parameter completely: %s\n' "${@^^}"
+printf '${*^^} - Uppercase the entire combined string: %s\n' "${*^^}"
+printf '${@,} - Lowercase the first character of each parameter: %s\n' "${@,}"
+printf '${*,} - Lowercase only the first character of the combined string: %s\n' "${*,}"
+printf '${@,,} - Lowercase all characters of each parameter: %s\n' "${@,}"
+printf '${*,,} - Lowercase all characters of the combined string: %s\n' "${*,}"
+printf '${@@Q} - Quote each parameter individually: %s\n' "${@@Q}"
+printf '${*@Q} - Quote the entire combined string: %s\n' "${*@Q}"
+printf '${*@Q} - Quote the entire combined string: %s\n' "${*@Q}"
+printf '${@@A} - Return an array that contains statements to recreate each variable: %s\n' "${@@A}"
+printf '${*@A} - Return an assignment statement to recreate the variables: %s\n' "${*@A}"
 
 
