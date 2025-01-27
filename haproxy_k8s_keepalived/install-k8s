@@ -1,0 +1,62 @@
+#!/bin/bash
+# TODO: add error handling
+
+OS_FAMILY=$(cat /etc/*release | grep -i "ID_LIKE" | awk -F= '{print $2}')
+printf "OS family: %s\n" "$OS_FAMILY"
+
+[ -n "$OS_FAMILY" ] && printf "OS family: %s\n" "${OS_FAMILY}" ||
+    printf "Couldn't determine OS from /etc/*release. Defaulting to Debian installation.\n"
+: "${OS_FAMILY:=debian}"
+
+
+sudo swapoff -a
+sudo sed -i '/swap/d' /etc/fstab
+
+if [[ $OS_FAMILY == "debian" ]]; then
+    printf "Using debian installation.\n"
+    sudo apt-get update
+    sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/dev/Release.key | 
+        sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    # allow unprivileged apt programs to read it
+    sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+    printf "Adding the k8s apt repository.\n"
+    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pks.k8s.io/core:/stable:/v1.32/deb/ /' |
+        sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+    printf "Installing kubelet, kubeadm, and kubectl.\n"
+    sudo apt-get install kubelet kubeadm kubectl -y
+
+    printf "Attempting to add the 'br_netfilter' kernel module.\n"
+	cat <<- 'EOF' | sudo tee /etc/modules-load.d/k8s.conf
+		br_netfilter
+	EOF
+
+    sudo modprobe br_netfilter
+
+    printf "Attempting to configure network bridge for iptables.\n"
+    cat <<- 'EOF' | sudo tee /etc/sysctl.d/k8s.conf
+		net.bridge.bridge-nf-call-ip6tables = 1
+		net.bridge.bridge-nf-call-iptables = 1
+	EOF
+
+    sudo sysctl --system
+
+    # enable kubectl bash completion 
+    if dpkg -l | grep -qi 'bash-completion'; then
+        echo 'source <(kubectl completion bash)' >> ~/.bashrc
+    fi
+
+    kubeadm version
+    kubelet --version
+    kubectl version --client
+    # TODO: check for kubectl alias?
+
+fi
+
+
+if [[ $OS_FAMILY == "rhel" ]]; then
+    :
+fi
+
