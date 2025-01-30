@@ -1,0 +1,41 @@
+#!/bin/bash
+
+: "${MASTER=true}"
+: "${BACKUP=false}"
+: "${STATE=master}"
+: "${PRIORITY=100}"
+
+while [[ $1 =~ ^- ]]; do
+    case $1 in
+        -p) 
+            if [[ -n $2 ]]; then
+                printf "Setting priority: %s\n" "$2"
+                PRIORITY=$2
+                shift;
+            fi
+            shift;
+            ;;
+        -m)
+            if [[ -n $2 ]]; then
+                printf "Setting STATE: %s\n" "$2"
+                STATE=$2
+                shift;
+            else
+                printf -- "-s specified but no STATE given!\n" && exit 1
+            fi
+            shift;
+            ;;
+        *)
+            printf "Unknown argument: %s\n" "$1" && exit 1
+            ;;
+    esac
+done
+
+# debug variables
+cat << EOF
+Setting up Keepalived for $(hostname) - $(hostname -I | awk '{print $1}')
+STATE: ${STATE^^}
+PRIORITY: ${PRIORITY}
+EOF
+
+
