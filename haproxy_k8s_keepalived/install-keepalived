@@ -1,9 +1,7 @@
 #!/bin/bash
 
-: "${MASTER=true}"
-: "${BACKUP=false}"
-: "${STATE=master}"
-: "${PRIORITY=100}"
+: "${STATE:=}"
+: "${PRIORITY:=}"
 
 while [[ $1 =~ ^- ]]; do
     case $1 in
@@ -31,11 +29,14 @@ while [[ $1 =~ ^- ]]; do
     esac
 done
 
+# Get state and priority if options were net specified
+[[ -z $STATE ]] && read -r -p "Enter the desired STATE (MASTER/BACKUP): " STATE
+[[ -z $PRIORITY ]] && read -r -p "Enter the desired PRIORITY: " PRIORITY
+
 # debug variables
 cat << EOF
 Setting up Keepalived for $(hostname) - $(hostname -I | awk '{print $1}')
 STATE: ${STATE^^}
 PRIORITY: ${PRIORITY}
 EOF
-
 
