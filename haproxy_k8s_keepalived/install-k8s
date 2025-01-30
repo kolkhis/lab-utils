@@ -29,7 +29,7 @@ if [[ $OS_FAMILY == *debian* ]]; then
     printf "Using debian installation.\n"
     sudo apt-get update
     sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
-    curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/dev/Release.key | 
+    sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/dev/Release.key | 
         sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
     # allow unprivileged apt programs to read it
     sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
@@ -90,7 +90,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 
     # download gpg key
     printf "Downloading RPM repository GPG key...\n"
-    if ! curl -o /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes \
+    if ! sudo curl -o /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes \
         https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg; then
         printf >&2 "Error while downloading GPG key!\n" && exit 1
     fi
