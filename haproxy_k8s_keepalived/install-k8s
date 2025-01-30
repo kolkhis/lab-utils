@@ -10,8 +10,12 @@ printf "OS family: %s\n" "$OS_FAMILY"
 : "${OS_FAMILY:=debian}"
 
 
-sudo swapoff -a
-sudo sed -i '/swap/d' /etc/fstab
+if ! sudo swapoff -a; then
+    printf "Couldn't disable SWAP!\n" && exit 1
+fi
+
+# comment out swap entries
+sudo sed -i '/swap/s/^/#/' /etc/fstab
 
 if [[ $OS_FAMILY == "debian" ]]; then
     printf "Using debian installation.\n"
@@ -72,7 +76,9 @@ if [[ $OS_FAMILY == "rhel" ]]; then
     :
 
     # install deps
-    sudo dnf install -y yum-utils device-mapper-persistent-data lvm2
+    if ! sudo dnf install -y yum-utils device-mapper-persistent-data lvm2; then
+        printf >&2 "Error installing dependencies!\n" && exit 1
+    fi
 
     # download gpg key
     printf "Downloading RPM repository GPG key...\n"
@@ -80,8 +86,12 @@ if [[ $OS_FAMILY == "rhel" ]]; then
         https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg; then
         printf >&2 "Error while downloading GPG key!\n" && exit 1
     fi
-    chmod 644 /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes
 
+    if ! chmod 644 /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes; then
+        printf "Error changing GPG key permissions!\n" && exit 1
+    fi
+
+    printf "Adding Kubernetes repository to /etc/yum.repos.d/kubernetes.repo ...\n"
     cat <<- 'EOF' | sudo tee /etc/yum.repos.d/kubernetes.repo
     [kubernetes]
     name=Kubernetes
@@ -91,33 +101,61 @@ if [[ $OS_FAMILY == "rhel" ]]; then
     repo_gpgcheck=0
     gpgkey=/etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes
 	EOF
+    printf "Repository added.\n"
 
-    sudo dnf install kubelet kubectl kubeadm -y
-    sudo systemctl enable --now kubelet
+    printf "Installing kubelet, kubectl, and kubeadm...\n"
 
+    if ! sudo dnf install kubelet kubectl kubeadm -y; then
+        printf >&2 "There was an problem installing kubelet, kubectl, and kubeadm!\n" && exit 1
+    fi
+
+    if ! sudo systemctl enable --now kubelet; then
+        printf >&2 "There was a problem enabling the kubelet service!\n" && exit 1
+    fi
+
+    if ! kubeadm version; then
+        printf >&2 "Kubeadm could not be verified!\n"
+    fi
+
+    if ! kubectl version --client; then
+        printf >&2 "Kubectl could not be verified!\n"
+    fi
+
+    if ! kubelet --version; then
+        printf >&2 "Kubelet could not be verified!\n"
+    fi
+    
+
+
+    printf "Adding 'br_netfilter' kernel module.\n"
     cat <<- 'EOF' | sudo tee /etc/modules-load.d/k8s.conf
 		br_netfilter
 	EOF
-    sudo modprobe br_netfilter
+    if ! sudo modprobe br_netfilter; then
+        printf >&2 "modprobe: Unable to load the br_netfilter kernel module.\n"
+    fi
 
+
+    printf "Configuring iptables network bridge\n"
 	cat <<- 'EOF' | sudo tee /etc/sysctl.d/k8s.conf
 		net.bridge.bridge-nf-call-ip6tables = 1
 		net.bridge.bridge-nf-call-iptables = 1
 	EOF
 
-    sudo sysctl --system
+    printf "Reloading kernel modules.\n"
+    if ! sudo sysctl --system; then
+        printf "Unable to reload kernel modules!\n" && exit 1
+    fi
 
-    kubeadm version
-    kubectl version --client
-    kubelet --version
-    
     if rpm -qa | grep -i 'bash-completion'; then
+        printf "Bash-completion is on the system. Adding completion for Kubernetes.\n"
         source <(kubectl completion bash)
         { 
             printf 'source <(kubectl completion bash)\n';
             printf 'alias k=kubectl\n';
             printf 'complete -o default -F __start_kubectl k\n';
         } >> ~/.bashrc
+        printf "Added completion for Kubernetes.\n"
     fi
 
 fi
