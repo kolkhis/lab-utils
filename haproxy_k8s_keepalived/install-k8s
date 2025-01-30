@@ -95,7 +95,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
         printf >&2 "Error while downloading GPG key!\n" && exit 1
     fi
 
-    if ! chmod 644 /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes; then
+    if ! sudo chmod 644 /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes; then
         printf "Error changing GPG key permissions!\n" && exit 1
     fi
 
