@@ -30,8 +30,23 @@ Feats:
 
 ---
 
-Maybe:
-- SSL certs with Let's Encrypt
+TODO:
+- Add more Control Plane nodes (2 more?) for real HA
+- Ingress controller 
+    - `Traefix`, `Nginx`, `HAProxy Ingress`
+- K8s API Server load balancing
+    - HAProxy only balances traffic to worker nodes via NodePort
+    - Set up HAProxy to handle PAI server traffic (`kube-apiserver`)
+    - Add an HAproxy frontend for the k8s api server (`6443`) and point it to control nodes
+- Add SSL termination
+    - SSL certs with Let's Encrypt
+- Add storage and Persistent Volumes (PVs) 
+    - NFS storage (CSI driver for Synology)
+
+Consider:
+- Kube-VIP v. Keepalived?
+- Cloudflare / Zero Trust
+
 
 ## Overview
 Minimum of 5 VMs
@@ -66,12 +81,10 @@ Add more load balancers to scale if more redundancy is needed.
 
 ---
 
-In a prod-like HA setup, the load balancers (HAProxy) typically run on separate hosts
-from the worker nodes.  
-If a worker node crashes or is busy, you don't want that to bring down the load
-balancer.  
-Dedicated load balancer VMs are easier to manage, configure, or reboot without
-affecting the worker pods.  
+In a prod-like HA setup, the load balancers (HAProxy) typically run on separate hosts from the worker nodes.  
+If a worker node crashes or is busy, you don't want that to bring down the load balancer.  
+Dedicated load balancer VMs are easier to manage/configure/reboot without affecting 
+the worker pods.  
 With Keepalived, you want 2 distinct machines to have a failover mechanism for HA.  
 
 ### Install K8s

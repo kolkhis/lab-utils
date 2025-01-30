@@ -1,0 +1,143 @@
+#!/bin/bash
+
+: "${NODE_PORT:=}"
+: "${WORKER1:=192.168.4.67}"
+: "${WORKER2:=192.168.4.68}"
+
+restart-and-enable() {
+    if ! sudo systemctl restart haproxy; then
+        printf "Couldn't restart HAProxy! Was it running?\n"
+    fi
+
+    if ! sudo systemctl enable --now haproxy; then
+        printf "Couldn't enable HAProxy!\n"
+    fi
+}
+
+add-config-file(){
+	cat <<- EOF >> /etc/haproxy/haproxy.cgf
+	global
+	    log /dev/log local0
+	    log /dev/log local1 notice
+	    chroot /var/lib/haproxy
+	    user haproxy
+	    group haproxy
+	    daemon
+
+	defaults
+	    log global
+	    mode http
+	    option httplog
+	    option dontlognull
+	    timeout connect 5s
+	    timeout client 30s
+	    timeout server 30s
+
+	frontend http_front
+	    bind *:80
+	    default_backend k8s_backend
+
+	backend k8s_backend
+	    balance roundrobin
+	    # point to k8s using the NodePort
+	    server worker1 ${WORKER1}:${NODE_PORT} check
+	    server worker2 ${WORKER2}:${NODE_PORT} check
+	EOF
+}
+
+debian-install-haproxy() {
+    :
+    if ! sudo apt-get update; then
+        printf >&2 "Unable to update apt repositories.\n"
+    fi
+
+    if ! sudo apt-get install haproxy -y; then
+        printf >&2 "There was an error installing HAProxy!\n" && exit 1
+    fi
+
+    if ! dpkg -l | grep -i 'haproxy'; then
+        printf >&2 "Couldn't determine the existence of the HAProxy package!\n"
+    else
+        printf "HAProxy successfully installed.\n" 
+    fi
+
+    add-config-file
+    restart-and-enable
+}
+
+rhel-install-haproxy() {
+    :
+    add-config-file
+    restart-and-enable
+}
+
+
+
+while [[ $1 =~ ^- ]]; do
+    case $1 in
+        -p) 
+            if [[ -n $2 ]]; then
+                printf "Setting NodePort: %s\n" "$2"
+                NODE_PORT=$2
+                shift;
+            else
+                printf >&2 "No NodePort was specified.\n" && exit 1
+            fi
+            shift;
+            ;;
+        *)
+            printf "Unknown option: %s\nDiscarding.\n" "$1"
+            shift;
+            ;;
+    esac
+done
+
+if [[ -z $NODE_PORT ]]; then
+    cat <<- EOF
+    No NodePort was specified.
+    Run this script again with '-p <NodePort>'
+
+    You need to specify the NodePort that was assigned to the Kubernetes cluster.
+
+    Expose the deployment with '--type=NodePort' and then
+    use 'kubectl get svc <deployment-name>' to see the NodePort.
+    E.g.,:
+
+        kubectl create deployment nginx-demo --image=nginx:stable
+        kubectl scale deployment nginx-demo --replicas=2
+        kubectl expose deployment nginx-demo --type=NodePort --port=80
+
+	EOF
+    exit 1
+fi
+
+printf "Starting installation of HAProxy.\n"
+
+OS_FAMILY=$(cat /etc/*release | grep -i "id_like" | awk -F= '{print $2}')
+printf "OS Family detected: %s\n" "${OS_FAMILY}"
+
+if [[ -z "$OS_FAMILY" ]]; then
+    printf "Trying again to determine OS family.\n"
+    {
+        which apt && printf "OS_FAMILY: %s\n" "${OS_FAMILY:=debian}"; 
+    } || {
+        which dnf && printf "OS_FAMILY: %s\n" "${OS_FAMILY:=rhel}"; 
+    }
+fi
+
+[[ -z "$OS_FAMILY" ]] && printf "Failed to determine OS family (RHEL/Debian)!\n" && exit 1
+
+
+if [[ ${OS_FAMILY,,} == *debian* ]]; then
+    printf "Starting HAProxy installation for Debian-based systems.\n"
+    debian-install-haproxy
+fi
+
+
+if [[ ${OS_FAMILY,,} == *rhel* ]]; then
+    printf "Starting HAProxy installation for RedHat-based systems.\n"
+    rhel-install-haproxy
+fi
+
+
+
