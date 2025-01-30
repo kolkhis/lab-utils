@@ -1,8 +1,13 @@
 #!/bin/bash
 
+# TODO (input): Add loop to get worker node IPs and generate config file?
+
 : "${NODE_PORT:=}"
 : "${WORKER1:=192.168.4.67}"
 : "${WORKER2:=192.168.4.68}"
+
+
+# TODO (fns): Add return codes to fns for error handling
 
 restart-and-enable() {
     if ! sudo systemctl restart haproxy; then
@@ -46,7 +51,6 @@ add-config-file(){
 }
 
 debian-install-haproxy() {
-    :
     if ! sudo apt-get update; then
         printf >&2 "Unable to update apt repositories.\n"
     fi
@@ -66,7 +70,9 @@ debian-install-haproxy() {
 }
 
 rhel-install-haproxy() {
-    :
+    if ! dnf install haproxy -y; then
+        printf >&2 "There was a problem installing HAProxy!\n" && exit 1
+    fi
     add-config-file
     restart-and-enable
 }
@@ -85,6 +91,10 @@ while [[ $1 =~ ^- ]]; do
             fi
             shift;
             ;;
+        --)
+            shift;
+            break;
+            ;;
         *)
             printf "Unknown option: %s\nDiscarding.\n" "$1"
             shift;
@@ -92,10 +102,11 @@ while [[ $1 =~ ^- ]]; do
     esac
 done
 
+[[ -z $NODE_PORT ]] && read -r -p "No -p <NodePort> specified. Enter the NodePort of your cluster: " NODE_PORT
 if [[ -z $NODE_PORT ]]; then
     cat <<- EOF
     No NodePort was specified.
-    Run this script again with '-p <NodePort>'
+    Run this script again with '-p <NodePort>' or enter the NodePort after running.  
 
     You need to specify the NodePort that was assigned to the Kubernetes cluster.
 
