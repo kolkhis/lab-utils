@@ -5,9 +5,15 @@
 OS_FAMILY=$(cat /etc/*release | grep -i "ID_LIKE" | awk -F= '{print $2}')
 printf "OS family: %s\n" "$OS_FAMILY"
 
-[ -n "$OS_FAMILY" ] && printf "OS family: %s\n" "${OS_FAMILY}" ||
-    printf "Couldn't determine OS from /etc/*release. Defaulting to Debian installation.\n"
-: "${OS_FAMILY:=debian}"
+if [[ -z "$OS_FAMILY" ]]; then
+    printf "Trying again to determine OS family.\n"
+    {
+        which apt && printf "OS_FAMILY: %s\n" "${OS_FAMILY:=debian}"; 
+    } || {
+        which dnf && printf "OS_FAMILY: %s\n" "${OS_FAMILY:=rhel}"; 
+    }
+fi
+
 
 
 if ! sudo swapoff -a; then
@@ -15,9 +21,11 @@ if ! sudo swapoff -a; then
 fi
 
 # comment out swap entries
-sudo sed -i '/swap/s/^/#/' /etc/fstab
+if ! sudo sed -i '/swap/s/^/#/' /etc/fstab; then
+    printf "Unable to comment out swap entries from /etc/fstab!\n"
+fi
 
-if [[ $OS_FAMILY == "debian" ]]; then
+if [[ $OS_FAMILY == *debian* ]]; then
     printf "Using debian installation.\n"
     sudo apt-get update
     sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
@@ -65,7 +73,7 @@ if [[ $OS_FAMILY == "debian" ]]; then
 fi
 
 
-if [[ $OS_FAMILY == "rhel" ]]; then
+if [[ $OS_FAMILY == *rhel* ]]; then
     printf "Performing RHEL-based installation.\n"
 
     # set selinux to permissive
