@@ -166,5 +166,12 @@ if [[ $OS_FAMILY == *rhel* ]]; then
         printf "Added completion for Kubernetes.\n"
     fi
 
+    # open ports 6443 and 10250 in firewalld
+    if [[ $(sudo systemctl is-active firewalld) == 'active' ]]; then
+        sudo firewall-cmd --add-port 6443/tcp --permanent
+        sudo firewall-cmd --add-port 10250/tcp --permanent
+        sudo firewall-cmd --reload
+    fi
+
 fi
 
