@@ -224,7 +224,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
         printf "There was a problem enabling containerd.\n"
     fi
 
-    if ! sudo systemctl status containerd; then
+    if ! sudo systemctl status --no-pager containerd; then
         printf "Could not verify the status of containerd!\n"
     fi
 
