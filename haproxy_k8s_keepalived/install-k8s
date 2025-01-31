@@ -84,7 +84,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
     :
 
     # install deps
-    if ! sudo dnf install -y yum-utils device-mapper-persistent-data lvm2; then
+    if ! sudo dnf install -y yum-utils device-mapper-persistent-data lvm2 containerd; then
         printf >&2 "Error installing dependencies!\n" && exit 1
     fi
 
@@ -168,6 +168,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 
     # open ports 6443 and 10250 in firewalld
     if [[ $(sudo systemctl is-active firewalld) == 'active' ]]; then
+        printf "Opening ports 6443 and 10250 in firewalld.\n"
         sudo firewall-cmd --add-port 6443/tcp --permanent
         sudo firewall-cmd --add-port 10250/tcp --permanent
         sudo firewall-cmd --reload
