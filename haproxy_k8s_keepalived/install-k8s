@@ -1,6 +1,8 @@
 #!/bin/bash
 # shellcheck disable=SC1090
-# TODO: add error handling
+# TODO: add error handling (debian)
+# TODO: Refactor to use a variable version
+# K8S_VERSION="1.32"
 
 OS_FAMILY=$(cat /etc/*release | grep -i "ID_LIKE" | awk -F= '{print $2}')
 printf "OS family: %s\n" "$OS_FAMILY"
@@ -52,9 +54,9 @@ if [[ $OS_FAMILY == *debian* ]]; then
 
     printf "Attempting to configure network bridge for iptables.\n"
     cat <<- 'EOF' | sudo tee /etc/sysctl.d/k8s.conf
-		net.bridge.bridge-nf-call-ip6tables = 1
-		net.bridge.bridge-nf-call-iptables  = 1
-		net.ipv4.ip_forward                 = 1
+	net.bridge.bridge-nf-call-ip6tables = 1
+	net.bridge.bridge-nf-call-iptables  = 1
+	net.ipv4.ip_forward                 = 1
 	EOF
 
     sudo sysctl --system
@@ -92,25 +94,28 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 
     # download gpg key
     printf "Downloading RPM repository GPG key...\n"
-    if ! sudo curl -o /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes \
-        https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg; then
+    if ! sudo curl -fsSL -o /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes \
+        https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key; then
         printf >&2 "Error while downloading GPG key!\n" && exit 1
     fi
 
     if ! sudo chmod 644 /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes; then
-        printf "Error changing GPG key permissions!\n" && exit 1
+        printf >&2 "Error changing GPG key permissions!\n" && exit 1
     fi
 
     printf "Adding Kubernetes repository to /etc/yum.repos.d/kubernetes.repo ...\n"
-    cat <<- 'EOF' | sudo tee /etc/yum.repos.d/kubernetes.repo
-	[kubernetes]
-	name=Kubernetes
-	baseurl=https://pkgs.k8s.io/core:/stable:/v1.32/rpm
-	enabled=1
-	gpgcheck=1
-	repo_gpgcheck=0
-	gpgkey=https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key
-	EOF
+    {
+	    cat <<- 'EOF' | sudo tee /etc/yum.repos.d/kubernetes.repo
+		[kubernetes]
+		name=Kubernetes
+		baseurl=https://pkgs.k8s.io/core:/stable:/v1.32/rpm
+		enabled=1
+		gpgcheck=1
+		repo_gpgcheck=0
+		gpgkey=https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key
+		EOF
+    } || printf >&2 "Failed to add repository in /etc/yum.repos.d/kubernetes.repo!\n" && exit 1
+
     printf "Repository added.\n"
 
     printf "Installing kubelet, kubectl, and kubeadm...\n"
@@ -139,10 +144,12 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 
     ##################### Configuration ####################
     printf "Adding 'br_netfilter' and 'overlay' kernel modules.\n"
-    cat <<- 'EOF' | sudo tee /etc/modules-load.d/k8s.conf
-		overlay
-		br_netfilter
-	EOF
+    {
+		cat <<- 'EOF' | sudo tee /etc/modules-load.d/k8s.conf
+			overlay
+			br_netfilter
+		EOF
+    } || printf "Unable to add 'overlay' and 'br_netfilter' to /etc/modules-load.d/k8s.conf!\n" && exit 1
 
     if ! sudo modprobe br_netfilter; then
         printf >&2 "modprobe: Unable to load the br_netfilter kernel module.\n"
@@ -154,15 +161,17 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 
 
     printf "Configuring iptables network bridge and enabling IP forwarding.\n"
-	cat <<- 'EOF' | sudo tee /etc/sysctl.d/k8s.conf
-		net.bridge.bridge-nf-call-ip6tables = 1
-		net.bridge.bridge-nf-call-iptables  = 1
-		net.ipv4.ip_forward                 = 1
-	EOF
+    {
+		cat <<- 'EOF' | sudo tee /etc/sysctl.d/k8s.conf
+			net.bridge.bridge-nf-call-ip6tables = 1
+			net.bridge.bridge-nf-call-iptables  = 1
+			net.ipv4.ip_forward	                = 1
+		EOF
+    } || printf >&2 "Error adding iptables configuration to /etc/sysctl.d/k8s.conf!\n" && exit 1
 
     printf "Reloading kernel parameters.\n"
     if ! sudo sysctl --system; then
-        printf "Unable to reload kernel modules!\n" && exit 1
+        printf >&2 "Unable to reload kernel modules!\n" && exit 1
     fi
 
     # add bash completion for kubectl
@@ -182,16 +191,20 @@ if [[ $OS_FAMILY == *rhel* ]]; then
         printf "Opening necessary ports in firewalld.\n"
         case $(hostname) in 
             *control*|*master*)
-                sudo firewall-cmd --permanent --add-port={6443,2379,2380,10250,10251,10252,10257,10259,179}/tcp
-                sudo firewall-cmd --permanent --add-port=4789/udp
-                sudo firewall-cmd --add-masquerade --permanent
-                sudo firewall-cmd --reload
+                {
+                    sudo firewall-cmd --permanent --add-port={6443,2379,2380,10250,10251,10252,10257,10259,179}/tcp
+                    sudo firewall-cmd --permanent --add-port=4789/udp
+                    sudo firewall-cmd --add-masquerade --permanent
+                    sudo firewall-cmd --reload
+                } || printf >&2 "Problem adding ports to firewalld on control node!\n"
                 ;;
             *worker*)
-                sudo firewall-cmd --permanent --add-port={179,10250,30000-32767}/tcp
-                sudo firewall-cmd --permanent --add-port=4789/udp
-                sudo firewall-cmd --add-masquerade --permanent
-                sudo firewall-cmd --reload
+                {
+                    sudo firewall-cmd --permanent --add-port={179,10250,30000-32767}/tcp
+                    sudo firewall-cmd --permanent --add-port=4789/udp
+                    sudo firewall-cmd --add-masquerade --permanent
+                    sudo firewall-cmd --reload
+                } || printf >&2 "Problem opening ports on worker node!\n"
                 ;;
             *)
         esac
@@ -199,35 +212,41 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 
     printf "Adding the Docker-ce repository for containerd.\n"
 
-    # Install containerd
-    # if ! sudo dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo; then
-    #     printf "There was a problem when downloading the Docker repository!\n" && exit 1
-    # fi
+    printf "Adding docker-ce repository.\n"
+    sudo curl -fsSL -o /etc/yum.repos.d/docker-ce.repo \
+        https://download.docker.com/linux/rhel/docker-ce.repo ||
+        printf >&2 "There was a problem when downloading the Docker repository!\n" && exit 1
 
-    if ! sudo curl -fsSL -o /etc/yum.repos.d/docker-ce.repo \
-        https://download.docker.com/linux/rhel/docker-ce.repo; then
-        printf "There was a problem when downloading the Docker repository!\n" && exit 1
-    fi
 
     printf "Configuring containerd...\n"
-    if ! containerd config default | sudo tee /etc/containerd/config.toml > /dev/null 2>&1; then
-        printf "Error while setting up default configuration for containerd!\n" && exit 1
-    fi
+    containerd config default | sudo tee /etc/containerd/config.toml > /dev/null 2>&1 ||
+        printf >&2 "Error while setting up default configuration for containerd!\n" && exit 1
+
 
     printf "Restarting and enabling containerd...\n"
+    sudo systemctl restart containerd ||
+        printf >&2 "There was a problem restarting containerd.\n" && exit 1
 
-    if ! sudo systemctl restart containerd; then
-        printf "There was a problem restarting containerd.\n"
-    fi
 
-    if ! sudo systemctl enable --now containerd; then
-        printf "There was a problem enabling containerd.\n"
-    fi
+    sudo systemctl enable --now containerd ||
+        printf >&2 "There was a problem enabling containerd.\n" && exit 1
 
-    if ! sudo systemctl status --no-pager containerd; then
-        printf "Could not verify the status of containerd!\n"
-    fi
+    sudo systemctl status --no-pager containerd ||
+        printf >&2 "Could not verify the status of containerd!\n" && exit 1
 
+
+    # printf "Createing kube config directory at %s\n" "$HOME/.kube/config"
+    # mkdir -p "$HOME/.kube" ||
+    #     printf >&2 "Couldn't create kubeconfig directory (~/.kube)\n" && exit 1; 
+
+    # printf "Copying /etc/kubernetes/admin.conf to new kube config directory...\n"
+    # sudo cp /etc/kubernetes/admin.conf "$HOME/.kube/config" || 
+    #     printf >&2 "Problem copying admin.conf to kube config directory!\n" && exit 1
+
+    # printf "Changing owner of kube config directory.\n"
+    # sudo chown "$(id -u):$(id -g)" "$HOME/.kube/config" ||
+    #     printf >&2 "Problem changing kube config directory owner!\n" && exit 1
 
 fi
+
 
