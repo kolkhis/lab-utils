@@ -3,6 +3,7 @@
 # TODO: add error handling (debian)
 # TODO: Refactor to use a variable version
 # K8S_VERSION="1.32"
+NODE_IP=$(hostname -I | awk '{print $1}' | tr -d ' ')
 
 OS_FAMILY=$(cat /etc/*release | grep -i "ID_LIKE" | awk -F= '{print $2}')
 printf "OS family: %s\n" "$OS_FAMILY"
@@ -114,7 +115,9 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 		repo_gpgcheck=0
 		gpgkey=https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key
 		EOF
-    } || printf >&2 "Failed to add repository in /etc/yum.repos.d/kubernetes.repo!\n" && exit 1
+    } || {
+        printf >&2 "Failed to add repository in /etc/yum.repos.d/kubernetes.repo!\n" && exit 1
+    }
 
     printf "Repository added.\n"
 
@@ -146,10 +149,12 @@ if [[ $OS_FAMILY == *rhel* ]]; then
     printf "Adding 'br_netfilter' and 'overlay' kernel modules.\n"
     {
 		cat <<- 'EOF' | sudo tee /etc/modules-load.d/k8s.conf
-			overlay
-			br_netfilter
+		overlay
+		br_netfilter
 		EOF
-    } || printf "Unable to add 'overlay' and 'br_netfilter' to /etc/modules-load.d/k8s.conf!\n" && exit 1
+    } || {
+        printf >&2 "Unable to add 'overlay' and 'br_netfilter' to /etc/modules-load.d/k8s.conf!\n" && exit 1
+    }
 
     if ! sudo modprobe br_netfilter; then
         printf >&2 "modprobe: Unable to load the br_netfilter kernel module.\n"
@@ -163,11 +168,13 @@ if [[ $OS_FAMILY == *rhel* ]]; then
     printf "Configuring iptables network bridge and enabling IP forwarding.\n"
     {
 		cat <<- 'EOF' | sudo tee /etc/sysctl.d/k8s.conf
-			net.bridge.bridge-nf-call-ip6tables = 1
-			net.bridge.bridge-nf-call-iptables  = 1
-			net.ipv4.ip_forward	                = 1
+		net.bridge.bridge-nf-call-ip6tables = 1
+		net.bridge.bridge-nf-call-iptables  = 1
+		net.ipv4.ip_forward	                = 1
 		EOF
-    } || printf >&2 "Error adding iptables configuration to /etc/sysctl.d/k8s.conf!\n" && exit 1
+    } || {
+        printf >&2 "Error adding iptables configuration to /etc/sysctl.d/k8s.conf!\n" && exit 1 
+    }
 
     printf "Reloading kernel parameters.\n"
     if ! sudo sysctl --system; then
@@ -191,22 +198,33 @@ if [[ $OS_FAMILY == *rhel* ]]; then
         printf "Opening necessary ports in firewalld.\n"
         case $(hostname) in 
             *control*|*master*)
+                printf "Adding ports for control node %s\n" "$(hostname)"
                 {
                     sudo firewall-cmd --permanent --add-port={6443,2379,2380,10250,10251,10252,10257,10259,179}/tcp
                     sudo firewall-cmd --permanent --add-port=4789/udp
                     sudo firewall-cmd --add-masquerade --permanent
                     sudo firewall-cmd --reload
-                } || printf >&2 "Problem adding ports to firewalld on control node!\n"
+                } || {
+                    printf >&2 "Problem adding ports to firewalld on control node!\n" && exit 1
+                }
                 ;;
             *worker*)
+                printf "Adding ports for worker node %s\n" "$(hostname)"
                 {
                     sudo firewall-cmd --permanent --add-port={179,10250,30000-32767}/tcp
                     sudo firewall-cmd --permanent --add-port=4789/udp
                     sudo firewall-cmd --add-masquerade --permanent
                     sudo firewall-cmd --reload
-                } || printf >&2 "Problem opening ports on worker node!\n"
+                } || {
+                    printf >&2 "Problem opening ports on worker node!\n" && exit 1
+                }
                 ;;
             *)
+                printf "Couldn't determine if the current node is a worker or control node.\n"
+                printf "Control node hostnames must contain 'control' or 'master'.\n"
+                printf "Worker node hostnames must contain the word 'worker'.\n"
+                exit 1;
+                ;;
         esac
     fi
 
@@ -235,17 +253,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
         printf >&2 "Could not verify the status of containerd!\n" && exit 1
 
 
-    # printf "Createing kube config directory at %s\n" "$HOME/.kube/config"
-    # mkdir -p "$HOME/.kube" ||
-    #     printf >&2 "Couldn't create kubeconfig directory (~/.kube)\n" && exit 1; 
-
-    # printf "Copying /etc/kubernetes/admin.conf to new kube config directory...\n"
-    # sudo cp /etc/kubernetes/admin.conf "$HOME/.kube/config" || 
-    #     printf >&2 "Problem copying admin.conf to kube config directory!\n" && exit 1
-
-    # printf "Changing owner of kube config directory.\n"
-    # sudo chown "$(id -u):$(id -g)" "$HOME/.kube/config" ||
-    #     printf >&2 "Problem changing kube config directory owner!\n" && exit 1
+    printf "Successfully installed Kubernetes tools on node %s at %s!\n" "$(hostname)" "${NODE_IP}"
 
 fi
 
