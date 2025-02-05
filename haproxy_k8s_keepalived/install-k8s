@@ -200,7 +200,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
             *control*|*master*)
                 printf "Adding ports for control node %s\n" "$(hostname)"
                 {
-                    sudo firewall-cmd --permanent --add-port={6443,2379,2380,10250,10251,10252,10257,10259,179}/tcp
+                    sudo firewall-cmd --permanent --add-port={179,6443,2379,2380,10250,10251,10252,10257,10259}/tcp
                     sudo firewall-cmd --permanent --add-port=4789/udp
                     sudo firewall-cmd --add-masquerade --permanent
                     sudo firewall-cmd --reload
@@ -252,9 +252,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
     sudo systemctl status --no-pager containerd ||
         printf >&2 "Could not verify the status of containerd!\n" && exit 1
 
-
     printf "Successfully installed Kubernetes tools on node %s at %s!\n" "$(hostname)" "${NODE_IP}"
-
 fi
 
 
