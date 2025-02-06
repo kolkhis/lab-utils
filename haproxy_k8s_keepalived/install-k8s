@@ -51,7 +51,7 @@ if [[ $OS_FAMILY == *debian* ]]; then
     sudo apt-get install kubelet kubeadm kubectl -y
 
     printf "Attempting to add the 'br_netfilter' kernel module.\n"
-	cat <<- 'EOF' | sudo tee /etc/modules-load.d/k8s.conf
+	cat <<- 'EOF' | sudo tee /etc/modules-load.d/k8s.conf > /dev/null
 		overlay
 		br_netfilter
 	EOF
@@ -60,7 +60,7 @@ if [[ $OS_FAMILY == *debian* ]]; then
     sudo modprobe br_netfilter
 
     printf "Attempting to configure network bridge for iptables.\n"
-    cat <<- 'EOF' | sudo tee /etc/sysctl.d/k8s.conf
+    cat <<- 'EOF' | sudo tee /etc/sysctl.d/k8s.conf > /dev/null
 	net.bridge.bridge-nf-call-ip6tables = 1
 	net.bridge.bridge-nf-call-iptables  = 1
 	net.ipv4.ip_forward                 = 1
@@ -116,7 +116,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 
     printf "Adding Kubernetes repository to /etc/yum.repos.d/kubernetes.repo ...\n"
     {
-	    cat <<- EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+	    cat <<- EOF | sudo tee /etc/yum.repos.d/kubernetes.repo > /dev/null
 		[kubernetes]
 		name=Kubernetes
 		baseurl=https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/rpm
@@ -157,7 +157,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
     ##################### Configuration ####################
     printf "Adding 'br_netfilter' and 'overlay' kernel modules.\n"
     {
-		cat <<- 'EOF' | sudo tee /etc/modules-load.d/k8s.conf
+		cat <<- 'EOF' | sudo tee /etc/modules-load.d/k8s.conf > /dev/null
 		overlay
 		br_netfilter
 		EOF
@@ -176,7 +176,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 
     printf "Configuring iptables network bridge and enabling IP forwarding.\n"
     {
-		cat <<- 'EOF' | sudo tee /etc/sysctl.d/k8s.conf
+		cat <<- 'EOF' | sudo tee /etc/sysctl.d/k8s.conf > /dev/null
 		net.bridge.bridge-nf-call-ip6tables = 1
 		net.bridge.bridge-nf-call-iptables  = 1
 		net.ipv4.ip_forward	                = 1
