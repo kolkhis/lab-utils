@@ -99,7 +99,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
     fi
 
     # install deps
-    sudo dnf install -y yum-utils device-mapper-persistent-data lvm2 containerd || {
+    sudo dnf install -y yum-utils device-mapper-persistent-data lvm2 || {
         printf >&2 "Error installing dependencies!\n" && exit 1
     }
 
