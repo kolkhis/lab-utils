@@ -1,8 +1,13 @@
 #!/bin/bash
 # shellcheck disable=SC1090
+# This script installs the Kubernetes tools kubelet, kubectl, and kubeadm.  
+# containerd is also installed as the k8s container runtime.  
+
+
+# TODO: Test Debian install on a Debian-based system
 # TODO: add error handling (debian)
 # TODO: Refactor to use a variable version
-# K8S_VERSION="1.32"
+K8S_VERSION="1.32"
 NODE_IP=$(hostname -I | awk '{print $1}' | tr -d ' ')
 
 OS_FAMILY=$(cat /etc/*release | grep -i "ID_LIKE" | awk -F= '{print $2}')
@@ -32,13 +37,13 @@ if [[ $OS_FAMILY == *debian* ]]; then
     printf "Using debian installation.\n"
     sudo apt-get update
     sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
-    sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/dev/Release.key | 
+    sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/dev/Release.key | 
         sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
     # allow unprivileged apt programs to read it
     sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
     printf "Adding the k8s apt repository.\n"
-    echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pks.k8s.io/core:/stable:/v1.32/deb/ /' |
+    echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pks.k8s.io/core:/stable:/v${K8S_VERSION}/deb/ /" |
         sudo tee /etc/apt/sources.list.d/kubernetes.list
 
     printf "Installing kubelet, kubeadm, and kubectl.\n"
@@ -96,7 +101,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
     # download gpg key
     printf "Downloading RPM repository GPG key...\n"
     if ! sudo curl -fsSL -o /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes \
-        https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key; then
+        https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/rpm/repodata/repomd.xml.key; then
         printf >&2 "Error while downloading GPG key!\n" && exit 1
     fi
 
@@ -106,14 +111,14 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 
     printf "Adding Kubernetes repository to /etc/yum.repos.d/kubernetes.repo ...\n"
     {
-	    cat <<- 'EOF' | sudo tee /etc/yum.repos.d/kubernetes.repo
+	    cat <<- EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
 		[kubernetes]
 		name=Kubernetes
-		baseurl=https://pkgs.k8s.io/core:/stable:/v1.32/rpm
+		baseurl=https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/rpm
 		enabled=1
 		gpgcheck=1
 		repo_gpgcheck=0
-		gpgkey=https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key
+		gpgkey=https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/rpm/repodata/repomd.xml.key
 		EOF
     } || {
         printf >&2 "Failed to add repository in /etc/yum.repos.d/kubernetes.repo!\n" && exit 1
@@ -195,6 +200,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 
     # Open necessary ports in firewalld
     if [[ $(sudo systemctl is-active firewalld) == 'active' ]]; then
+        printf "Firewalld is active.\n"
         printf "Opening necessary ports in firewalld.\n"
         case $(hostname) in 
             *control*|*master*)
@@ -226,6 +232,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
                 exit 1;
                 ;;
         esac
+    else printf "Firewalld is not active. Continuing installation.\n"
     fi
 
     printf "Adding the Docker-ce repository for containerd.\n"
@@ -244,7 +251,6 @@ if [[ $OS_FAMILY == *rhel* ]]; then
     printf "Restarting and enabling containerd...\n"
     sudo systemctl restart containerd ||
         printf >&2 "There was a problem restarting containerd.\n" && exit 1
-
 
     sudo systemctl enable --now containerd ||
         printf >&2 "There was a problem enabling containerd.\n" && exit 1
