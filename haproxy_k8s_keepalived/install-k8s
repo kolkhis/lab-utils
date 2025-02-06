@@ -7,6 +7,11 @@ print-error() {
     printf >&2 "\033[31mERROR: %s\033[0m\n" "$*"
 }
 
+print-error-and-fail() {
+    printf >&2 "\033[31mERROR(fatal): %s\033[0m\n" "$*" && exit 1
+}
+
+
 # TODO: Test Debian install on a Debian-based system
 # TODO: add error handling (debian)
 # TODO: Refactor to use a variable version
@@ -114,6 +119,10 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 
     sudo chmod 644 /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes || {
         printf >&2 "Error changing GPG key permissions!\n" && exit 1
+    }
+
+    sudo rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes || {
+        printf >&2 "Failed to import the rpm Kubernetes GPG key!\n" && exit 1
     }
 
     printf "Adding Kubernetes repository to /etc/yum.repos.d/kubernetes.repo ...\n"
