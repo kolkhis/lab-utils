@@ -245,6 +245,9 @@ if [[ $OS_FAMILY == *rhel* ]]; then
         printf >&2 "There was a problem when downloading the Docker repository!\n" && exit 1
     }
 
+    sudo dnf install containerd -y || {
+        printf "Unable to install containerd!\n" && exit 1
+    }
 
     printf "Configuring containerd...\n"
     containerd config default | sudo tee /etc/containerd/config.toml > /dev/null 2>&1 || {
