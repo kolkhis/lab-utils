@@ -3,6 +3,9 @@
 # This script installs the Kubernetes tools kubelet, kubectl, and kubeadm.  
 # containerd is also installed as the k8s container runtime.  
 
+print-error() {
+    printf >&2 "\033[31mERROR: %s\033[0m\n" "$*"
+}
 
 # TODO: Test Debian install on a Debian-based system
 # TODO: add error handling (debian)
@@ -11,7 +14,6 @@ K8S_VERSION="1.32"
 NODE_IP=$(hostname -I | awk '{print $1}' | tr -d ' ')
 
 OS_FAMILY=$(cat /etc/*release | grep -i "ID_LIKE" | awk -F= '{print $2}')
-printf "OS family: %s\n" "$OS_FAMILY"
 
 if [[ -z "$OS_FAMILY" ]]; then
     printf "Trying again to determine OS family.\n"
