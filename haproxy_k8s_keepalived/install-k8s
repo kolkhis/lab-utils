@@ -241,13 +241,15 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 
     printf "Adding the Docker-ce repository for containerd.\n"
     sudo curl -fsSL -o /etc/yum.repos.d/docker-ce.repo \
-        https://download.docker.com/linux/rhel/docker-ce.repo ||
+        https://download.docker.com/linux/rhel/docker-ce.repo || {
         printf >&2 "There was a problem when downloading the Docker repository!\n" && exit 1
+    }
 
 
     printf "Configuring containerd...\n"
-    containerd config default | sudo tee /etc/containerd/config.toml > /dev/null 2>&1 ||
+    containerd config default | sudo tee /etc/containerd/config.toml > /dev/null 2>&1 || {
         printf >&2 "Error while setting up default configuration for containerd!\n" && exit 1
+    }
 
     # Configure containerd to use systemdcgroup
     {
@@ -260,14 +262,17 @@ if [[ $OS_FAMILY == *rhel* ]]; then
     }
 
     printf "Restarting and enabling containerd...\n"
-    sudo systemctl restart containerd ||
+    sudo systemctl restart containerd || {
         printf >&2 "There was a problem restarting containerd.\n" && exit 1
+    }
 
-    sudo systemctl enable --now containerd ||
+    sudo systemctl enable --now containerd || {
         printf >&2 "There was a problem enabling containerd.\n" && exit 1
+    }
 
-    sudo systemctl status --no-pager containerd ||
+    sudo systemctl status --no-pager containerd || {
         printf >&2 "Could not verify the status of containerd!\n" && exit 1
+    }
 
     printf "Successfully installed Kubernetes tools on node %s at %s!\n" "$(hostname)" "${NODE_IP}"
 fi
