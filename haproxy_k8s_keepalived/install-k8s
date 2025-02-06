@@ -33,6 +33,7 @@ if ! sudo sed -i '/swap/s/^/#/' /etc/fstab; then
     printf "Unable to comment out swap entries from /etc/fstab!\n"
 fi
 
+# TODO(deb): Debian install is untested.
 if [[ $OS_FAMILY == *debian* ]]; then
     printf "Using debian installation.\n"
     sudo apt-get update
@@ -89,25 +90,29 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 
     # set selinux to permissive
     if [[ $(getenforce | tr '[:upper:]' '[:lower:]') == enforcing ]]; then
-        sudo setenforce 0
-        sudo sed -i -E 's/^(SELINUX=)enforcing$/\1permissive/' /etc/selinux/config
+        {
+            sudo setenforce 0
+            sudo sed -i -E 's/^(SELINUX=)enforcing$/\1permissive/' /etc/selinux/config
+        } || {
+            printf "Couldn't set SELinux enforcement mode to permissive!\n" && exit 1
+        }
     fi
 
     # install deps
-    if ! sudo dnf install -y yum-utils device-mapper-persistent-data lvm2 containerd; then
+    sudo dnf install -y yum-utils device-mapper-persistent-data lvm2 containerd || {
         printf >&2 "Error installing dependencies!\n" && exit 1
-    fi
+    }
 
     # download gpg key
     printf "Downloading RPM repository GPG key...\n"
-    if ! sudo curl -fsSL -o /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes \
-        https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/rpm/repodata/repomd.xml.key; then
+    sudo curl -fsSL -o /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes \
+        https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/rpm/repodata/repomd.xml.key || {
         printf >&2 "Error while downloading GPG key!\n" && exit 1
-    fi
+    }
 
-    if ! sudo chmod 644 /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes; then
+    sudo chmod 644 /etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes || {
         printf >&2 "Error changing GPG key permissions!\n" && exit 1
-    fi
+    }
 
     printf "Adding Kubernetes repository to /etc/yum.repos.d/kubernetes.repo ...\n"
     {
@@ -118,7 +123,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 		enabled=1
 		gpgcheck=1
 		repo_gpgcheck=0
-		gpgkey=https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/rpm/repodata/repomd.xml.key
+		gpgkey=/etc/pki/rpm-gpg/RPM-GPG-KEY-kubernetes
 		EOF
     } || {
         printf >&2 "Failed to add repository in /etc/yum.repos.d/kubernetes.repo!\n" && exit 1
@@ -128,27 +133,26 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 
     printf "Installing kubelet, kubectl, and kubeadm...\n"
 
-    if ! sudo dnf install kubelet kubectl kubeadm -y; then
+    sudo dnf install kubelet kubectl kubeadm -y || {
         printf >&2 "There was an problem installing kubelet, kubectl, and kubeadm!\n" && exit 1
-    fi
+    }
 
-    if ! sudo systemctl enable --now kubelet; then
+    sudo systemctl enable --now kubelet || {
         printf >&2 "There was a problem enabling the kubelet service!\n" && exit 1
-    fi
+    }
 
-    if ! kubeadm version; then
-        printf >&2 "Kubeadm could not be verified!\n"
-    fi
+    kubeadm version || {
+        printf >&2 "Kubeadm could not be verified!\n" && exit 1
+    }
 
-    if ! kubectl version --client; then
-        printf >&2 "Kubectl could not be verified!\n"
-    fi
+    kubectl version --client || {
+        printf >&2 "Kubectl could not be verified!\n" && exit 1
+    }
 
-    if ! kubelet --version; then
-        printf >&2 "Kubelet could not be verified!\n"
-    fi
+    kubelet --version || {
+        printf >&2 "Kubelet could not be verified!\n" && exit 1
+    }
     
-
 
     ##################### Configuration ####################
     printf "Adding 'br_netfilter' and 'overlay' kernel modules.\n"
@@ -236,8 +240,6 @@ if [[ $OS_FAMILY == *rhel* ]]; then
     fi
 
     printf "Adding the Docker-ce repository for containerd.\n"
-
-    printf "Adding docker-ce repository.\n"
     sudo curl -fsSL -o /etc/yum.repos.d/docker-ce.repo \
         https://download.docker.com/linux/rhel/docker-ce.repo ||
         printf >&2 "There was a problem when downloading the Docker repository!\n" && exit 1
