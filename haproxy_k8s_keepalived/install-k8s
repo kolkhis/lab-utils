@@ -249,6 +249,15 @@ if [[ $OS_FAMILY == *rhel* ]]; then
     containerd config default | sudo tee /etc/containerd/config.toml > /dev/null 2>&1 ||
         printf >&2 "Error while setting up default configuration for containerd!\n" && exit 1
 
+    # Configure containerd to use systemdcgroup
+    {
+        sudo sed -i \
+            -e '/systemd_cgroup/s/false/true/' \
+            -e '/SystemdCgroup/s/false/true/' \
+            /etc/containerd/config.toml
+    } || {
+        printf >&2 "Error when enabling systemd_cgroup in /etc/containerd/config.toml\n" && exit 1
+    }
 
     printf "Restarting and enabling containerd...\n"
     sudo systemctl restart containerd ||
