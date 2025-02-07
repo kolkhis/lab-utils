@@ -652,4 +652,4 @@ At this point, the `haproxy-lb1` *should* hold the Virtual IP `192.168.1.250` (o
 * [Installing `kubeadm`](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)
 * [Installing `kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-using-native-package-management)
 * [Installing all 3 `kube` tools](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#installing-kubeadm-kubelet-and-kubectl)
-
+* [Installing k8s with CRI-O and Cilium on Rocky](https://blog.andreev.it/2023/10/install-kubernetes-with-cri-o-and-cilium-on-rocky-linux-9/)
