@@ -259,7 +259,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
     if [[ $(sudo systemctl is-active firewalld) == 'active' ]]; then
         printf "Firewalld is active.\n"
         printf "Opening necessary ports in firewalld.\n"
-        case $(hostname) in 
+        case $HOSTNAME in 
             *control*|*master*)
                 printf "Adding ports for control node %s\n" "$(hostname)"
                 {
