@@ -3,6 +3,8 @@
 # This script installs the Kubernetes tools kubelet, kubectl, and kubeadm.  
 # containerd is also installed as the k8s container runtime.  
 
+K8S_VERSION="1.32"
+
 # TODO: Refactor to use these fns 
 error() {
     printf >&2 "\033[31mERROR: %s\033[0m\n" "$*"
@@ -15,10 +17,7 @@ fatal() {
 
 # TODO: Test Debian install on a Debian-based system
 # TODO: add error handling (debian)
-# TODO: Refactor to use a variable version
-K8S_VERSION="1.32"
 NODE_IP=$(hostname -I | awk '{print $1}' | tr -d ' ')
-
 OS_FAMILY=$(cat /etc/*release | grep -i "ID_LIKE" | awk -F= '{print $2}')
 
 if [[ -z "$OS_FAMILY" ]]; then
@@ -237,7 +236,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
         printf >&2 "Could not verify the status of containerd!\n" && exit 1
     }
 
-    printf "Successfully installed Kubernetes tools on node %s at %s!\n" "$(hostname)" "${NODE_IP}"
+    printf "Successfully installed Kubernetes tools on node %s at %s!\n" "${HOSTNAME}" "${NODE_IP}"
 
 fi
 
