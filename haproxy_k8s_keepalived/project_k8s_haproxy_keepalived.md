@@ -297,13 +297,6 @@ echo 'complete -o default -F __start_kubectl k' >> ~/.bashrc
 
 * Initialize the cluster (done later).  
 
-### Set up `kubeconfig`
-```bash
-mkdir -p "$HOME/.kube"
-sudo cp /etc/kubernetes/admin.conf "$HOME/.kube/config"
-sudo chown $(id -u):$(id -g) "$HOME/.kube/config"
-```
-
 
 
 
@@ -320,18 +313,23 @@ address range for pods in the cluster.
 * `10.244.0.0/16` defines a network range from `10.244.0.0` up to `10.244.255.255`
 * Typically choose a private, non-routable IP range to avoid conflicts with external
   networks.  
-`10.244.0.0/16` is a common default used by certain Container Network Interface (CNI)
-plugins like Flannel.  
-You can technically pick another private range but most Flannel docs uses `10.244.0.0/16`.  
+* `10.244.0.0/16` is a common default used by certain Container Network Interface (CNI)
+  plugins like Flannel.  
+    * You can technically pick another private range but most Flannel docs uses `10.244.0.0/16`.  
+---
 
+### Set up `kubeconfig`
+```bash
+mkdir -p "$HOME/.kube"
+sudo cp /etc/kubernetes/admin.conf "$HOME/.kube/config"
+sudo chown $(id -u):$(id -g) "$HOME/.kube/config"
+```
 ---
 
 ### Install a CNI plugin (flannel)
 The CNI needs to be installed on all of the nodes that are running kubernetes.  
 
 ```bash
-kubectl apply -f \
-    https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 ```
 
@@ -613,8 +611,7 @@ At this point, the `haproxy-lb1` *should* hold the Virtual IP `192.168.1.250` (o
   the transport layer is closed normally
 
 - In HAProxy you can enable the `stats` page to monitor traffic and do node healthchecks.  
-- Make sure the NICs on HAProxy servers have static IP addresses so the VIP stays in
-  the same subnet
+- Make sure the NICs on HAProxy servers have static IP addresses so the VIP stays in the same subnet.  
 
 * kubevip
 
