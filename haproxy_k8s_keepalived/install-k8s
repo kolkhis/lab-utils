@@ -3,6 +3,7 @@
 # This script installs the Kubernetes tools kubelet, kubectl, and kubeadm.  
 # containerd is also installed as the k8s container runtime.  
 
+# TODO: Refactor to use these fns 
 error() {
     printf >&2 "\033[31mERROR: %s\033[0m\n" "$*"
 }
