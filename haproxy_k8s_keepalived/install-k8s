@@ -33,107 +33,14 @@ fi
 : "${OS_FAMILY:?"Unable to verify the OS family!"}"
 
 
-if ! sudo swapoff -a; then
+
+# Disable swap 
+sudo swapoff -a || {
     printf >&2 "Couldn't disable SWAP!\n" && exit 1
-fi
-
-# comment out swap entries
-if ! sudo sed -i '/swap/s/^/#/' /etc/fstab; then
+}
+sudo sed -i '/swap/s/^/#/' /etc/fstab || {
     printf >&2 "Unable to comment out swap entries from /etc/fstab!\n"
-fi
-
-# TODO(deb): Debian install is untested.
-if [[ $OS_FAMILY == *debian* ]]; then
-    printf "Using debian installation.\n"
-    
-    {
-        sudo apt-get update
-        sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
-    } || {
-        printf >&2 "Failed to install dependencies!\n" && exit 1
-    }
-
-    printf "Adding k8s apt GPG key...\n"
-    {
-        sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/dev/Release.key | 
-            sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-    } || {
-        printf >&2 "Failed to download k8s apt GPG key to /etc/apt/keyrings/kubernetes-apt-keyring.gpg\n" && exit 1
-    }
-
-    # allow unprivileged apt programs to read it
-    sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg || {
-        printf >&2 "Failed to change permissions (644) for /etc/apt/keyrings/kubernetes-apt-keyring.gpg\n" && exit 1
-    }
-
-    printf "Adding the k8s apt repository.\n"
-
-    {
-        echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pks.k8s.io/core:/stable:/v${K8S_VERSION}/deb/ /" |
-            sudo tee /etc/apt/sources.list.d/kubernetes.list
-    } || {
-        printf >&2 "Failed to add k8s apt repository.\n" && exit 1
-    }
-
-    printf "Installing kubelet, kubeadm, and kubectl.\n"
-    sudo apt-get install kubelet kubeadm kubectl -y || {
-        printf >&2 "Failed to install kubernetes tools (kubelet, kubeadm, kubectl). Exiting.\n" && exit 1
-    }
-
-    printf "Attempting to add the 'br_netfilter' kernel module.\n"
-	cat <<- 'EOF' | sudo tee /etc/modules-load.d/k8s.conf > /dev/null
-		overlay
-		br_netfilter
-	EOF
-
-    {
-        sudo modprobe overlay
-        sudo modprobe br_netfilter
-    } || {
-        printf >&2 "Failed to load kernel modules 'overlay' and 'br_netfilter'! Exiting.\n" && exit 1
-    }
-
-    printf "Attempting to configure network bridge for iptables...\n"
-    {
-    cat <<- 'EOF' | sudo tee /etc/sysctl.d/k8s.conf > /dev/null
-	net.bridge.bridge-nf-call-ip6tables = 1
-	net.bridge.bridge-nf-call-iptables  = 1
-	net.ipv4.ip_forward                 = 1
-	EOF
-    } || {
-        printf >&2 "Failed to add IP Forwarding and bridge rules to iptables!\n" && exit 1
-    }
-
-    sudo sysctl --system || { printf >&2 "Failed to reload sysctl.\n" && exit 1; }
-
-    kubeadm version || {
-        printf >&2 "Kubeadm could not be verified!\n" && exit 1
-    }
-
-    kubectl version --client || {
-        printf >&2 "Kubectl could not be verified!\n" && exit 1
-    }
-
-    kubelet --version || {
-        printf >&2 "Kubelet could not be verified!\n" && exit 1
-    }
-    
-
-    # enable kubectl bash completion 
-    if dpkg -l | grep -qi 'bash-completion'; then
-        {
-            source <(kubectl completion bash)
-            { 
-                printf 'source <(kubectl completion bash)\n';
-                printf 'alias k=kubectl\n';
-                printf 'complete -o default -F __start_kubectl k\n';
-            } >> ~/.bashrc
-        } || {
-            printf >&2 "Failed to set up bash completion.\n"
-        }
-    fi
-fi
-
+}
 
 if [[ $OS_FAMILY == *rhel* ]]; then
     printf "Performing RHEL-based installation.\n"
@@ -219,14 +126,13 @@ if [[ $OS_FAMILY == *rhel* ]]; then
         printf >&2 "Unable to add 'overlay' and 'br_netfilter' to /etc/modules-load.d/k8s.conf!\n" && exit 1
     }
 
-    if ! sudo modprobe br_netfilter; then
+    sudo modprobe br_netfilter || {
         printf >&2 "modprobe: Unable to load the br_netfilter kernel module.\n"
-    fi
+    }
 
-    if ! sudo modprobe overlay; then
+    sudo modprobe overlay || {
         printf >&2 "modprobe: Unable to load the br_netfilter kernel module.\n"
-    fi
-
+    }
 
     printf "Configuring iptables network bridge and enabling IP forwarding.\n"
     {
@@ -333,5 +239,97 @@ if [[ $OS_FAMILY == *rhel* ]]; then
 
     printf "Successfully installed Kubernetes tools on node %s at %s!\n" "$(hostname)" "${NODE_IP}"
 
+fi
+
+# TODO(deb): Debian install is untested.
+if [[ $OS_FAMILY == *debian* ]]; then
+    printf "Using debian installation.\n"
+    
+    {
+        sudo apt-get update
+        sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
+    } || {
+        printf >&2 "Failed to install dependencies!\n" && exit 1
+    }
+
+    printf "Adding k8s apt GPG key...\n"
+    {
+        sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v${K8S_VERSION}/dev/Release.key | 
+            sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    } || {
+        printf >&2 "Failed to download k8s apt GPG key to /etc/apt/keyrings/kubernetes-apt-keyring.gpg\n" && exit 1
+    }
+
+    # allow unprivileged apt programs to read it
+    sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg || {
+        printf >&2 "Failed to change permissions (644) for /etc/apt/keyrings/kubernetes-apt-keyring.gpg\n" && exit 1
+    }
+
+    printf "Adding the k8s apt repository.\n"
+
+    {
+        echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pks.k8s.io/core:/stable:/v${K8S_VERSION}/deb/ /" |
+            sudo tee /etc/apt/sources.list.d/kubernetes.list
+    } || {
+        printf >&2 "Failed to add k8s apt repository.\n" && exit 1
+    }
+
+    printf "Installing kubelet, kubeadm, and kubectl.\n"
+    sudo apt-get install kubelet kubeadm kubectl -y || {
+        printf >&2 "Failed to install kubernetes tools (kubelet, kubeadm, kubectl). Exiting.\n" && exit 1
+    }
+
+    printf "Attempting to add the 'br_netfilter' kernel module.\n"
+	cat <<- 'EOF' | sudo tee /etc/modules-load.d/k8s.conf > /dev/null
+		overlay
+		br_netfilter
+	EOF
+
+    {
+        sudo modprobe overlay
+        sudo modprobe br_netfilter
+    } || {
+        printf >&2 "Failed to load kernel modules 'overlay' and 'br_netfilter'! Exiting.\n" && exit 1
+    }
+
+    printf "Attempting to configure network bridge for iptables...\n"
+    {
+    cat <<- 'EOF' | sudo tee /etc/sysctl.d/k8s.conf > /dev/null
+	net.bridge.bridge-nf-call-ip6tables = 1
+	net.bridge.bridge-nf-call-iptables  = 1
+	net.ipv4.ip_forward                 = 1
+	EOF
+    } || {
+        printf >&2 "Failed to add IP Forwarding and bridge rules to iptables!\n" && exit 1
+    }
+
+    sudo sysctl --system || { printf >&2 "Failed to reload sysctl.\n" && exit 1; }
+
+    kubeadm version || {
+        printf >&2 "Kubeadm could not be verified!\n" && exit 1
+    }
+
+    kubectl version --client || {
+        printf >&2 "Kubectl could not be verified!\n" && exit 1
+    }
+
+    kubelet --version || {
+        printf >&2 "Kubelet could not be verified!\n" && exit 1
+    }
+    
+
+    # enable kubectl bash completion 
+    if dpkg -l | grep -qi 'bash-completion'; then
+        {
+            source <(kubectl completion bash)
+            { 
+                printf 'source <(kubectl completion bash)\n';
+                printf 'alias k=kubectl\n';
+                printf 'complete -o default -F __start_kubectl k\n';
+            } >> ~/.bashrc
+        } || {
+            printf >&2 "Failed to set up bash completion.\n"
+        }
+    fi
 fi
 
