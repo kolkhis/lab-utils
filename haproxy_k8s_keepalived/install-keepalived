@@ -1,11 +1,11 @@
 #!/bin/bash
-
+# TODO: finish this
 : "${STATE:=}"
 : "${PRIORITY:=}"
 
 while [[ $1 =~ ^- ]]; do
     case $1 in
-        -p) 
+        -p|--priority) 
             if [[ -n $2 ]]; then
                 printf "Setting priority: %s\n" "$2"
                 PRIORITY=$2
@@ -13,7 +13,7 @@ while [[ $1 =~ ^- ]]; do
             fi
             shift;
             ;;
-        -m)
+        -s|--state)
             if [[ -n $2 ]]; then
                 printf "Setting STATE: %s\n" "$2"
                 STATE=$2
@@ -31,12 +31,13 @@ done
 
 # Get state and priority if options were net specified
 [[ -z $STATE ]] && read -r -p "Enter the desired STATE (MASTER/BACKUP): " STATE
-[[ -z $PRIORITY ]] && read -r -p "Enter the desired PRIORITY: " PRIORITY
+[[ -z $PRIORITY ]] && read -r -p "Enter the desired PRIORITY (0-100): " PRIORITY
 
 # debug variables
 cat << EOF
 Setting up Keepalived for $(hostname) - $(hostname -I | awk '{print $1}')
-STATE: ${STATE^^}
-PRIORITY: ${PRIORITY}
+STATE: ${STATE:?"ERROR: STATE must be set to either BACKUP or MASTER!"}
+PRIORITY: ${PRIORITY:?"ERROR: PRIORITY must be set to 1-100!"}
 EOF
+
 
