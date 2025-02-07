@@ -1,0 +1,19 @@
+#!/bin/bash
+
+[[ -f ~/.kube/config ]] && sudo rm -f ~/.kube/config
+[[ -d ~/.kube/cache ]] && sudo rm -rf ~/.kube/cache
+
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16 || {
+    printf "There was a problem initializing the cluster with 'kubeadm init'!\n" && exit 1
+}
+
+
+{ 
+    mkdir -p ~/.kube 
+    sudo cp -i /etc/kubernetes/admin.conf "$HOME/.kube/config"
+    sudo chown "$(id -u):$(id -g)" "$HOME/.kube/config"; 
+} || {
+    printf "Problem with kube config directory ~/.kube\n" && exit 1
+}
+
+# kubectl apply -f 
