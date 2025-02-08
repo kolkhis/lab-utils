@@ -2,6 +2,7 @@
 # shellcheck disable=SC1090
 # This script installs the Kubernetes tools kubelet, kubectl, and kubeadm.  
 # containerd is also installed as the k8s container runtime.  
+# The firewalld ports for k8s and Flannel CNI are opened.  
 
 K8S_VERSION="1.32"
 
@@ -50,7 +51,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
             sudo setenforce 0
             sudo sed -i -E 's/^(SELINUX=)enforcing$/\1permissive/' /etc/selinux/config
         } || {
-            printf "Couldn't set SELinux enforcement mode to permissive!\n" && exit 1
+            printf >&2 "Couldn't set SELinux enforcement mode to permissive!\n" && exit 1
         }
     fi
 
