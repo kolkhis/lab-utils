@@ -14,12 +14,17 @@ while read -r l; do
 
         if [[ $NODE =~ [0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3} ]]; then
             printf "Valid IP found: %s\n" "$NODE"
+            
             if ! "${COMPLETED[$NODE]}"; then
+                printf "%s not completed. Using ssh-copy-id to copy key...\n" "$NODE"
                 {
                     ssh-copy-id "${USER}@${NODE}" && COMPLETED[$NODE]=true
                 } || {
                     printf "Problem with ssh-copy-id with node %s\n" "${NODE}"
                 }
+            else
+                printf "%s already completed. Skipping.\n" "${NODE}"
+                continue
             fi
         fi
 
