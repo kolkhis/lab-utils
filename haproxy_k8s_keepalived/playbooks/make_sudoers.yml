@@ -4,6 +4,7 @@
   hosts: rocky
   become: true
   vars:
+    primary_user: kolkhis
     users:
       - kolkhis
     sudo_group_line: "%sudo ALL=(ALL:ALL) ALL"
@@ -37,9 +38,17 @@
         state: present
       loop: "{{ users }}"
 
-    - name: Set personal shell options in /etc/profile
+    - name: Set personal shell options in user's bashrc
       ansible.builtin.lineinfile:
-        path: /etc/bash.bashrc
+        path: "/home/{{ primary_user }}/.bashrc"
+        line: "{{ item }}"
+        regex: "^{{ item }}"
+        state: present
+      loop: "{{ rc_lines }}"
+
+    - name: Set personal shell options in root's bashrc
+      ansible.builtin.lineinfile:
+        path: /root/.bashrc
         line: "{{ item }}"
         regex: "^{{ item }}"
         state: present
