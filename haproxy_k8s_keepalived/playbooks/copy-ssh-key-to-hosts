@@ -1,0 +1,28 @@
+#!/bin/bash
+
+declare -A COMPLETED
+
+[[ ! -f ~/.ssh/id_ed25519.pub ]] && {
+    printf "There is no key to copy to the hosts in ~/.ssh! Generate a key with 'ssh-keygen -t ed25519'"
+    exit 1
+}
+
+while read -r l; do
+    if [[ $l == *ansible_host* ]]; then
+        NODE=$(printf "%s" "$l" | awk -F '[ =]' '{ for(i=1; i< NF; i++) if($i == "ansible_host") print $(i+1) }')
+        printf "Node: %s\n" "$NODE"
+
+        if [[ $NODE =~ [0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3} ]]; then
+            printf "Valid IP found: %s\n" "$NODE"
+            if ! "${COMPLETED[$NODE]}"; then
+                {
+                    ssh-copy-id "${USER}@${NODE}" && COMPLETED[$NODE]=true
+                } || {
+                    printf "Problem with ssh-copy-id with node %s\n" "${NODE}"
+                }
+            fi
+        fi
+
+    fi
+done < ./hosts
+
