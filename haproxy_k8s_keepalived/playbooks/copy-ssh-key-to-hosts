@@ -7,28 +7,45 @@ declare -A COMPLETED
     exit 1
 }
 
+
+while [[ -n $1 ]]; do
+    case $1 in
+        -u|--user)
+            [[ -n $2 ]] && {
+                USERNAME=$2
+                printf "Set username to %s\n" "${USERNAME}"
+            }
+            shift; shift;
+            ;;
+        *)
+            printf "Unknown option: %s\n" "$1"
+            shift;
+            ;;
+    esac
+done
+: "${USERNAME:=$USER}"
+printf "Using user: %s\n" "${USERNAME}"
+
 while read -r l; do
     if [[ $l == *ansible_host* ]]; then
         NODE=$(printf "%s" "$l" | awk -F '[ =]' '{ for(i=1; i< NF; i++) if($i == "ansible_host") print $(i+1) }')
-        printf "Node: %s\n" "$NODE"
-
         if [[ $NODE =~ [0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3} ]]; then
-            printf "Valid IP found: %s\n" "$NODE"
-            
+            printf "Checking node %s\n" "${NODE}"
+
             if [[ ! "${COMPLETED[$NODE]-}" ]]; then
-                printf "%s not completed. Using ssh-copy-id to copy key...\n" "$NODE"
+                printf "\033[33mNode: %s not completed. Using ssh-copy-id to copy key...\033[0m\n" "$NODE"
                 {
-                    ssh-copy-id "${USER}@${NODE}" && COMPLETED[$NODE]=true && 
-                        printf "Node successfully added: %s\n" "${NODE}"
+                    ssh-copy-id "${USERNAME}@${NODE}" && COMPLETED[$NODE]=true &&
+                        printf "\033[32mNode successfully added: %s\n\033[0m" "${NODE}"
                 } || {
-                    printf "Problem with ssh-copy-id with node %s\n" "${NODE}"
+                    printf "\033[31mProblem with ssh-copy-id with node %s\n\033[0m" "${NODE}"
                 }
             else
-                printf "%s already completed. Skipping.\n" "${NODE}"
+                printf "\033[32m%s already completed. Skipping.\n\033[0m" "${NODE}"
                 continue
             fi
-        fi
 
+        fi
     fi
 done < ./hosts
 
