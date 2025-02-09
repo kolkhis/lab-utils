@@ -47,5 +47,5 @@ while read -r l; do
 
         fi
     fi
-done < ./hosts
+done < ./playbooks/hosts
 
