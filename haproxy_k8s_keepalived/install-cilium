@@ -1,9 +1,12 @@
 #!/bin/bash
 
 mkdir -p /tmp/cilium-install
-curl -L https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz \
-    -o /tmp/cilium-install
-tar -C /tmp/cilium-install -xzvf /tmp/cilium-install/cilium-linux-amd64.tar.gz
+cd /tmp/cilium-install || {
+    printf "Couldn't switch directory to /tmp/cilium-install\n" && exit 1
+}
+
+curl -LO https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz
+tar -xzvf /tmp/cilium-install/cilium-linux-amd64.tar.gz
 sudo cp /tmp/cilium-install/cilium /usr/local/bin
 
 
