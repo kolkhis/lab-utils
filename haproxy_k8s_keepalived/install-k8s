@@ -176,8 +176,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
                     # cilium
                     sudo firewall-cmd --permanent --add-icmp-block-inversion
                     sudo firewall-cmd --permanent --add-port=4240/tcp
-                    sudo firewall-cmd --permanent --add-port=8472/udp
-                    sudo firewall-cmd --permanent --add-port=6081/udp
+                    sudo firewall-cmd --permanent --add-port={8472,6081}/udp
                     sudo firewall-cmd --reload
                 } || {
                     printf >&2 "Problem adding ports to firewalld on control node!\n" && exit 1
@@ -192,8 +191,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
                     # cilium
                     sudo firewall-cmd --permanent --add-icmp-block-inversion
                     sudo firewall-cmd --permanent --add-port=4240/tcp
-                    sudo firewall-cmd --permanent --add-port=8472/udp
-                    sudo firewall-cmd --permanent --add-port=6081/udp
+                    sudo firewall-cmd --permanent --add-port={8472,6081}/udp
                     sudo firewall-cmd --reload
                 } || {
                     printf >&2 "Problem opening ports on worker node!\n" && exit 1
