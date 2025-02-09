@@ -225,7 +225,6 @@ if [[ $OS_FAMILY == *rhel* ]]; then
     # Configure containerd to use systemdcgroup
     {
         sudo sed -i \
-            -e '/systemd_cgroup/s/false/true/' \
             -e '/SystemdCgroup/s/false/true/' \
             /etc/containerd/config.toml
     } || {
