@@ -174,7 +174,6 @@ if [[ $OS_FAMILY == *rhel* ]]; then
                     sudo firewall-cmd --permanent --add-port=4789/udp
                     sudo firewall-cmd --add-masquerade --permanent
                     # cilium
-                    sudo firewall-cmd --permanent --add-icmp-block-inversion
                     sudo firewall-cmd --permanent --add-port=4240/tcp
                     sudo firewall-cmd --permanent --add-port={8472,6081}/udp
                     sudo firewall-cmd --reload
@@ -189,7 +188,6 @@ if [[ $OS_FAMILY == *rhel* ]]; then
                     sudo firewall-cmd --permanent --add-port=4789/udp
                     sudo firewall-cmd --add-masquerade --permanent
                     # cilium
-                    sudo firewall-cmd --permanent --add-icmp-block-inversion
                     sudo firewall-cmd --permanent --add-port=4240/tcp
                     sudo firewall-cmd --permanent --add-port={8472,6081}/udp
                     sudo firewall-cmd --reload
