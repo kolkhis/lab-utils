@@ -9,4 +9,11 @@ curl -LO https://github.com/cilium/cilium-cli/releases/latest/download/cilium-li
 tar -xzvf /tmp/cilium-install/cilium-linux-amd64.tar.gz
 sudo cp /tmp/cilium-install/cilium /usr/local/bin
 
+[[ -f /usr/local/bin/cilium ]] && which cilium && {
+    printf "Successfully added cilium to PATH.\n"
+}
+
+rm -rf /tmp/cilium-install || {
+    printf "Failed to remove cilium install directory.\n"
+}
 
