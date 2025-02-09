@@ -14,6 +14,7 @@
 printf "Initializing cluster with kubeadm...\n"
 sudo kubeadm init \
     --pod-network-cidr=10.244.0.0/16 \
+    --cri-socket=unix:///run/containerd/containerd.sock \
     --skip-phases=addon/kube-proxy || {
     printf "There was a problem initializing the cluster with 'kubeadm init'!\n" && exit 1
 }
@@ -29,4 +30,3 @@ printf "Creating kube config directory and copying admin.conf\n"
 }
 printf "Done.\n"
 
-# kubectl apply -f 
