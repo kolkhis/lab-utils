@@ -5,13 +5,16 @@
     printf "Cleaning up old kube config file...\n"
     sudo rm -f ~/.kube/config
 } 
+
 [[ -d ~/.kube/cache ]] && {
     printf "Cleaning up old kube config cache directory...\n"
     sudo rm -rf ~/.kube/cache
 }
 
 printf "Initializing cluster with kubeadm...\n"
-sudo kubeadm init --pod-network-cidr=10.244.0.0/16 || {
+sudo kubeadm init \
+    --pod-network-cidr=10.244.0.0/16 \
+    --skip-phases=addon/kube-proxy || {
     printf "There was a problem initializing the cluster with 'kubeadm init'!\n" && exit 1
 }
 
@@ -25,4 +28,5 @@ printf "Creating kube config directory and copying admin.conf\n"
     printf "Problem with kube config directory ~/.kube\n" && exit 1
 }
 printf "Done.\n"
+
 # kubectl apply -f 
