@@ -45,7 +45,16 @@ TODO:
 
 Consider:
 - Kube-VIP v. Keepalived?
+    - metallb/kube-vip
 - Cloudflare / Zero Trust
+
+```bash
+- kubernetes
+  - ingress
+    - service
+      - Pods in a deployment which are constatnly monitored by the ReplicaSet
+        that wants to always have a certain number of pods.  
+```
 
 Deps:
 - A container runtime interface (CRI)
