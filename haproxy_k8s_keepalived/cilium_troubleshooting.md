@@ -283,3 +283,9 @@ Test [to-fqdns]:
 
 [cilium-test-1] 8 tests failed
 ```
+
+
+## Links
+* [Cilium Docs: Quick install](https://docs.cilium.io/en/stable/gettingstarted/k8s-install-default/)
+* [Cilium Docs: Troubleshooting](https://docs.cilium.io/en/stable/operations/troubleshooting/)
+
