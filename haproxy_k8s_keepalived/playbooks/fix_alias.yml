@@ -1,0 +1,24 @@
+---
+- name: Fix broken alias
+  hosts: rocky
+  become: true
+  vars:
+    primary_user: kolkhis
+    users:
+      - "{{ primary_user }}"
+      - "{{ ansible_user }}"
+    sudo_group_line: "%sudo ALL=(ALL:ALL) ALL"
+    rc_lines:
+      - set -o vi
+      - alias lv="vi -c \"normal '0\""
+  tasks:
+
+    - name: Fix old broken lines
+      ansible.builtin.lineinfile:
+        path: "{{ item }}"
+        regex: |
+          alias lv=vi -c \"'0\"
+        state: absent
+      loop:
+        - "/home/{{ primary_user }}/.bashrc"
+        - /root/.bashrc

@@ -1,2 +1,14 @@
 ---
 # tasks file for common
+- name: Disable SWAP
+  ansible.builtin.command:
+    cmd: swapoff -a
+  become: true
+
+- name: Copy k8s installation script
+  ansible.builtin.copy:
+    src: install-k8s
+    dest: /home/kolkhis/
+    force: true
+    mode: '0755'
+
