@@ -3,6 +3,7 @@
 
 install-cilium() {
 
+    printf "Creating temporary install directory...\n"
     mkdir -p /tmp/cilium-install || {
         printf >&2 "Unable to create temporary directory: /tmp/cilium-install\n" && return 1
     }
@@ -10,26 +11,33 @@ install-cilium() {
         printf >&2 "Couldn't switch directory to /tmp/cilium-install\n" && return 1
     }
 
+    printf "Downloading Cilium tarball...\n"
     curl -LO https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz || {
         printf >&2 "Problem downloading cilium tarball.\n" && return 1
     }
 
+    printf "Extracting tarball...\n"
     tar -xzvf /tmp/cilium-install/cilium-linux-amd64.tar.gz || {
         printf >&2 "Problem extracting cilium tarball.\n" && return 1
     }
 
+    printf "Copying Cilum binary to /usr/local/bin..."
     sudo cp /tmp/cilium-install/cilium /usr/local/bin || {
-        printf >&2 "Problem copying cilium binary to /usr/loca/bin\n" && return 1
+        printf >&2 "Problem copying cilium binary to /usr/local/bin\n" && return 1
     }
 
+    printf "Cleaning up installation files...\n"
     rm -rf /tmp/cilium-install || {
         printf >&2 "Failed to remove cilium install directory.\n" && return 1
     }
 
+    printf "Verifying installation...\n"
     { [[ -f /usr/local/bin/cilium ]] && which cilium; } && {
-        printf "Successfully added cilium to PATH.\n"
+        printf "Successfully installed and added Cilium to PATH.\n"
+        return 0
     }
-    return 0
+    return 1
+
 }
 
 case $HOSTNAME in
