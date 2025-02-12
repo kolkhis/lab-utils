@@ -336,6 +336,7 @@ sudo chown $(id -u):$(id -g) "$HOME/.kube/config"
 ---
 
 ### Install a CNI plugin (flannel)
+* This is no longer relevant -- I've switched to [Cilium](#install-cilium).  
 The CNI needs to be installed on all of the nodes that are running kubernetes.  
 
 ```bash
@@ -761,4 +762,6 @@ cilium connectivity test
 * [Installing `kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/#install-using-native-package-management)
 * [Installing all 3 `kube` tools](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#installing-kubeadm-kubelet-and-kubectl)
 * [Installing k8s with CRI-O and Cilium on Rocky](https://blog.andreev.it/2023/10/install-kubernetes-with-cri-o-and-cilium-on-rocky-linux-9/)
-[Cilium CLI releases](https://github.com/cilium/cilium-cli/releases/)
+* [Cilium CLI releases](https://github.com/cilium/cilium-cli/releases/)
+* [External Keepalived and HAProxy project](https://github.com/justmeandopensource/kubernetes/tree/master/kubeadm-ha-keepalived-haproxy/external-keepalived-haproxy)
+* [Kubeadm HA Considerations](https://github.com/kubernetes/kubeadm/blob/main/docs/ha-considerations.md)
