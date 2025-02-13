@@ -312,7 +312,14 @@ echo 'complete -o default -F __start_kubectl k' >> ~/.bashrc
 ### Initialize k8s Cluster
 Initialize the k8s cluster on `control-node1`.  
 ```bash
-sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+# Flannel init
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16 
+
+# Cilium init
+sudo kubeadm init \
+    --pod-network-cidr=10.244.0.0/16 \
+    --cri-socket=unix:///run/containerd/containerd.sock \
+    --skip-phases=addon/kube-proxy
 ```
 
 ---
@@ -328,6 +335,7 @@ address range for pods in the cluster.
 ---
 
 ### Set up `kubeconfig`
+Make a directory `~/.kube` and copy `/etc/kubernetes/admin.conf` as `~/.kube/config`:
 ```bash
 mkdir -p "$HOME/.kube"
 sudo cp /etc/kubernetes/admin.conf "$HOME/.kube/config"
@@ -755,6 +763,17 @@ Run a cilium network test to verify pod communication
 ```bash
 cilium connectivity test
 ```
+
+---
+
+## Generating a New Join Token
+If you lose the original `kubeadm join` command or its token, you can generate a new
+one without resetting the entire cluster.  
+```bash
+kubeadm token create --print-join-command
+```
+This will output a new `join` command that will work to add nodes to the cluster.  
+
 
 
 ## Resources

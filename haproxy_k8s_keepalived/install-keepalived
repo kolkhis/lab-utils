@@ -23,6 +23,26 @@ while [[ $1 =~ ^- ]]; do
             fi
             shift;
             ;;
+        -h|--help)
+            cat <<- EOF
+			Usage: ${0##*/} [OPTIONS]
+			
+			This script sets up Keepalived for high availability, allowing a node to be
+			configured as either MASTER or BACKUP with a specified priority.
+			
+			Options:
+			  -p, --priority <VALUE>   Set the Keepalived priority (1-100).
+			  -s, --state <STATE>      Set the Keepalived state (MASTER or BACKUP).
+			  -h, --help               Show this help message and exit.
+			
+			If options are not specified, the script will prompt for STATE and PRIORITY.
+			
+			Example:
+			  ${0##*/} --state MASTER --priority 100
+			
+			EOF
+            exit 0
+            ;;
         *)
             printf "Unknown argument: %s\n" "$1" && exit 1
             ;;
@@ -39,5 +59,17 @@ Setting up Keepalived for $(hostname) - $(hostname -I | awk '{print $1}')
 STATE: ${STATE:?"ERROR: STATE must be set to either BACKUP or MASTER!"}
 PRIORITY: ${PRIORITY:?"ERROR: PRIORITY must be set to 1-100!"}
 EOF
+
+
+install-keepalived-debian() {
+    :
+}
+
+install-keepalived-rhel() {
+    :
+}
+
+
+# printf "%s" "${BASH_VERSINFO[@]}" | grep -i 'redhat'
 
 
