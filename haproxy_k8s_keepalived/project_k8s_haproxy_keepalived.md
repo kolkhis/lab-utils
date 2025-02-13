@@ -343,7 +343,7 @@ sudo chown $(id -u):$(id -g) "$HOME/.kube/config"
 ```
 ---
 
-### Install a CNI plugin (flannel)
+### Install a CNI plugin (Flannel/Cilium/Calico)
 * This is no longer relevant -- I've switched to [Cilium](#install-cilium).  
 The CNI needs to be installed on all of the nodes that are running kubernetes.  
 
