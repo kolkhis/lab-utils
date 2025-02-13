@@ -247,7 +247,7 @@ However, when adding either `http://` or `https://` to the IPs, they stop respon
 ---
 
 
-## Cilium Connectivity Test Results
+## Cilium Connectivity Test Results (8 failed)
 ```bash
 📋 Test Report [cilium-test-1]
 ❌ 8/56 tests failed (21/243 actions), 49 tests skipped, 0 scenarios skipped:
@@ -283,7 +283,59 @@ Test [to-fqdns]:
 
 [cilium-test-1] 8 tests failed
 ```
+* the `curl` command is timing out.
+    - network policies?
+      ```bash
+      $ kubectl get cnp --all-namespaces
+      # No resources found
+      ```
 
+    - Firewall rules?
+      ```bash
+      ```
+    - DNS resolution? CoreDNS config? `to-fqdns`
+
+
+#### Cilium Status
+```bash
+[kolkhis@control-node1 ~]$ cilium status
+    /¯¯\
+ /¯¯\__/¯¯\    Cilium:             OK
+ \__/¯¯\__/    Operator:           OK
+ /¯¯\__/¯¯\    Envoy DaemonSet:    OK
+ \__/¯¯\__/    Hubble Relay:       disabled
+    \__/       ClusterMesh:        disabled
+
+DaemonSet              cilium             Desired: 2, Ready: 2/2, Available: 2/2
+DaemonSet              cilium-envoy       Desired: 2, Ready: 2/2, Available: 2/2
+Deployment             cilium-operator    Desired: 1, Ready: 1/1, Available: 1/1
+Containers:            cilium             Running: 2
+                       cilium-envoy       Running: 2
+                       cilium-operator    Running: 1
+Cluster Pods:          5/5 managed by Cilium
+Helm chart version:    1.16.6
+Image versions         cilium             quay.io/cilium/cilium:v1.16.6@sha256:1e0896b1c4c188b4812c7e0bed7ec3f5631388ca88325c1391a0ef9172c448da: 2
+                       cilium-envoy       quay.io/cilium/cilium-envoy:v1.30.9-1737073743-40a016d11c0d863b772961ed0168eea6fe6b10a5@sha256:a69dfe0e54b24b0ff747385c8feeae0612cfbcae97bfcc8ee42a773bb3f69c88: 2
+                       cilium-operator    quay.io/cilium/operator-generic:v1.16.6@sha256:13d32071d5a52c069fb7c35959a56009c6914439adc73e99e098917646d154fc: 1
+
+[kolkhis@control-node1 ~]$ cilium version
+cilium-cli: v0.16.24 compiled with go1.23.4 on linux/amd64
+cilium image (default): v1.16.6
+cilium image (stable): v1.17.0
+cilium image (running): 1.16.6
+```
+
+#### Test Failures Remediation Steps Taken
+* Check pods and nodes
+```bash
+```
+* Check network policies
+  ```bash
+  [kolkhis@control-node1 ~]$ kubectl get cnp --all-namespaces
+  No resources found
+  ```
+
+---
 
 ## Links
 * [Cilium Docs: Quick install](https://docs.cilium.io/en/stable/gettingstarted/k8s-install-default/)

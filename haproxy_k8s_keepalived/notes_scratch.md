@@ -541,6 +541,19 @@ To see the stack trace of this error execute with --v=5 or higher
 ```
 [join command in join-nodes.md](./join-nodes.md)
 
+## Nginx Demo Deployment
+```bash
+kubectl create deployment nginx-demo --image=nginx:stable
+kubectl scale deployment nginx-demo --replicas=2
+kubectl expose deployment nginx-demo --type=NodePort --port=80
+kubectl get deployment nginx-demo
+kubectl get svc nginx-demo
+#NAME         TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+#nginx-demo   NodePort   10.101.59.244   <none>        80:30189/TCP   21s
+curl localhost:30189
+# Nginx welcome page if successful
+```
+
 ---
 Manifests files:
 `/etc/kubernetes/manifests/*.yaml`
