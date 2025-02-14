@@ -507,6 +507,13 @@ sudo systemctl enable haproxy --now
 ```
 * `--now` also tells it to `start` in addition to `enable`.  
 
+---
+
+On Rocky, make sure to open ports 443, 80, and whatever the NodePort is.  
+Also, make sure SELinux is set to permissive.  
+
+---
+
 At this point, each HAProxy node should be able to forward traffic independently to 
 the k8s cluster.  
 
