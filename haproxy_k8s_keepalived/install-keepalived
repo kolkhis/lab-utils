@@ -62,14 +62,41 @@ EOF
 
 
 install-keepalived-debian() {
-    :
+    if ! sudo apt update && sudo apt-get install keepalived -y ; then
+        printf "Failed to install keepalived.\n" && return 1
+    fi
+    return 0
 }
 
 install-keepalived-rhel() {
-    :
+    if ! sudo dnf install keepalived -y; then
+        printf "Failed to install keepalived via dnf.\n" && return 1
+    fi
+    return 0
 }
 
 
-# printf "%s" "${BASH_VERSINFO[@]}" | grep -i 'redhat'
+OS_FAMILY=$(grep -i 'id_like' /etc/*release | awk -F= '{print $2}')
+if [[ -z $OS_FAMILY ]]; then
+    {
+        which dnf && printf "dnf found, installing using OS family: %s\n" "${OS_FAMILY:=rhel}"
+    } || {
+        which apt && printf "Apt found, installing using OS family: %s\n" "${OS_FAMILY:=debian}"
+    }
+    :
+fi
 
+if [[ $OS_FAMILY == *rhel* ]]; then
+    install-keepalived-rhel || {
+        printf "Failed to install keepalived!\n" && exit 1
+    }
+    exit 0
+fi
+
+if [[ $OS_FAMILY == *debian* ]]; then
+    install-keepalived-debian || {
+        printf "Failed to install keepalived!\n" && exit 1
+    }
+    exit 0
+fi
 
