@@ -1,0 +1,13 @@
+---
+- name: Deploy storage and visualization tools on the central node
+  hosts: control-node
+  roles:
+    - prometheus-deploy
+    - loki-deploy
+    - grafana-deploy
+
+- name: Deploy collection agents on all nodes
+  hosts: all
+  roles:
+    - node_exporter-deploy
+    - promtail-deploy
