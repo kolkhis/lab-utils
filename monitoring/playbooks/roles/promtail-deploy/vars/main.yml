@@ -1,0 +1,6 @@
+---
+# vars file for promtail-deploy
+promtail_version: 3.3.2
+promtail_platform: linux-amd64
+promtail_release_page: https://github.com/grafana/loki/releases/download
+promtail_download_link: "{{ promtail_release_page }}/v{{ promtail_version }}/promtail-{{ promtail_platform }}.zip"

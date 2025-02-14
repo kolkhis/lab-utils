@@ -1,0 +1,9 @@
+---
+# vars file for prometheus-deploy
+prometheus_version: "3.0.1"
+prometheus_extracted_directory: "/var/lib/prometheus"
+prometheus_platform: "linux-amd64"
+github_download_page: "https://github.com/prometheus/prometheus/releases/download"
+prometheus_download_link: |
+  {{ github_download_page }}/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.{{ prometheus_platform }}.tar.gz
+prometheus_tarball: "/tmp/prometheus-{{ prometheus_version }}.{{ prometheus_platform }}.tar.gz"

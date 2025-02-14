@@ -1,0 +1,164 @@
+# tasks file for grafana-deploy
+- name: Install Grafana on Debian systems
+  when: ansible_os_family == "Debian"
+  become: true
+  block:
+    - name: Download Grafana GPG key for Debian based systems
+      ansible.builtin.get_url:
+        url: https://apt.grafana.com/gpg.key
+        dest: /usr/share/keyrings/grafana.key
+        mode: '0644'
+
+    - name: Add Grafana apt repository on Debian based systems
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/grafana.list
+        content: |
+          deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main
+        mode: '0644'
+
+    - name: Install Grafana and dependencies on Debian based systems
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - software-properties-common
+          - unzip
+          - grafana-enterprise
+        state: present
+        update_cache: true
+
+
+- name: Install Grafana on RedHat systems
+  when: ansible_os_family == "RedHat"
+  become: true
+  block:
+
+    - name: Download the GPG key on RedHat based systems
+      ansible.builtin.get_url:
+        url: https://rpm.grafana.com/gpg.key
+        dest: /etc/pki/rpm-gpg/RPM_GPG_KEY_grafana
+        mode: '0644'
+
+    - name: Add the Grafana yum repository for RedHat based Systems
+      ansible.builtin.copy:
+        dest: /etc/yum.repos.d/grafana.repo
+        content: |
+          [grafana]
+          name=Grafana Enterprise
+          baseurl=https://rpm.grafana.com
+          repo_gpgcheck=1
+          enabled=1
+          gpgcheck=1
+          gpgkey=file:///etc/pki/rpm-gpg/RPM_GPG_KEY_grafana
+          sslverify=1
+          sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+        mode: '0644'
+
+    - name: Install Grafana and Dependencies on RedHat based systems
+      ansible.builtin.package:
+        name:
+          - dnf-plugins-core
+          - unzip
+          - grafana-enterprise
+        state: present
+
+
+- name: Provisioning datasources and dashboards
+  become: true
+  block:
+    - name: Ensure provisioning directories exist (should be created by default)
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - /etc/grafana
+        - /etc/grafana/provisioning
+        - /etc/grafana/provisioning/dashboards
+        - /etc/grafana/provisioning/datasources
+
+    - name: Create Prometheus datasource provisioning file if it doesn't exist
+      ansible.builtin.copy:
+        dest: /etc/grafana/provisioning/datasources/prometheus.yaml
+        content: |
+          # /etc/grafana/provisioning/datasources/prometheus.yaml
+          apiVersion: 1
+          datasources:
+            - name: Prometheus
+              type: prometheus
+              access: proxy
+              url: http://localhost:9090
+              isDefault: true
+              editable: false
+        force: false
+        mode: '0644'
+
+    - name: Create Loki datasource provisioning file if it doesn't exist
+      ansible.builtin.copy:
+        dest: /etc/grafana/provisioning/datasources/loki.yaml
+        content: |
+          # /etc/grafana/provisioning/datasources/loki.yaml
+          apiVersion: 1
+          datasources:
+            - name: Loki
+              type: loki
+              access: proxy
+              url: http://localhost:3100
+              isDefault: false
+              editable: false
+        force: false
+        mode: '0644'
+
+    - name: Create directory for dashboards
+      ansible.builtin.file:
+        path: /var/lib/grafana/dashboards
+        state: directory
+        mode: '0755'
+
+    - name: Set up dashboard provisioning
+      ansible.builtin.copy:
+        mode: '0644'
+        dest: /etc/grafana/provisioning/dashboards/default.yaml
+        force: false
+        content: |
+          apiVersion: 1
+          providers:
+            - name: 'default'
+              orgId: 1
+              folder: ''
+              type: file
+              options:
+                path: /var/lib/grafana/dashboards
+
+- name: Check if firewalld is running
+  ansible.builtin.systemd:
+    name: firewalld
+  register: firewalld_status
+
+- name: Output firewalld status
+  ansible.builtin.debug:
+    msg: "Firewalld status: {{ firewalld_status.status.ActiveState }}"
+
+- name: Open Firewalld port 3000
+  become: true
+  ansible.builtin.shell:
+    cmd: |
+      firewall-cmd --add-port=3000/tcp --permanent
+      firewall-cmd --reload
+  when: firewalld_status.status.ActiveState == 'active'
+
+- name: Save host IP
+  ansible.builtin.set_fact:
+    grafana_host_ip: "{{ ansible_default_ipv4.address }}"
+
+- name: Start Grafana
+  become: true
+  ansible.builtin.systemd:
+    daemon_reload: true
+    name: grafana-server
+    state: started
+    enabled: true
+
+- name: Generate Grafana link
+  ansible.builtin.debug:
+    msg: "Grafana link: http://{{ grafana_host_ip }}:3000"
+

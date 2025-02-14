@@ -1,0 +1,116 @@
+---
+# tasks file for promtail-deploy
+- name: Set up the environment
+  become: true
+  block:
+    - name: Create the /opt/promtail directory
+      ansible.builtin.file:
+        path: /opt/promtail
+        state: directory
+        mode: '0755'
+
+    - name: Download the promtail archive
+      ansible.builtin.get_url:
+        url: "{{ promtail_download_link }}"
+        dest: /opt/promtail
+        mode: '0755'
+
+    - name: Make sure unzip is on the system
+      ansible.builtin.package:
+        name: unzip
+        state: present
+
+    - name: Unarchive promtail
+      ansible.builtin.unarchive:
+        remote_src: true
+        src: "/opt/promtail/promtail-{{ promtail_platform }}.zip"
+        dest: /opt/promtail
+        mode: '0755'
+
+    - name: Write out a default config file
+      vars:
+        syslog_file: "{% if ansible_os_family == 'Debian' %}/var/log/syslog{% else %}/var/log/messages{% endif %}"
+        auth_file: "{% if ansible_os_family == 'Debian' %}/var/log/auth.log{% else %}/var/log/secure{% endif %}"
+        os_label: "{% if ansible_os_family == 'Debian' %}debian{% else %}rhel{% endif %}"
+      ansible.builtin.copy:
+        dest: /opt/promtail/promtail-local-config.yaml
+        mode: '0644'
+        content: |
+          server:
+            http_listen_port: 9080
+            grpc_listen_port: 0
+            log_level: debug
+
+          positions:
+            filename: /tmp/positions.yaml
+
+          clients:
+            - url: http://{{ hostvars.control_node.control_node_ip }}:3100/loki/api/v1/push
+
+          scrape_configs:
+
+            - job_name: syslog
+              static_configs:
+                - targets:
+                    - localhost
+                  labels:
+                    job: syslog
+                    os_family: {{ os_label }}
+                    host: {{ ansible_hostname }}
+                    __path__: {{ syslog_file }}
+
+            - job_name: auth
+              static_configs:
+                - targets:
+                    - localhost
+                  labels:
+                    job: auth
+                    os_family: {{ os_label }}
+                    host: {{ ansible_hostname }}
+                    __path__: {{ auth_file }}
+
+            - job_name: all
+              static_configs:
+                - targets:
+                    - localhost
+                  labels:
+                    job: all
+                    os_family: {{ os_label }}
+                    host: {{ ansible_hostname }}
+                    __path__: /var/log/*.log
+
+
+    - name: Ensure the service file is in /etc/systemd/system
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/promtail.service
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Promtail Service Startup
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          ExecStart=/opt/promtail/promtail-linux-amd64 -config.file=/opt/promtail/promtail-local-config.yaml
+
+          [Install]
+          WantedBy=default.target
+
+- name: Start promtail and output its status
+  become: true
+  block:
+    - name: Do a daemon reload and enable/start promtail
+      ansible.builtin.systemd:
+        daemon_reload: true
+        enabled: true
+        name: promtail
+        state: started
+
+    - name: Get the status of promtail
+      ansible.builtin.systemd:
+        name: promtail
+      register: promtail_systemd_status
+
+    - name: Output the status of promtail
+      ansible.builtin.debug:
+        msg: "promtail status: {{ promtail_systemd_status.status.ActiveState }}"

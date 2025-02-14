@@ -1,0 +1,10 @@
+---
+# vars file for node_exporter-deploy
+node_exporter_version: 1.8.2
+node_exporter_platform: "linux-amd64"
+node_exporter_dir: "/opt/node_exporter"
+node_exporter_tarball: "node_exporter-{{ node_exporter_version }}.{{ node_exporter_platform }}.tar.gz"
+node_exporter_extracted_dir: "{{ node_exporter_dir }}/node_exporter-{{ node_exporter_version }}.{{ node_exporter_platform }}"
+github_download_page: https://github.com/prometheus/node_exporter/releases/download
+node_exporter_download_link: |
+  {{ github_download_page }}/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.{{ node_exporter_platform }}.tar.gz
