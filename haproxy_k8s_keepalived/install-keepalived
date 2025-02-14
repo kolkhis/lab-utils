@@ -3,6 +3,24 @@
 : "${STATE:=}"
 : "${PRIORITY:=}"
 
+
+case $HOSTNAME in
+    *lb1*)
+        printf "Host is load balancer number 1.\n" 
+        printf "Setting priority to %s.\n" "${PRIORITY:=100}"
+        printf "Setting state to %s.\n" "${STATE:=MASTER}"
+        ;;
+    *lb2*)
+        printf "Host is load balancer number 2.\n"
+        printf "Setting priority to: %s.\n" "${PRIORITY:=90}"
+        printf "Setting state to: %s.\n" "${STATE:=BACKUP}"
+        ;;
+    *)
+        printf "Couldn't determine what the priority should be based on the hostname.\n"
+        ;;
+esac
+
+
 while [[ $1 =~ ^- ]]; do
     case $1 in
         -p|--priority) 
@@ -60,6 +78,29 @@ STATE: ${STATE:?"ERROR: STATE must be set to either BACKUP or MASTER!"}
 PRIORITY: ${PRIORITY:?"ERROR: PRIORITY must be set to 1-100!"}
 EOF
 
+
+add-config-file() {
+    {
+    cat <<- EOF | sudo tee /etc/keepalived/keepalived.conf
+	vrrp_instance VI_1 {
+	    state ${STATE}            # MASTER on the primary node, BACKUP on the secondary
+	    interface ens18         # The network interface connected to the LAN (ip addr)
+	    virtual_router_id 51    # needs to be the same on both nodes
+	    priority ${PRIORITY}            # Highest priority indicates the active MASTER node
+	    advert_int 1            # advertisement interval, in seconds
+	    authentication {
+	        auth_type PASS
+	        auth_pass secretpassword123
+	    }
+	    virtual_ipaddress {
+	        192.168.4.250/24   # adjust to match network
+	    }
+	}
+	EOF
+    } || {
+        printf "Failed to add config file: /etc/keepalived/keepalived.conf\n" && return 1
+    }
+}
 
 install-keepalived-debian() {
     if ! sudo apt update && sudo apt-get install keepalived -y ; then
