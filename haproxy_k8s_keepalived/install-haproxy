@@ -71,15 +71,36 @@ debian-install-haproxy() {
 }
 
 rhel-install-haproxy() {
+    if [[ $(getenforce | tr '[:upper:]' '[:lower:]') != "permissive" ]]; then
+        {
+            sudo setenforce 0
+            sudo sed -i -E 's/^(SELINUX=)enforcing$/\1permissive/' /etc/selinux/config
+        } || {
+            printf "Failed to set SELinux to permissive.\n" && return 1
+        }
+    fi
+
+    if [[ $(sudo systemctl is-active firewalld) == 'active' ]]; then
+        printf "Firewalld is active. Adding HTTP/S ports to Firewalld.\n"
+        {
+            sudo firewall-cmd --add-port={443,80}/tcp --permanent
+            sudo firewall-cmd --reload
+        } || {
+            printf "Failed to open ports 80 and 443 in firewalld.\n" && return 1
+        }
+    fi
+
     if ! sudo dnf install haproxy -y; then
         printf >&2 "There was a problem installing HAProxy!\n" && return 1
     fi
+
     add-config-file || {
         printf >&2 "ERROR: Failed to add HAProxy config file.\n" && return 1
     }
     restart-and-enable || {
         printf >&2 "ERROR: Failed to add HAProxy config file.\n" && return 1
     }
+
 }
 
 
