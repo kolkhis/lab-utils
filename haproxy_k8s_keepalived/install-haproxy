@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# TODO (input): Add loop to get worker node IPs and generate config file?
-
-: "${NODE_PORT:=}"
+: "${NODE_PORT:=30189}"
 : "${WORKER1:=192.168.4.67}"
 : "${WORKER2:=192.168.4.68}"
 
@@ -75,8 +73,12 @@ rhel-install-haproxy() {
     if ! dnf install haproxy -y; then
         printf >&2 "There was a problem installing HAProxy!\n" && return 1
     fi
-    add-config-file
-    restart-and-enable
+    add-config-file || {
+        printf >&2 "ERROR: Failed to add HAProxy config file.\n" && return 1
+    }
+    restart-and-enable || {
+        printf >&2 "ERROR: Failed to add HAProxy config file.\n" && return 1
+    }
 }
 
 
@@ -118,6 +120,7 @@ while [[ $1 =~ ^- ]]; do
     esac
 done
 
+
 [[ -z $NODE_PORT ]] && read -r -p "No -p <NodePort> specified. Enter the NodePort of your cluster: " NODE_PORT
 if [[ -z $NODE_PORT ]]; then
     cat <<- EOF
@@ -142,8 +145,6 @@ fi
 printf "Starting installation of HAProxy.\n"
 
 OS_FAMILY=$(cat /etc/*release | grep -i "id_like" | awk -F= '{print $2}')
-printf "OS Family detected: %s\n" "${OS_FAMILY}"
-
 if [[ -z "$OS_FAMILY" ]]; then
     printf "Trying again to determine OS family.\n"
     {
