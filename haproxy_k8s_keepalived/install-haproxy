@@ -16,7 +16,8 @@ restart-and-enable() {
 }
 
 add-config-file(){
-	cat <<- EOF | sudo tee /etc/haproxy/haproxy.cgf
+    sudo mv /etc/haproxy/haproxy.cfg /etc/haproxy/old_haproxy.cfg  
+	cat <<- EOF | sudo tee /etc/haproxy/haproxy.cfg
 	global
 	    log /dev/log local0
 	    log /dev/log local1 notice
