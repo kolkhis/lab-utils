@@ -70,7 +70,7 @@ debian-install-haproxy() {
 }
 
 rhel-install-haproxy() {
-    if ! dnf install haproxy -y; then
+    if ! sudo dnf install haproxy -y; then
         printf >&2 "There was a problem installing HAProxy!\n" && return 1
     fi
     add-config-file || {
