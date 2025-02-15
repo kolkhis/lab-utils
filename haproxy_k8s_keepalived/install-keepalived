@@ -161,7 +161,7 @@ if [[ $OS_FAMILY == *debian* ]]; then
     install-keepalived-debian || {
         printf >&2 "Failed to install keepalived!\n" && exit 1
     }
-    printf "\033[31mSuccessfully installed keepalived.\n\033[0m"
+    printf "\033[32mSuccessfully installed keepalived.\n\033[0m"
     exit 0
 fi
 
