@@ -110,6 +110,9 @@ restart-and-enable() {
     sudo systemctl enable --now keepalived || {
         printf >&2 'Failed to enable keepalived.\n' && return 1; 
     }
+
+    printf "Restarted and enabled keepalived.\n";
+    return 0;
 }
 
 install-keepalived-debian() {
