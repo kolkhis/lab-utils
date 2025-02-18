@@ -1,0 +1,23 @@
+---
+# tasks file for k8s-common
+- name: Disable SWAP
+  ansible.builtin.shell:
+    cmd: |
+      swapoff -a
+      sed -i '/swap/s/^/#/' /etc/fstab
+  become: true
+  register: swapoff_output
+
+- name: Debug the output of swapoff
+  ansible.builtin.debug:
+    msg:
+      - "STDOUT: {{ swapoff_output.stdout }}"
+      - "STDERR: {{ swapoff_output.stderr }}"
+
+
+# - name: Copy k8s installation script
+#   ansible.builtin.copy:
+#     src: install-k8s
+#     dest: /home/kolkhis/
+#     force: true
+#     mode: '0755'

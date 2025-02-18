@@ -1,0 +1,13 @@
+---
+# tasks file for k8s-control-node
+- name: Disable SWAP
+  ansible.builtin.command:
+    become: true
+    cmd: swapoff -a
+  register: swapoff_output
+
+- name: Check if swapoff was successful
+  ansible.builtin.debug:
+    msg: "{{ swapoff_output.stdout }}"
+
+
