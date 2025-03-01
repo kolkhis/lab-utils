@@ -1,0 +1,8 @@
+#!/bin/bash
+{
+    [[ -d ~/lac ]] && cd ~/lac
+    [[ -f ~/.cargo/bin/mdbook ]] && ~/.cargo/bin/mdbook build -d /var/www/html
+} || {
+    printf >&2 "No ~/lac directory.\n"
+    exit 1
+}
