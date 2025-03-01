@@ -11,3 +11,4 @@ fi
     printf >&2 "No ~/lac directory.\n"
     exit 1
 }
+printf "Run the following command to verify:\ncurl http://192.168.4.54"
