@@ -1,4 +1,31 @@
 #!/bin/bash
+
+pull-upstream(){
+    cd ~/lac || {
+        printf "Failed to change directory to ~/lac!\n" && return 1
+    }
+    git pull upstream main || {
+        printf "Failed to pull from upstream!\n" && return 1
+    }
+    return 0
+}
+
+while [[ -n $1 ]]; do
+    case $1 in
+        -p|--pull)
+            printf "Pulling changes from upstream\n"
+            pull-upstream || {
+                printf "Failed to update repo from upstream. Exiting.\n" && exit 1
+            }
+            shift;
+            ;;
+        *)
+            printf "Unknown option. Discarding.\n"
+            shift;
+            ;;
+        esac
+done
+
 ACTIVE=$(sudo systemctl is-active apache2)
 if [[ ${ACTIVE,,} != 'active' ]]; then
     printf >&2 "Apache webserver isn't active.\n"
