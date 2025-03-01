@@ -1,2 +1,5 @@
 hosts
 join-nodes.md
+hosts.ini
+inventory.yml
+
