@@ -1,4 +1,9 @@
 #!/bin/bash
+ACTIVE=$(sudo systemctl is-active apache2)
+if [[ ${ACTIVE,,} != 'active' ]]; then
+    printf >&2 "Apache webserver isn't active.\n"
+    exit 1
+fi
 {
     [[ -d ~/lac ]] && cd ~/lac
     [[ -f ~/.cargo/bin/mdbook ]] && ~/.cargo/bin/mdbook build -d /var/www/html
