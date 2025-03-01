@@ -1,0 +1,65 @@
+---
+- name: Deploy local ProLUG mdBook dev page to rocky container
+  hosts: rocky2host
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Install dependencies
+      ansible.builtin.dnf:
+        update_cache: true
+        name:
+          - httpd
+          - git
+          - gcc
+          - rust
+          - cargo
+        state: present
+
+    - name: Enable httpd
+      ansible.builtin.service:
+        name: httpd
+        enabled: true
+
+    - name: Installing mdbook
+      community.general.cargo:
+        name: mdbook
+        state: present
+
+    - name: Verifying presence of ProLUG repo
+      ansible.builtin.command: ls /root/lac/
+      register: contents_git
+      ignore_errors: true
+
+    - name: Clone down ProLUG repo if absent
+      ansible.builtin.git:
+        repo: 'https://github.com/ProfessionalLinuxUsersGroup/lac'
+        dest: /root/lac/
+        clone: true
+      when: contents_git.stdout == ""
+
+    - name: Verify absent httpd configuration
+      ansible.builtin.command: ls /var/www/html/
+      register: contents_httpd
+
+    - name: Checking /var/www/html not empty
+      ansible.builtin.debug:
+        msg: "httpd /html not empty, verify content"
+      when: contents_httpd.stdout != ""
+
+    - name: Builing mdbook if /html empty
+      ansible.builtin.command:
+        chdir: /root/lac
+        argv:
+          - /root/.cargo/bin/mdbook
+          - build
+          - --dest-dir
+          - /var/www/html
+      when: contents_httpd.stdout == ""
+      notify: Restart httpd
+
+  handlers:
+    - name: Restart httpd
+      ansible.builtin.service:
+        name: httpd
+        state: restarted

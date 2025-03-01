@@ -1,0 +1,9 @@
+#!/bin/bash
+sudo apt update
+sudo apt install apache2 git gcc rustc-1.80 cargo-1.80
+sudo cargo-1.80 install --locked mdbook
+sudo systemctl enable apache2 && systemctl start apache2
+cd && git clone https://github.com/ProfessionalLinuxUsersGroup/lac
+cd ~/lac && ~/.cargo/bin/mdbook build -d /var/www/html
+sudo systemctl restart apache2
+
