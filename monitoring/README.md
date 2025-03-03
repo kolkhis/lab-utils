@@ -33,6 +33,9 @@ Node_Exporter and Promtail are installed on all nodes, including the control nod
 
 Always run from the control node. Otherwise Prometheus service discovery won't be updated and your targets won't be scraped. 
 
+The control node must be named `control_node` in the inventory file for the node_exporter role
+to properly append a new target to the `targets.json` file.  
+
 
 ### First Time Setup
 There are two ways to go about this:
