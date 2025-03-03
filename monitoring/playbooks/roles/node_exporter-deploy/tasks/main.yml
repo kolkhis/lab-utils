@@ -134,7 +134,7 @@
 
 - name: Read in data from targets.json
   become: true
-  delegate_to: control_node
+  delegate_to: "{{ control_node_inventory_name }}"
   block:
 
     - name: Check for targets.json
@@ -192,7 +192,7 @@
 
     - name: Write the new targets to targets.json
       become: true
-      delegate_to: control_node
+      delegate_to: "{{ control_node_inventory_name }}"
       when: new_targets is defined
       ansible.builtin.copy:
         dest: /etc/prometheus/targets.json

@@ -35,6 +35,7 @@ Always run from the control node. Otherwise Prometheus service discovery won't b
 
 The control node must be named `control_node` in the inventory file for the node_exporter role
 to properly append a new target to the `targets.json` file.  
+To change this, set the `control_node_inventory_name` variable in `roles/node_exporter-deploy/vars/main.yml` to your preferred control node name.  
 
 
 ### First Time Setup
