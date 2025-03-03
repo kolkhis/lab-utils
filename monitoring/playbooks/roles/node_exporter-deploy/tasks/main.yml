@@ -9,11 +9,11 @@
         state: directory
         mode: '0755'
 
-    - name: Create /etc/sysconfig directory
-      ansible.builtin.file:
-        path: /etc/sysconfig
-        state: directory
-        mode: '0755'
+    # - name: Create /etc/sysconfig directory
+    #   ansible.builtin.file:
+    #     path: /etc/sysconfig
+    #     state: directory
+    #     mode: '0755'
 
     - name: Download the given version of node_exporter
       ansible.builtin.get_url:
@@ -44,36 +44,25 @@
         group: node_exporter
         mode: '0755'
 
-  # TODO: Refactor to use basic service file with minimal ExecStart
-          # [Unit]
-          # Description=Node Exporter Startup
-          # Wants=network-online.target
-          # After=network-online.target
-
-          # [Service]
-          # ExecStart=/opt/node_exporter/node_exporter-1.5.0.linux-amd64/node_exporter
-
-          # [Install]
-          # WantedBy=default.target
-
-- name: Clone and copy configuration files
+- name: Create service file and move binary to /usr/sbin
   become: true
   block:
 
-    - name: Clone the node_exporter configuration files repo
-      ansible.builtin.git:
-        repo: "https://github.com/prometheus/node_exporter.git"
-        dest: "{{ node_exporter_dir }}/config_files"
-
-    - name: Copy the node_exporter unit files into systemd directory
+    - name: Copy the service file to its target location
       ansible.builtin.copy:
-        remote_src: true
-        src: "{{ node_exporter_dir }}/config_files/examples/systemd/{{ item }}"
-        dest: "/etc/systemd/system/{{ item }}"
+        dest: /etc/systemd/system/node_exporter.service
         mode: '0755'
-      loop:
-        - "node_exporter.socket"
-        - "node_exporter.service"
+        content: |
+          [Unit]
+          Description=Node Exporter Startup
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          ExecStart={{ node_exporter_extracted_dir }}/node_exporter
+
+          [Install]
+          WantedBy=default.target
 
     - name: Copy the node_exporter binary to /usr/sbin
       ansible.builtin.copy:
@@ -84,12 +73,27 @@
         group: node_exporter
         mode: '0755'
 
-    - name: Copy sysconfig file to /etc/sysconfig
-      ansible.builtin.copy:
-        remote_src: true
-        src: "{{ node_exporter_dir }}/config_files/examples/systemd/sysconfig.node_exporter"
-        dest: "/etc/sysconfig/node_exporter"
-        mode: '0755'
+    # - name: Clone the node_exporter configuration files repo
+    #   ansible.builtin.git:
+    #     repo: "https://github.com/prometheus/node_exporter.git"
+    #     dest: "{{ node_exporter_dir }}/config_files"
+
+    # - name: Copy the node_exporter unit files into systemd directory
+    #   ansible.builtin.copy:
+    #     remote_src: true
+    #     src: "{{ node_exporter_dir }}/config_files/examples/systemd/{{ item }}"
+    #     dest: "/etc/systemd/system/{{ item }}"
+    #     mode: '0755'
+    #   loop:
+    #     - "node_exporter.socket"
+    #     - "node_exporter.service"
+
+    # - name: Copy sysconfig file to /etc/sysconfig
+    #   ansible.builtin.copy:
+    #     remote_src: true
+    #     src: "{{ node_exporter_dir }}/config_files/examples/systemd/sysconfig.node_exporter"
+    #     dest: "/etc/sysconfig/node_exporter"
+    #     mode: '0755'
 
 
 - name: Systemd service commands
@@ -169,8 +173,7 @@
 
     - name: Output the result of IP check
       ansible.builtin.debug:
-        msg: "IP already in targets: {{ target_found }}"
-      when: not target_found
+        msg: "IP already in targets.json: {{ target_found }}"
 
     - name: Add to targets_file_contents if IP was not found
       ansible.builtin.set_fact:
