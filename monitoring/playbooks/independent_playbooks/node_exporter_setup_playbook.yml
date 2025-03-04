@@ -12,6 +12,7 @@
     github_download_page: https://github.com/prometheus/node_exporter/releases/download
     node_exporter_download_link: |
       {{ github_download_page }}/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.{{ node_exporter_platform }}.tar.gz
+    control_node_inventory_name: "localhost"
 
   tasks:
 
@@ -145,7 +146,7 @@
 
     - name: Read in data from targets.json
       become: true
-      delegate_to: localhost
+      delegate_to: "{{ control_node_inventory_name }}"
       block:
 
         - name: Check for targets.json
@@ -204,7 +205,7 @@
 
         - name: Write the new targets to targets.json
           become: true
-          delegate_to: localhost
+          delegate_to: "{{ control_node_inventory_name }}"
           when: new_targets is defined
           ansible.builtin.copy:
             dest: /etc/prometheus/targets.json
