@@ -1,11 +1,20 @@
 #!/bin/bash
+declare BUILD_DIR
+declare BOOK_LINK
+
+err() {
+    [[ $# -gt 0 ]] && {
+        local ERR="[ \033[31m ERROR \033[0m ]: "
+        printf >&2 "%s%s\n" "${ERR}" "$@"
+    }
+}
 
 pull-upstream(){
     cd ~/lac || {
-        printf "Failed to change directory to ~/lac!\n" && return 1
+        err "Failed to change directory to ~/lac!" && return 1
     }
     git pull upstream main || {
-        printf "Failed to pull from upstream!\n" && return 1
+        err "Failed to pull from upstream!" && return 1
     }
     return 0
 }
@@ -19,24 +28,48 @@ while [[ -n $1 ]]; do
             }
             shift;
             ;;
+        -d|--directory)
+            if [[ -n $2 ]]; then
+                printf "Using %s as build directory.\n" "$2"
+            else
+                err "The -d option given but no directory was specified. Using default."
+            fi
+            shift;
+            BUILD_DIR=$1
+            shift;
+            ;;
         *)
             printf "Unknown option. Discarding.\n"
             shift;
             ;;
-        esac
+    esac
 done
+
+: "${BUILD_DIR:=$HOME/book-lac}"
+
 
 ACTIVE=$(sudo systemctl is-active apache2)
 if [[ ${ACTIVE,,} != 'active' ]]; then
-    printf >&2 "Apache webserver isn't active.\n"
+    err "Apache WebServer is not active!"
     exit 1
 fi
-{
-    [[ -d ~/lac ]] && cd ~/lac
-    [[ -f ~/.cargo/bin/mdbook ]] && ~/.cargo/bin/mdbook build -d /var/www/html
-} || {
-    printf >&2 "No ~/lac directory.\n"
-    exit 1
+
+build() {
+
+    { [[ -d "${BUILD_DIR}" ]] && cd "${BUILD_DIR}"; } || {
+        err "No ${BUILD_DIR} directory!" && return 1
+    }
+
+    { [[ -f ~/.cargo/bin/mdbook ]] && ~/.cargo/bin/mdbook build -d /var/www/html; } || {
+        err "Failed to build book using mdbook!" && return 1
+    }
 }
 
-printf "Run the following command to verify:\ncurl http://192.168.4.54\n"
+if ! build; then
+    err "Failed to build book.\n" && exit 1
+fi
+
+BOOK_LINK="http://$(hostname -I | awk '{print $1}' | tr -d ' ')"
+printf "Run the following command to verify:\ncurl %s\n" "${BOOK_LINK}"
+printf "Or, visit the following link: %s\n" "${BOOK_LINK}"
+
