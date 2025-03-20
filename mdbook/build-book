@@ -1,6 +1,8 @@
 #!/bin/bash
-declare BUILD_DIR
+declare BUILD_DIR="$HOME/book-lac"
 declare BOOK_LINK
+declare REMOTE="upstream"
+declare BRANCH="main"
 
 err() {
     [[ $# -gt 0 ]] && {
@@ -10,32 +12,47 @@ err() {
 }
 
 pull-upstream(){
-    cd ~/lac || {
-        err "Failed to change directory to ~/lac!" && return 1
+    cd "${BUILD_DIR}" || {
+        err "Failed to change directory to ${BUILD_DIR}!" && return 1
     }
-    git pull upstream main || {
-        err "Failed to pull from upstream!" && return 1
-    }
+    if ! { [[ -n $REMOTE ]] && git pull "${REMOTE}" "${BRANCH}"; }; then
+        err "Failed to pull from remote repository: ${REMOTE}! Is the git remote set up?" && return 1
+    fi
     return 0
 }
 
 while [[ -n $1 ]]; do
     case $1 in
         -p|--pull)
+            if [[ -n $2 ]] && [[ ! $2 =~ ^- ]]; then
+                shift;
+                printf "Pulling from remote: %s\n" "$1"
+                REMOTE=$1
+            fi
             printf "Pulling changes from upstream\n"
             pull-upstream || {
                 printf "Failed to update repo from upstream. Exiting.\n" && exit 1
             }
             shift;
             ;;
+
         -d|--directory)
-            if [[ -n $2 ]]; then
+            if [[ -n $2 ]] && [[ ! $2 =~ ^- ]]; then
                 printf "Using %s as build directory.\n" "$2"
+                shift;
+                BUILD_DIR=$1
             else
-                err "The -d option given but no directory was specified. Using default."
+                err "The -d option was given but no directory was specified. Using default (~/book-lac)."
             fi
             shift;
-            BUILD_DIR=$1
+            ;;
+
+        -b|--branch)
+            if [[ -n $2 ]] && [[ ! $2 =~ ^- ]]; then
+                printf "Using %s as the branch.\n" "${BRANCH}"
+                shift;
+                BRANCH=$1
+            fi
             shift;
             ;;
         *)
@@ -45,8 +62,6 @@ while [[ -n $1 ]]; do
     esac
 done
 
-: "${BUILD_DIR:=$HOME/book-lac}"
-
 
 ACTIVE=$(sudo systemctl is-active apache2)
 if [[ ${ACTIVE,,} != 'active' ]]; then
@@ -55,7 +70,6 @@ if [[ ${ACTIVE,,} != 'active' ]]; then
 fi
 
 build() {
-
     { [[ -d "${BUILD_DIR}" ]] && cd "${BUILD_DIR}"; } || {
         err "No ${BUILD_DIR} directory!" && return 1
     }
