@@ -2,7 +2,7 @@
 # Terraform installer script
 
 declare OS_TYPE
-OS_TYPE=$(grep -i "id_like" /etc/*release | awk -F= '/rhel/ { print $2 } { print $1 }')
+ OS_TYPE=$(grep -i "id_like" /etc/*release | awk -F= '/rhel/ { print $2 } { print $1 }')
 if [[ -z "$OS_TYPE" ]]; then
     {
         which apt && printf "OS type detected: %s\n" "${OS_TYPE:=debian}"
@@ -94,15 +94,19 @@ case $OS_TYPE in
             err "There was a problem installing Terraform!" && exit 1
         fi
         ;;
-    *rhel_yum*)
-        if ! rhel-yum-install-tf; then
-            err "There was a problem installing Terraform!" && exit 1
+    *rhel*)
+        if which dnf; then
+            rhel-dnf-install-tf || {
+                err "there was a problem installing terraform (dnf)!" exit 1 
+            }
+        elif which yum; then
+            rhel-yum-install-tf || {
+                err "There was a problem installing Terraform!" && exit 1
+            }
         fi
         ;;
-    *rhel_dnf*)
-        if ! rhel-yum-install-tf; then
-            err "There was a problem installing Terraform!" && exit 1
-        fi
+    *)
+        err "Failed to determine OS family." && exit 1
         ;;
 esac
 
