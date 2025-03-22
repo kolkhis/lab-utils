@@ -2,14 +2,14 @@
 # Terraform installer script
 
 declare OS_TYPE
- OS_TYPE=$(grep -i "id_like" /etc/*release | awk -F= '/rhel/ { print $2 } { print $1 }')
+OS_TYPE=$(grep -i "id_like" /etc/*release | awk -F= '/rhel/ { print $2 } { print $1 }')
 if [[ -z "$OS_TYPE" ]]; then
     {
-        which apt && printf "OS type detected: %s\n" "${OS_TYPE:=debian}"
+        which apt > /dev/null 2>&1 && printf "OS type detected: %s\n" "${OS_TYPE:=debian}"
     } || {
-        which dnf && printf "OS type detected: %s\n" "${OS_TYPE:=rhel_dnf}"
+        which dnf > /dev/null 2>&1 && printf "OS type detected: %s\n" "${OS_TYPE:=rhel_dnf}"
     } || {
-        which yum && printf "OS type deteched: %s\n" "${OS_TYPE:=rhel_yum}"
+        which yum > /dev/null 2>&1 && printf "OS type deteched: %s\n" "${OS_TYPE:=rhel_yum}"
     }
 fi
 
@@ -97,7 +97,7 @@ case $OS_TYPE in
     *rhel*)
         if which dnf; then
             rhel-dnf-install-tf || {
-                err "there was a problem installing terraform (dnf)!" exit 1 
+                err "there was a problem installing terraform (dnf)!" && exit 1 
             }
         elif which yum; then
             rhel-yum-install-tf || {
