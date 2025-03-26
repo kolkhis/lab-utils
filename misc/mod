@@ -18,11 +18,13 @@ debug() {
 }
 
 download-link-gen() {
+    # download files should be named 'u$n_lab.*' or 'u$n_worksheet.*' (where $n is the unit number)
     for FILE in "${FILES[@]}"; do
         printf "File: %s\n" "$FILE"
-        printf "File basename: %s\n" "$(basename "$FILE")"
+        local FILENAME
         FILENAME=$(basename "$FILE")
 
+        if ! grep -q "## Downloads" "$FILE"; then sed -i -e '$a\ ' -e '$a ## Downloads' "$FILE"; fi
         if [[ $FILENAME =~ ^u([0-9]+)lab.md$ ]]; then
             local -a DOWNLOAD_FILES
             UNIT="${BASH_REMATCH[1]}"
@@ -36,12 +38,33 @@ download-link-gen() {
             )
 
             for DOWNLOAD_FILE in "${DOWNLOAD_FILES[@]}"; do
+                local FILE_LOCATION="./${DOWNLOAD_FILE#./src/}"
+                local FILE_EXTENSION=".${DOWNLOAD_FILE##.*.}"
+                local LINK_TO_INPUT
+                # [[ $DOWNLOAD_FILE =~ u.*(\..*) ]] && FILE_EXTENSION="${BASH_REMATCH[1]}"
                 printf "Lab Download file: %s\n" "${DOWNLOAD_FILE}"
                 FILE_LOCATION="./${DOWNLOAD_FILE#./src/}"
-                [[ $DOWNLOAD_FILE =~ u.*(\..*) ]] && FILE_EXTENSION="${BASH_REMATCH[1]}"
-                LINK_TO_INPUT=$(printf "\n#### <a href=\"${FILE_LOCATION}\" target=\"_blank\" download>📥 Download (\`%s\`)</a>\n" "${FILE_EXTENSION}")
-                debug "FINAL LINK: $LINK_TO_INPUT"
-                # sed -i "\$a $LINK_TO_INPUT" "$FILE"
+                LINK_TO_INPUT="#### - <a href=\"${FILE_LOCATION}\" target=\"_blank\" download>📥 Download (\`${FILE_EXTENSION}\`)</a>"
+                debug "Lab link: $LINK_TO_INPUT"
+                if ! grep -qi "${LINK_TO_INPUT}" "${FILE}"; then
+                    debug "Download link not found. Adding."
+                    sed -i "/## Downloads/a ${LINK_TO_INPUT}" "$FILE" || {
+                        printf "[ \033[31m ERROR: \033[0m]: Failed to insert download link.\n"
+                    }
+                else
+                    debug "Link found - skipping."
+                fi
+
+                # Add to downloads.md
+                if ! grep -qi "${LINK_TO_INPUT}" "./src/downloads.md"; then
+                    debug "Download link not found. Adding."
+
+                    sed -i "/^## Unit $UNIT$/a  ${LINK_TO_INPUT} - Lab" "./src/downloads.md" || {
+                        printf "[ \033[31m ERROR: \033[0m]: Failed to insert download link (downloads.md).\n"
+                    }
+                else
+                    debug "Link found in downloads.md - skipping."
+                fi
 
             done
 
@@ -57,24 +80,46 @@ download-link-gen() {
             )
 
             for DOWNLOAD_FILE in "${DOWNLOAD_FILES[@]}"; do
+                local FILE_LOCATION="./${DOWNLOAD_FILE#./src/}"
+                local FILE_EXTENSION=".${DOWNLOAD_FILE##.*.}"
+                local LINK_TO_INPUT
+                # [[ $DOWNLOAD_FILE =~ u.*(\..*) ]] && FILE_EXTENSION="${BASH_REMATCH[1]}"
                 printf "Worksheet Download file: %s\n" "${DOWNLOAD_FILE}"
                 FILE_LOCATION="./${DOWNLOAD_FILE#./src/}"
-                [[ $DOWNLOAD_FILE =~ u.*(\..*) ]] && FILE_EXTENSION="${BASH_REMATCH[1]}"
-                LINK_TO_INPUT=$(printf "\n#### <a href=\"${FILE_LOCATION}\" target=\"_blank\" download>📥 Download (\`%s\`)</a>\n" "${FILE_EXTENSION}")
-                debug "FINAL LINK: $LINK_TO_INPUT"
+                LINK_TO_INPUT="#### - <a href=\"${FILE_LOCATION}\" target=\"_blank\" download>📥 Download (\`${FILE_EXTENSION}\`)</a>"
+                debug "Worksheet Link: ${LINK_TO_INPUT}"
+                if ! grep -qi "${LINK_TO_INPUT}" "${FILE}"; then
+                    debug "Download link not found. Adding."
+                    sed -i "/## Downloads/a ${LINK_TO_INPUT}" "$FILE" || {
+                        printf "[ \033[31m ERROR: \033[0m]: Failed to insert download link.\n"
+                    }
+                else
+                    debug "Link found - skipping."
+                fi
+
+                # Add to downloads.md
+                if ! grep -qi "${LINK_TO_INPUT}" "./src/downloads.md"; then
+                    debug "Download link not found. Adding."
+                    sed -i "/^## Unit $UNIT$/a ${LINK_TO_INPUT} - Worksheet" "./src/downloads.md" || {
+                        printf "[ \033[31m ERROR: \033[0m]: Failed to insert download link (downloads.md).\n"
+                    }
+                else
+                    debug "Link found in downloads.md - skipping."
+                fi
+
             done
         fi
-
-        # if [[ $INSERT_AT_EOF ]]; then
-        #     declare DOWNLOAD_LINK
-        #     DOWNLOAD_LINK="#### <a href="https://raw.githubusercontent.com/ProfessionalLinuxUsersGroup/lac/main/src/$(basename "$FILE")" download>📥 Download Raw Markdown Document</a>"
-        #     sed -i "\$a $DOWNLOAD_LINK\n" "$FILE" ;
-        # fi
 
     done
 }
 
-download-link-gen || printf "Error while generating links.\n"
+create-downloads-page() {
+    touch src/downloads.md
+    printf "# ProLUG Linux Sysadmin - Course Work Downloads\n" >> ./src/downloads.md
+    for i in {1..16}; do
+        printf "## Unit %s\n" "$i" >> ./src/downloads.md
+    done
+}
 
 replace-text() {
     for FILE in "${FILES[@]}"; do
@@ -92,32 +137,5 @@ append-text() {
     done
 }
 
-# for FILE in "${FILES[@]}"; do
-#     printf "File: %s\n" "$FILE"
-#     printf "File basename: %s\n" "$(basename "$FILE")"
-#     FILENAME=$(basename "$FILE")
-#     if [[ $FILENAME =~ ^u[0-9]+lab.md$ ]]; then
-#         printf 'File is a lab\n'
-#     elif [[ $FILENAME =~ ^u[0-9]+ws.md$ ]]; then
-#         printf 'File is a worksheet\n'
-#     fi
-#     if [[ $FILENAME =~ ^u([0-9]+)lab.md$ ]]; then
-#         printf 'File is a lab\n'
-#         UNIT="${BASH_REMATCH[1]}"
-#         [[ -n "$UNIT" ]] || {
-#             printf "Could not determine the unit.\n" && continue
-#         }
-#         printf "Unit: %s\n" "${UNIT}"
-#     elif [[ $FILENAME =~ ^u([0-9]+)ws.md$ ]]; then
-#         printf 'File is a worksheet\n'
-#         UNIT="${BASH_REMATCH[1]}"
-#         [[ -n "$UNIT" ]] || {
-#             printf "Could not determine the unit.\n" && continue
-#         }
-#         printf "Unit: %s\n " "${UNIT}"
-#     fi
-# done
-
-: '
-<a href="https://raw.githubusercontent.com/ProfessionalLinuxUsersGroup/lac/main/src/unit14/lab.md" download>📥 Download Markdown</a>
-'
+create-downloads-page
+download-link-gen || printf "Error while generating links.\n"
