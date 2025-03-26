@@ -9,10 +9,15 @@ declare APPENDED_TEXT="<a href="https://raw.githubusercontent.com/ProfessionalLi
 
 declare -a FILES
 IFS=$'\n' read -r -d '' -a FILES < <(
-    find "$SEARCH_DIR" -name "$FILE_PATTERN" ! -name 'u*intro.md' ! -name 'u*lab.md'
+    find "$SEARCH_DIR" -name "$FILE_PATTERN" ! -name 'u*intro.md' #! -name 'u*lab.md'
 )
 
-link-gen() {
+debug() {
+    printf "[ \033[33mDEBUG\033[0m ]: "
+    printf "%s\n" "$*"
+}
+
+download-link-gen() {
     for FILE in "${FILES[@]}"; do
         printf "File: %s\n" "$FILE"
         printf "File basename: %s\n" "$(basename "$FILE")"
@@ -27,8 +32,18 @@ link-gen() {
             printf 'Searching for unit %s lab files...\n' "$UNIT"
 
             IFS=$'\n' read -r -d '' -a DOWNLOAD_FILES < <(
-                find "./src/assets/downloads/u${UNIT}" -type f
+                find "./src/assets/downloads/u${UNIT}" -type f -name "*lab*"
             )
+
+            for DOWNLOAD_FILE in "${DOWNLOAD_FILES[@]}"; do
+                printf "Lab Download file: %s\n" "${DOWNLOAD_FILE}"
+                FILE_LOCATION="./${DOWNLOAD_FILE#./src/}"
+                [[ $DOWNLOAD_FILE =~ u.*(\..*) ]] && FILE_EXTENSION="${BASH_REMATCH[1]}"
+                LINK_TO_INPUT=$(printf "\n#### <a href=\"${FILE_LOCATION}\" target=\"_blank\" download>📥 Download (\`%s\`)</a>\n" "${FILE_EXTENSION}")
+                debug "FINAL LINK: $LINK_TO_INPUT"
+                # sed -i "\$a $LINK_TO_INPUT" "$FILE"
+
+            done
 
         elif [[ $FILENAME =~ ^u([0-9]+)ws.md$ ]]; then
             local -a DOWNLOAD_FILES
@@ -38,27 +53,17 @@ link-gen() {
             }
             printf 'Searching for unit %s worksheet files...\n' "$UNIT"
             IFS=$'\n' read -r -d '' -a DOWNLOAD_FILES < <(
-                find "./src/assets/downloads/u${UNIT}" -type f
+                find "./src/assets/downloads/u${UNIT}" -type f -name "*worksheet*"
             )
+
+            for DOWNLOAD_FILE in "${DOWNLOAD_FILES[@]}"; do
+                printf "Worksheet Download file: %s\n" "${DOWNLOAD_FILE}"
+                FILE_LOCATION="./${DOWNLOAD_FILE#./src/}"
+                [[ $DOWNLOAD_FILE =~ u.*(\..*) ]] && FILE_EXTENSION="${BASH_REMATCH[1]}"
+                LINK_TO_INPUT=$(printf "\n#### <a href=\"${FILE_LOCATION}\" target=\"_blank\" download>📥 Download (\`%s\`)</a>\n" "${FILE_EXTENSION}")
+                debug "FINAL LINK: $LINK_TO_INPUT"
+            done
         fi
-
-        # declare -a DOWNLOAD_FILES
-        # IFS=$'\n' read -r -d '' -a DOWNLOAD_FILES < <(
-        #     find "./src/assets/downloads/u${UNIT}" -type f
-        # )
-
-        # for DOWNLOAD_FILE in "${DOWNLOAD_FILES[@]}"; do
-        #     printf "Download file for Unit %s Found: %s\n" "$UNIT" "$DOWNLOAD_FILE"
-        #     if [[ $FILENAME =~ ^u([0-9])+lab.md$ ]]; then
-        #         printf 'File is a lab\n'
-        #         UNIT="${BASH_REMATCH[1]}"
-        #         printf "Unit: %s\n" "${BASH_REMATCH[1]}"
-        #     elif [[ $FILENAME =~ ^u([0-9])+ws.md$ ]]; then
-        #         printf 'File is a worksheet\n'
-        #         UNIT="${BASH_REMATCH[1]}"
-        #         printf "Unit: %s\n " "${BASH_REMATCH[1]}"
-        #     fi
-        # done
 
         # if [[ $INSERT_AT_EOF ]]; then
         #     declare DOWNLOAD_LINK
@@ -68,7 +73,8 @@ link-gen() {
 
     done
 }
-link-gen
+
+download-link-gen || printf "Error while generating links.\n"
 
 replace-text() {
     for FILE in "${FILES[@]}"; do
