@@ -1,0 +1,68 @@
+#!/bin/bash
+# Rename the original files to a standardized format
+# Example filenames:
+# Unit2_ProLUG_Worksheet.txt
+# Unit2_ProLUG_Lab_Essentials2.docx
+# Unit2_ProLUG_Worksheet.docx
+# Unit3_ProLUG_Worksheet.txt
+# Unit3_ProLug_Lab_LVM_and_RAID.docx
+# Unit3_ProLug_Lab_LVM_and_RAID.pdf
+# Unit3_ProLug_Lab_LVM_and_RAID.txt
+# Unit3_ProLUG_Worksheet.docx
+
+# mkdir src/assets/downloads && cd src/assets/downloads
+# for n in {1..16}; do mkdir ./u"$n"; mv ./Unit"${n}_"* ./u"${n}"; done
+
+declare -a FILES
+IFS=$'\n' read -r -d '' -a FILES < <(
+    find ./src/assets/downloads -name 'Unit*'
+)
+
+standardize-names() {
+    for FILE in "${FILES[@]}"; do
+        printf "File: %s\n" "$FILE"
+
+        if ! printf "%s" "$FILE" | grep -qi 'worksheet'; then
+            : "File is a lab"
+            printf "File is a lab: %s\n" "$FILE"
+            mv "$FILE" "$(printf "%s\n" "$FILE" |
+                sed -E 's/Unit([0-9]+).*(\.[a-z]*)/u\1_lab\2/')" || {
+                printf "Problem renaming file: %s\n" "$FILE" && return 1
+            }
+
+            printf "Renamed LAB File (dry run): \033[32m"
+            printf "%s\n" "$FILE" | sed -E 's/Unit([0-9]+).*(\.[a-z]*)/u\1_lab\2/'
+            printf "\033[0m"
+
+        elif printf "%s" "$FILE" | grep -qi 'worksheet'; then
+            : "File is a worksheet"
+            mv "$FILE" "$(printf "%s\n" "$FILE" |
+                sed -E 's/Unit([0-9]+).*(\.[a-z]*)/u\1_worksheet\2/')" || {
+                printf "Problem renaming file: %s\n" "$FILE" && return 1
+            }
+
+            printf "RENAMED WORKSHEET FILE (dry run): \033[32m"
+            printf "%s\n" "$FILE" | sed -E 's/Unit([0-9]+).*(\.[a-z]*)/u\1_worksheet\2/'
+            printf "\033[0m"
+        else
+            : "Unknown file (shouldn't happen)"
+            printf "Unknown file: %s\n" "$FILE"
+        fi
+
+    done
+}
+
+if ! standardize-names; then
+    printf "[\033[31m ERROR \033[0m]: "
+    printf "Ran into a problem standardizing names!\n"
+fi
+
+# linkgen() {
+#     :
+#     # for line in $(IFS=$'\n' read -r -d '' -a FILES < <(find ./src -name '*.md')); do
+#     for line in $(find ./src -name '*.md'); do
+#         printf "Markdown File: %s\n" "$line"
+#     done
+# }
+# linkgen
+

@@ -1,0 +1,117 @@
+#!/bin/bash
+# TODO: Make all of these variables controllable from the command line
+declare SEARCH_DIR='./src'
+declare FILE_PATTERN='u*.md'
+declare SEARCH_TEXT="The discussion posts are done in Discord threads"
+declare INSERT_AT_EOF=1
+# declare APPENDED_TEXT="\n- The discussion posts are done in Discord threads. Click the 'Threads' icon on the top right and search for the discussion post."
+declare APPENDED_TEXT="<a href="https://raw.githubusercontent.com/ProfessionalLinuxUsersGroup/lac/main/src/unit14/lab.md" download>📥 Download Markdown</a>"
+
+declare -a FILES
+IFS=$'\n' read -r -d '' -a FILES < <(
+    find "$SEARCH_DIR" -name "$FILE_PATTERN" ! -name 'u*intro.md' ! -name 'u*lab.md'
+)
+
+link-gen() {
+    for FILE in "${FILES[@]}"; do
+        printf "File: %s\n" "$FILE"
+        printf "File basename: %s\n" "$(basename "$FILE")"
+        FILENAME=$(basename "$FILE")
+
+        if [[ $FILENAME =~ ^u([0-9]+)lab.md$ ]]; then
+            local -a DOWNLOAD_FILES
+            UNIT="${BASH_REMATCH[1]}"
+            [[ -n "$UNIT" ]] || {
+                printf "Could not determine the unit.\n" && return 1
+            }
+            printf 'Searching for unit %s lab files...\n' "$UNIT"
+
+            IFS=$'\n' read -r -d '' -a DOWNLOAD_FILES < <(
+                find "./src/assets/downloads/u${UNIT}" -type f
+            )
+
+        elif [[ $FILENAME =~ ^u([0-9]+)ws.md$ ]]; then
+            local -a DOWNLOAD_FILES
+            UNIT="${BASH_REMATCH[1]}"
+            [[ -n "$UNIT" ]] || {
+                printf "Could not determine the unit.\n" && return 1
+            }
+            printf 'Searching for unit %s worksheet files...\n' "$UNIT"
+            IFS=$'\n' read -r -d '' -a DOWNLOAD_FILES < <(
+                find "./src/assets/downloads/u${UNIT}" -type f
+            )
+        fi
+
+        # declare -a DOWNLOAD_FILES
+        # IFS=$'\n' read -r -d '' -a DOWNLOAD_FILES < <(
+        #     find "./src/assets/downloads/u${UNIT}" -type f
+        # )
+
+        # for DOWNLOAD_FILE in "${DOWNLOAD_FILES[@]}"; do
+        #     printf "Download file for Unit %s Found: %s\n" "$UNIT" "$DOWNLOAD_FILE"
+        #     if [[ $FILENAME =~ ^u([0-9])+lab.md$ ]]; then
+        #         printf 'File is a lab\n'
+        #         UNIT="${BASH_REMATCH[1]}"
+        #         printf "Unit: %s\n" "${BASH_REMATCH[1]}"
+        #     elif [[ $FILENAME =~ ^u([0-9])+ws.md$ ]]; then
+        #         printf 'File is a worksheet\n'
+        #         UNIT="${BASH_REMATCH[1]}"
+        #         printf "Unit: %s\n " "${BASH_REMATCH[1]}"
+        #     fi
+        # done
+
+        # if [[ $INSERT_AT_EOF ]]; then
+        #     declare DOWNLOAD_LINK
+        #     DOWNLOAD_LINK="#### <a href="https://raw.githubusercontent.com/ProfessionalLinuxUsersGroup/lac/main/src/$(basename "$FILE")" download>📥 Download Raw Markdown Document</a>"
+        #     sed -i "\$a $DOWNLOAD_LINK\n" "$FILE" ;
+        # fi
+
+    done
+}
+link-gen
+
+replace-text() {
+    for FILE in "${FILES[@]}"; do
+        sed -i "/${SEARCH_TEXT}/s/- //" "${FILE}" || {
+            printf "Failed to replace text.\n" && exit 1
+        }
+    done
+}
+
+append-text() {
+    for FILE in "${FILES[@]}"; do
+        sed -i "/$SEARCH_TEXT/a\\$APPENDED_TEXT" "$FILE" || {
+            printf "Failed to append text.\n" && exit 1
+        }
+    done
+}
+
+# for FILE in "${FILES[@]}"; do
+#     printf "File: %s\n" "$FILE"
+#     printf "File basename: %s\n" "$(basename "$FILE")"
+#     FILENAME=$(basename "$FILE")
+#     if [[ $FILENAME =~ ^u[0-9]+lab.md$ ]]; then
+#         printf 'File is a lab\n'
+#     elif [[ $FILENAME =~ ^u[0-9]+ws.md$ ]]; then
+#         printf 'File is a worksheet\n'
+#     fi
+#     if [[ $FILENAME =~ ^u([0-9]+)lab.md$ ]]; then
+#         printf 'File is a lab\n'
+#         UNIT="${BASH_REMATCH[1]}"
+#         [[ -n "$UNIT" ]] || {
+#             printf "Could not determine the unit.\n" && continue
+#         }
+#         printf "Unit: %s\n" "${UNIT}"
+#     elif [[ $FILENAME =~ ^u([0-9]+)ws.md$ ]]; then
+#         printf 'File is a worksheet\n'
+#         UNIT="${BASH_REMATCH[1]}"
+#         [[ -n "$UNIT" ]] || {
+#             printf "Could not determine the unit.\n" && continue
+#         }
+#         printf "Unit: %s\n " "${UNIT}"
+#     fi
+# done
+
+: '
+<a href="https://raw.githubusercontent.com/ProfessionalLinuxUsersGroup/lac/main/src/unit14/lab.md" download>📥 Download Markdown</a>
+'
