@@ -1,7 +1,7 @@
 #!/bin/bash
 declare BUILD_DIR="$HOME/book-lac"
 declare BOOK_LINK
-declare REMOTE="upstream"
+declare REMOTE="origin"
 declare BRANCH="main"
 
 err() {
@@ -11,10 +11,21 @@ err() {
     }
 }
 
+warn() {
+    [[ $# -gt 0 ]] && {
+        local WARNING="[ \033[33m WARNING \033[0m ]: "
+        printf "%s%s\n" "${WARNING}" "$@"
+    }
+}
+
+
 pull-upstream(){
     cd "${BUILD_DIR}" || {
         err "Failed to change directory to ${BUILD_DIR}!" && return 1
     }
+    git switch -c "${BRANCH}" || {
+        err "Failed to switch to branch: $BRANCH" && return 1
+    } 
     if ! { [[ -n $REMOTE ]] && git pull "${REMOTE}" "${BRANCH}"; }; then
         err "Failed to pull from remote repository: ${REMOTE}! Is the git remote set up?" && return 1
     fi
@@ -23,27 +34,27 @@ pull-upstream(){
 
 while [[ -n $1 ]]; do
     case $1 in
-        -p|--pull)
-            if [[ -n $2 ]] && [[ ! $2 =~ ^- ]]; then
-                shift;
-                printf "Pulling from remote: %s\n" "$1"
-                REMOTE=$1
-            fi
-            printf "Pulling changes from upstream\n"
-            pull-upstream || {
-                printf "Failed to update repo from upstream. Exiting.\n" && exit 1
-            }
-            shift;
-            ;;
-
-        -d|--directory)
+         -d|--directory)
             if [[ -n $2 ]] && [[ ! $2 =~ ^- ]]; then
                 printf "Using %s as build directory.\n" "$2"
                 shift;
                 BUILD_DIR=$1
             else
-                err "The -d option was given but no directory was specified. Using default (~/book-lac)."
+                err "The -d option was given but no directory was specified. Using default ($BUILD_DIR)."
             fi
+            shift;
+            ;;
+
+       -p|--pull)
+            if [[ -n $2 ]] && [[ ! $2 =~ ^- ]]; then
+                shift;
+                printf "Pulling from remote: %s\n" "$1"
+                REMOTE=$1
+            fi
+            printf "Pulling changes from %s...\n" "${REMOTE:=origin}"
+            pull-upstream || {
+                printf "Failed to update repo from upstream. Exiting.\n" && exit 1
+            }
             shift;
             ;;
 
@@ -53,20 +64,23 @@ while [[ -n $1 ]]; do
                 shift;
                 BRANCH=$1
             fi
+            printf "Pulling from branch: %s\n" "${BRANCH:=main}"
             shift;
             ;;
+
         *)
-            printf "Unknown option. Discarding.\n"
+            warn "Unknown option: $1 - Discarding.\n"
             shift;
             ;;
     esac
 done
 
-
 ACTIVE=$(sudo systemctl is-active apache2)
 if [[ ${ACTIVE,,} != 'active' ]]; then
-    err "Apache WebServer is not active!"
-    exit 1
+    warn "Apache WebServer is not active! Attempting to start apache2..."
+    sudo systemctl start apache2 || {
+        err "Failed to start Apache WebServer." && exit 1
+    }
 fi
 
 build() {
