@@ -3,9 +3,12 @@
 declare SEARCH_DIR='./src'
 declare FILE_PATTERN='u*.md'
 declare SEARCH_TEXT="The discussion posts are done in Discord threads"
-declare INSERT_AT_EOF=1
-# declare APPENDED_TEXT="\n- The discussion posts are done in Discord threads. Click the 'Threads' icon on the top right and search for the discussion post."
-declare APPENDED_TEXT="<a href="https://raw.githubusercontent.com/ProfessionalLinuxUsersGroup/lac/main/src/unit14/lab.md" download>📥 Download Markdown</a>"
+# declare APPENDED_TEXT="<a href="https://raw.githubusercontent.com/ProfessionalLinuxUsersGroup/lac/main/src/unit14/lab.md" download>📥 Download Markdown</a>"
+
+
+# u14_ws.docx
+# u14_ws.txt
+# u14_ws.md
 
 declare -a FILES
 IFS=$'\n' read -r -d '' -a FILES < <(
@@ -33,6 +36,7 @@ download-link-gen() {
             }
             printf 'Searching for unit %s lab files...\n' "$UNIT"
 
+            # Read lab download files into an array
             IFS=$'\n' read -r -d '' -a DOWNLOAD_FILES < <(
                 find "./src/assets/downloads/u${UNIT}" -type f -name "*lab*"
             )
@@ -41,7 +45,7 @@ download-link-gen() {
                 local FILE_LOCATION="./${DOWNLOAD_FILE#./src/}"
                 local FILE_EXTENSION=".${DOWNLOAD_FILE##.*.}"
                 local LINK_TO_INPUT
-                # [[ $DOWNLOAD_FILE =~ u.*(\..*) ]] && FILE_EXTENSION="${BASH_REMATCH[1]}"
+
                 printf "Lab Download file: %s\n" "${DOWNLOAD_FILE}"
                 FILE_LOCATION="./${DOWNLOAD_FILE#./src/}"
                 LINK_TO_INPUT="#### - <a href=\"${FILE_LOCATION}\" target=\"_blank\" download>📥 Download (\`${FILE_EXTENSION}\`)</a>"
@@ -58,7 +62,6 @@ download-link-gen() {
                 # Add to downloads.md
                 if ! grep -qi "${LINK_TO_INPUT}" "./src/downloads.md"; then
                     debug "Download link not found. Adding."
-
                     sed -i "/^## Unit $UNIT$/a  ${LINK_TO_INPUT} - Lab" "./src/downloads.md" || {
                         printf "[ \033[31m ERROR: \033[0m]: Failed to insert download link (downloads.md).\n"
                     }
@@ -75,6 +78,8 @@ download-link-gen() {
                 printf "Could not determine the unit.\n" && return 1
             }
             printf 'Searching for unit %s worksheet files...\n' "$UNIT"
+
+            # read worksheet download files into array
             IFS=$'\n' read -r -d '' -a DOWNLOAD_FILES < <(
                 find "./src/assets/downloads/u${UNIT}" -type f -name "*worksheet*"
             )
@@ -84,10 +89,14 @@ download-link-gen() {
                 local FILE_EXTENSION=".${DOWNLOAD_FILE##.*.}"
                 local LINK_TO_INPUT
                 # [[ $DOWNLOAD_FILE =~ u.*(\..*) ]] && FILE_EXTENSION="${BASH_REMATCH[1]}"
+
                 printf "Worksheet Download file: %s\n" "${DOWNLOAD_FILE}"
                 FILE_LOCATION="./${DOWNLOAD_FILE#./src/}"
+
                 LINK_TO_INPUT="#### - <a href=\"${FILE_LOCATION}\" target=\"_blank\" download>📥 Download (\`${FILE_EXTENSION}\`)</a>"
                 debug "Worksheet Link: ${LINK_TO_INPUT}"
+
+
                 if ! grep -qi "${LINK_TO_INPUT}" "${FILE}"; then
                     debug "Download link not found. Adding."
                     sed -i "/## Downloads/a ${LINK_TO_INPUT}" "$FILE" || {
@@ -106,16 +115,28 @@ download-link-gen() {
                 else
                     debug "Link found in downloads.md - skipping."
                 fi
-
             done
+
         fi
 
     done
 }
 
 create-downloads-page() {
-    touch src/downloads.md
-    printf "# ProLUG Linux Sysadmin - Course Work Downloads\n" >> ./src/downloads.md
+    # truncate file
+    : > ./src/downloads.md
+    [[ ! -f src/downloads.md ]] && touch src/downloads.md
+    cat <<- EOF > "./src/downloads.md"
+	<div class="flex-container">
+	        <img src="https://github.com/ProfessionalLinuxUsersGroup/img/blob/main/Assets/Logos/ProLUG_Round_Transparent_LOGO.png?raw=true" width="64" height="64"></img>
+	    <p>
+	        <h1>Course Work Downloads</h1>
+	    </p>
+	</div>
+	This page contains the downloads for all labs and worksheets in this course.  
+
+	EOF
+    # printf "# ProLUG Linux Sysadmin - Course Work Downloads\n" >> ./src/downloads.md
     for i in {1..16}; do
         printf "## Unit %s\n" "$i" >> ./src/downloads.md
     done
@@ -139,3 +160,4 @@ append-text() {
 
 create-downloads-page
 download-link-gen || printf "Error while generating links.\n"
+: " "
