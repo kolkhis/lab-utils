@@ -1,0 +1,161 @@
+#!/bin/bash
+# shellcheck disable=SC2016,SC2164
+
+
+
+
+if [[ -n $1 ]]; then
+    if [[ $1 == '--help' ]]; then
+        cat << EOF
+Here's how to use the script:
+
+
+EOF
+    fi
+fi
+
+
+declare FILE='./hello.c'
+
+case "$FILE" in
+    *)
+        printf "File is unknown\n"
+        ;;
+esac
+
+
+export FILE
+./conditionals
+
+
+
+
+
+
+
+
+printf "Bash scripting is simply taking the commands you run at the command line and putting them into a file.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Let's take a common task: Making a directory and then moving into it.\n"
+
+mkdir -p /home/kolkhis/testdir
+cd /home/kolkhis/testdir
+pwd
+
+printf "Nice. We've written a bash script.\n"
+printf "Let's run it.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Wait, what happened? My pwd didn't change.\n"
+printf "That's because scripts run in subshells. That means they won't affect your current environment.\n"
+printf "So, what is the solution?"
+
+
+
+printf "Well, we could source the script.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# $0;                 # $0 contains the script name
+# "${BASH_SOURCE[0]}" # so does this -- useful when 'source'ing scripts.
+
+
+mkdircd() {
+    mkdir -p /home/kolkhis/testdir
+    cd /home/kolkhis/testdir
+}
+mkdircd
+
+testfunc() {
+    printf "Running function.\n" 
+    if [[ -n $1 ]]; then
+        printf "You said: %s\n" "$1"
+    fi
+}
+
+
+
+
+
+
+
+
+
+

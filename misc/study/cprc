@@ -1,0 +1,27 @@
+#!/bin/bash
+# shellcheck disable=SC2029
+
+cprc() {
+    declare FILE="$HOME/.bashrc"
+    declare REMOTE_USER
+    declare SERVER
+    declare LOCAL_FILE_CKSUM
+    declare REMOTE_FILE_CKSUM
+
+    if [[ -n $1 ]]; then
+        SERVER=$1
+    else
+        return
+    fi
+
+    REMOTE_USER=$(printf "%s" "$1" | awk -F@ '{print $1}')
+
+    LOCAL_FILE_CKSUM=$(md5sum "$HOME/.bashrc")
+    REMOTE_FILE_CKSUM=$(ssh "$1" "md5sum /home/$REMOTE_USER/.bashrc")
+
+    if [[ "$LOCAL_FILE_CKSUM" != "$REMOTE_FILE_CKSUM" ]]; then
+        scp "$FILE" "${SERVER}:/home/$REMOTE_USER"
+    fi
+
+    exec ssh "$SERVER"
+}

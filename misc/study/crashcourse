@@ -1,0 +1,139 @@
+#!/bin/bash
+# shellcheck disable=SC2016,SC2164
+
+# trap
+trap 'printf "Script interrupted.\n"' SIGINT
+
+# getting user input
+declare INPUT # not required, but good practice
+read -r -p 'Enter input: ' INPUT
+printf "You typed: %s\n" "$INPUT"
+
+
+# conditionals
+if [[ -f ./hello.c ]]; then         # file exists and is a regular file
+    return
+fi
+
+if [[ $VAR == 'hello' ]]; then      # VAR is equal to 'hello'
+    printf 'Hi\n'
+fi
+
+if [[ $VAR == *hello* ]]; then      # VAR contains 'hello'
+    printf 'Hi\n'
+fi
+
+if ! cd /home/kolkhis/testdir; then # error handling
+    return
+fi
+
+
+# parsing cli arguments
+
+printf '$@ is an array that contains all of the arguments passed to the script.\n'
+printf '$* is a single string that contains all arguments separated by spaces.\n'
+printf '$# contains the number of arguments passed to the script.\n'
+
+if [[ $# -gt 0 ]] ; then
+    printf "Arguments were passed to the script.\n"
+else
+    printf "There were no arguments passed to the script.\n"
+fi
+
+printf 'Arguments passed to the script are stored in $1, $2, $3, etc..\n'
+while [[ -n $1 ]]; do
+    printf "Argument: %s\n" "$1"
+    # the `shift` command pops out $1, and moves $2 to $1 --  does the same for all args
+    shift
+done
+
+printf 'The default array holds all arguments given to the script: $@\n'
+printf "Let's loop over the cli args.\n"
+for arg in "${@}"; do
+    printf "Argument: %s\n" "$arg"
+done
+
+
+# redirection
+printf "You can use the > and >> operators to redirect the output of commands.\n"
+
+printf "Let's output this to a file.\n" > file.txt
+printf "That line writes the output to file.txt, overwriting the content.\n"
+cat file.txt
+
+printf "This line will append to the file.\n" >> file.txt
+cat file.txt
+
+# redirection to file descriptors
+printf "By default, these printf statements output to stdout (file descriptor 1)\n"
+printf >&2 "You can also redirect to stderr (file descriptor 2)\n"
+printf "The > redirects, and &2 references the stderr file descriptor\n"
+
+# Combining file descriptors
+printf "You can also redirect stdout to stderr\n" 2>&1
+printf "This doesn't redirect the output of the command itself, it simply attaches stdout to stderr.\n"
+
+printf "If you wanted all errors to go into a file along with stdout, you'd do something like this.\n"
+printf "This will also print errors to file.txt\n" > file.txt 2>&1
+printf "This is particularly useful for logging\n"
+
+printf "If we wanted to disable ipv4 forwarding, and save the output to a file (including errors)\n"
+sysctl net.ipv4.ip_forward=1 > file.txt 2>&1
+cat file.txt
+
+# arrays
+printf "Let's declare an array with 'declare -a'.\n"
+declare -a MY_ARR
+
+printf "Let's get some stuff into it.\n"
+
+# defining array
+MY_ARR=('one' 'two' 'three')
+
+# accessing elements
+printf "The first element: %s\n" "${MY_ARR[0]}"
+printf "The second element: %s\n" "${MY_ARR[1]}"
+
+# loop over array
+printf "Let's just loop over it.\n"
+for THING in "${MY_ARR[@]}"; do
+    printf "Element: %s\n" "$THING"
+done
+printf "printf also works nicely with arrays: %s\n" "${MY_ARR[@]}"
+
+# What about the default array?
+printf 'The default array holds all arguments given to the script: $@\n'
+printf "Let's loop over the cli args.\n"
+for arg in "${@}"; do
+    printf "Argument: %s\n" "$arg"
+done
+
+# check current OS using `which`
+if which apt; then
+    printf "OS is Debian-based.\n"
+elif which dnf; then
+    printf "OS is RedHat-based (dnf)\n"
+elif which yum; then
+    printf "OS is RedHat-based (yum)\n"
+fi
+
+
+# check current OS in /etc/*release
+OS=$(grep -i '^id=' /etc/*release | awk -F= '{print $2}')
+printf "OS: %s\n" "$OS"
+
+case $OS in
+    *rocky*|*rhel*|*fedora*|*alma*)
+        printf "OS is RedHat-based\n"
+        ;;
+    *debian*|*ubuntu*|*mint*)
+        printf "OS is Debian-based\n"
+        ;;
+    *)
+        printf "idk\n"
+        ;;
+esac
+
+
+
+

@@ -1,0 +1,154 @@
+#!/bin/bash
+
+
+printf "First script:\n"
+
+# ----
+
+cat << EOF
+printf "Hello world\n"
+EOF
+
+
+#### Conditionals
+printf "Conditionals.\n"
+
+
+printf "Almost every tool you use on Linux was written in C.\n"
+printf "Let's look at this very simple C program.\n"
+cat ./hello.c
+
+printf "As you may notice, there's a line that comes at the end of every C program.\n"
+printf "Can anyone tell me what that is?\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "return 0;\n"
+
+printf "This is what's called an 'exit code' (or 'exit status').\n"
+printf "return 0; means that the program reached the end of execution without error.\n"
+printf "But why is this important?\n"
+
+printf "Because conditionals in Bash operate on exit codes.\n"
+printf "This is unique to bash/sh.\n" 
+printf "In other programming languages, conditions are evaluated to booleans - 'true' or 'false'.\n"
+printf "Bash doesn't have boolean values. It has 'truthy' and 'falsy' values.\n"
+printf "0 is truthy, and anything above 0 is falsy.\n"
+printf "Let's look at 'true' and 'false' in bash.\n"
+
+
+
+help true
+printf "This is not a boolean -- it's a program that returns a 'successful result' (0)\n"
+
+help false
+printf "Also not a boolean. This program returns an 'unsuccessful result' (1)\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Take this example:\n"
+if [[ -f ./hello.c ]]; then
+    printf "The file exists.\n"
+fi
+printf "This uses the '[[' bash builtin command.\n"
+printf "'[[' starts the command, '-f ./hello.c' is an argument to that command.\n"  
+printf "']]' ends the command.\n"
+
+
+printf "If the condition is true, (./hello.c exists and is a regular file), the exit code of the '[[' command will be 0.\n"
+printf "But, if the condition turns out to be false, the exit code will be non-zero (1+).\n"
+
+
+printf "So this condition will evaluate to:\n"
+if [[ 0 ]]; then
+    printf "File exists.\n"
+fi
+
+
+
+printf "The '&&' (AND) and '||' (OR) operators work with these truthy and falsy values.\n"
+printf "Let's look at '&&'\n"
+
+if [[ -f ./hello.c && -s ./hello.c ]]; then
+    printf "File exists and is not empty.\n"
+fi
+
+# explain this
+cat ./hello.c && printf "Successfully ran 'cat'\n"
+printf "This '&&'"
+
+printf " \n"
+
+
+# printf "This command is similar to the 'test' builtin command."
+

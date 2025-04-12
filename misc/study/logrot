@@ -1,0 +1,19 @@
+#!/bin/bash
+
+
+declare LOGFILE
+declare MAX_SIZE=800
+LOGFILE='./logfile'
+
+SIZE=$(ls -alh "$LOGFILE" | awk '{print $5}')
+
+printf "Size: %s\n" "$SIZE"
+
+while [[ $SIZE -lt $MAX_SIZE ]]; do
+    printf "Continue the service.\n"
+    sleep 1
+done
+printf "stop service\n"
+
+
+
