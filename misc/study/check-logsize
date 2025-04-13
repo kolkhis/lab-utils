@@ -1,0 +1,25 @@
+#!/bin/bash
+
+declare LOGFILE
+declare MAX_SIZE=800  # in bytes
+LOGFILE='./logfile'
+
+: > "${LOGFILE}"
+
+# SIZE=$(ls -alh "$LOGFILE" | awk '{print $5}')
+# or use a find with -printf
+SIZE=$(find . -wholename "$LOGFILE" -printf "%s\n")
+
+printf "Size: %s\n" "$SIZE"
+
+while [[ $SIZE -lt $MAX_SIZE ]]; do
+    SIZE=$(find . -wholename "$LOGFILE" -printf %s)
+    printf "Current Size: %s\n" "$SIZE"
+    printf "Continue the service.\n"
+    printf "Another line to put in the file\n" >> "$LOGFILE" 2>&1
+    sleep 1
+done
+
+[[ $SIZE -ge $MAX_SIZE ]] && printf "Stop service.\n"
+
+
