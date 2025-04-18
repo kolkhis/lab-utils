@@ -3,13 +3,13 @@
     - Check network connection?
 
 - Conditionals
-    - `if`/`elif`/`else`
-    - `case`
     - Main rant 
         - exit codes
         - `true`/`false`
         - C
         - `./hello.c`
+    - `if`/`elif`/`else`
+    - `case`
     - Side rant (POSIX)?
         - `[[ ... ]]` vs `[ ... ]`
         - `==` vs `=`
@@ -82,13 +82,23 @@
       ```
 
 - Process Substitution
+    - `<(cmd)`
+    - Pretend to be a file
 
-- Command Grouping `{ ... }` / Subshells `( ... )`
+- Command Grouping 
+    - `{ ... }` / `( ... )`
+    - Sharing output
 
-- `trap`
+- Error handling
+    - `trap`
+
+- Debugging
+    - `set -x`
+    - `printf` / `echo`
 
 - Backgrounding processes
     - Combining with FIFOs?
 
 - Bash Programmable Completion
+    - `complete -A command <smth>`
 
