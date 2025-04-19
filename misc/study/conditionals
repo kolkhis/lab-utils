@@ -1,21 +1,90 @@
 #!/bin/bash
 
 
-printf "First script:\n"
-
-# ----
-
-cat << EOF
-printf "Hello world\n"
-EOF
 
 
-#### Conditionals
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 printf "Conditionals.\n"
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "THEORY TIME!\n"
+
 printf "Almost every tool you use on Linux was written in C.\n"
-printf "Let's look at this very simple C program.\n"
+printf "All these common tools are written in C: grep, cat, sed, ls, find, cp, mv, rm, mkdir, etc.\n"
+
+printf "Let's look at a very simple C program.\n"
 cat ./hello.c
 
 printf "As you may notice, there's a line that comes at the end of every C program.\n"
@@ -62,20 +131,155 @@ printf "Can anyone tell me what that is?\n"
 
 
 
-printf "return 0;\n"
 
+
+
+
+
+
+
+
+
+
+
+
+printf "Bueller?\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "return 0;\n"
 printf "This is what's called an 'exit code' (or 'exit status').\n"
+
 printf "return 0; means that the program reached the end of execution without error.\n"
 printf "But why is this important?\n"
 
-printf "Because conditionals in Bash operate on exit codes.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Because conditionals in Bash operate on these exit codes.\n"
+
 printf "This is unique to bash/sh.\n" 
 printf "In other programming languages, conditions are evaluated to booleans - 'true' or 'false'.\n"
-printf "Bash doesn't have boolean values. It has 'truthy' and 'falsy' values.\n"
-printf "0 is truthy, and anything above 0 is falsy.\n"
+printf "Bash doesn't have boolean values. It has 'truthy' and 'falsey' values.\n"
+printf "0 is truthy, and anything not 0 is falsey.\n"
+
+printf "But, Bash does have a 'true' and a 'false'.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 printf "Let's look at 'true' and 'false' in bash.\n"
-
-
 
 help true
 printf "This is not a boolean -- it's a program that returns a 'successful result' (0)\n"
@@ -116,17 +320,30 @@ printf "Also not a boolean. This program returns an 'unsuccessful result' (1)\n"
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 printf "Take this example:\n"
 if [[ -f ./hello.c ]]; then
     printf "The file exists.\n"
 fi
+
 printf "This uses the '[[' bash builtin command.\n"
 printf "'[[' starts the command, '-f ./hello.c' is an argument to that command.\n"  
 printf "']]' ends the command.\n"
 
 
 printf "If the condition is true, (./hello.c exists and is a regular file), the exit code of the '[[' command will be 0.\n"
-printf "But, if the condition turns out to be false, the exit code will be non-zero (1+).\n"
+printf "But, if the condition turns out to be false, the exit code will be non-zero.\n"
 
 
 printf "So this condition will evaluate to:\n"
@@ -136,19 +353,317 @@ fi
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Well what if we want to check if a condition is NOT met?\n"
+printf "For that, we use the '!' (NOT) operator.\n" 
+
+if [[ ! -f ./hello.c ]]; then
+    printf "File does not exist!\n"
+fi
+
+printf "The '!' operator simply reverses the condition.\n"
+
+
+
+printf "The ! operator can be used either inside or outside the brackets.\n"
+# Also valid:
+
+if ! [[ -f ./hello.c ]]; then
+    printf "File doesn't exist!\n"
+fi
+printf "This is preference. I prefer to use it inside the brackets.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Now that we know what's true and what's false, we can combine some conditions.\n"
+
 printf "The '&&' (AND) and '||' (OR) operators work with these truthy and falsy values.\n"
 printf "Let's look at '&&'\n"
 
 if [[ -f ./hello.c && -s ./hello.c ]]; then
     printf "File exists and is not empty.\n"
 fi
-
-# explain this
-cat ./hello.c && printf "Successfully ran 'cat'\n"
-printf "This '&&'"
-
-printf " \n"
+if [ -f ./hello.c ] && [ -s ./hello.c ]; then # posix
+    :
+fi
+# If using [ ... ], use &&/|| outside
 
 
-# printf "This command is similar to the 'test' builtin command."
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+cat ./hello.c && printf "Successfully ran 'cat'\n" && printf "YEY\n"
+printf "This '&&' works here just like in the if statements.\n"
+
+printf "The first condition is the exit code of 'cat ./hello.c'\n"
+printf "If that condition passes (exit code 0), then the next condition is evaluated.\n"
+
+printf "This makes error handling very easy in Bash.\n"
+
+cat ./nonexistent.file || printf "Failed to run 'cat'\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Let's check if a package is installed.\n"
+declare PKG="jq"
+
+if dpkg -l | grep -i "$PKG"; then
+    printf "Package is installed.\n"
+else
+    printf "Packge is not installed.\n"
+fi
+
+printf "This will work on my Ubuntu Server system. But what about a cross-platform solution?\n"
+
+if which $PKG; then
+    printf "Package is installed (cmd in PATH).\n"
+else
+    printf "Package is not installed (cmd not in PATH).\n"
+    # sudo apt install -y $PKG
+fi
+
+printf "Though, 'which' is not POSIX-compliant. Use 'command -v' if you want it to be.\n"
+
+if command -v $PKG; then
+    printf "Package is installed (cmd in PATH).\n"
+else
+    printf "Package is not installed (cmd not in PATH).\n"
+    # sudo apt install -y $PKG
+fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+declare VAR="Hello, world!"
+
+
+case $VAR in
+    [a-z]*)
+        printf "Contains letters\n"
+        ;;
+    *world)
+        printf "Var contains 'world'\n"
+        ;;
+    hello*)
+        printf "Var contains 'hello'\n"
+        ;;
+    *)
+        printf "Unknown!\n"
+        ;;
+esac
+
+
+# if [[ $VAR == *world ]]; then
+if [[ $VAR == 'world' ]]; then
+    :
+fi
+
+if [[ $VAR =~ .*world ]]; then
+    :
+fi
+
+ps aux
+ps -ef
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
