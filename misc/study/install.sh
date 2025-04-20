@@ -53,8 +53,6 @@ fi
 #     printf "Package doesn't exist.\n" && exit 1
 # fi
 
-# printf 2>&1 "Stderr\n"
-
 # if rpm -q $packageName; then
 #     echo "$packageName is already installed"
 # else
