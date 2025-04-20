@@ -18,16 +18,35 @@
           [ $var = 'hello' ] # literal match
           [ $var = *.md ]    # at least it supports pattern matching
           ```
+    * Challenge: Write a script that takes one argument (via `read` or `$1`) and utilizes 
+      conditionals (`if`/`else`, `case`) to perform different actions based on the value.  
+        * Bonus points: Use conditional operators to print error messages if commands fail (hint: `||`).  
+        * For instance, maybe a script that prints something out in a certain color based on the argument.
 
 - Getting user input
     - `read`
     - CLI args (`$@`, `$*`, `$1`...)
-    - `getopts`?
+    - Argument parsing
+        - `while [[ -n $1 ]]` or `[[ -n $1 && $1 =~ ^- ]]`
+        - `getopts`?
+
+- Reading from a file
 
 - Redirection
-    - Files
+    - Pipelines 
+    - Redirecting to/from Files
     - File Descriptors (`stdin` [0], `stdout` [1], `stderr` [2])
-    - FIFOs/Named Pipes (`mkfifo`)
+        - Copying file descriptors (`2>&1`)
+        - Outputting to file descriptors (`>&2`)
+        - Closing/silencing file descriptors (`2>&-`)
+        - Redirecting for the whole file using `exec` (`exec 2>error.log`)
+    - Order of redirection
+        - Accidental truncating (`sed 's/old/new/' file > file`) 
+        - `man://bash`, type `/order of redirections`
+    - Challenge: Write an install script that takes a list of programs from a file.
+        - Bonus points: Add error handling that directs to a log
+    - FIFOs/Named Pipes (`mkfifo`) (save for another time?)
+
 
 - Regex / Pattern Matching
     - `=~`
