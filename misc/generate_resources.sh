@@ -82,6 +82,7 @@ pull-links() {
 	- Regular Links         $COUNT_REG_LINKS
 	- Unformatted Links     $COUNT_UF_LINKS
 	Total Links: $TOTAL_LINK_COUNT
+	Total links added: ${#ADDED_LINKS[@]}
 	
 	Duplicates: $DUPLICATES
 	EOF
