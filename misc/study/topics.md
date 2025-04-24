@@ -33,19 +33,21 @@
 - Reading from a file
 
 - Redirection
-    - Pipelines 
-    - Redirecting to/from Files
+    - Pipelines (`|`)
+    - Redirecting to/from Files (`> file`, `< file`)
+        - Process substitution?
     - File Descriptors (`stdin` [0], `stdout` [1], `stderr` [2])
-        - Copying file descriptors (`2>&1`)
-        - Outputting to file descriptors (`>&2`)
+        - Duplicating file descriptors (`2>&1`)
+            - Outputting to file descriptors (`>&2`)
         - Closing/silencing file descriptors (`2>&-`)
         - Redirecting for the whole file using `exec` (`exec 2>error.log`)
     - Order of redirection
+        - Attach file descriptors after redirecting.  
         - Accidental truncating (`sed 's/old/new/' file > file`) 
         - `man://bash`, type `/order of redirections`
-    - Challenge: Write an install script that takes a list of programs from a file.
-        - Bonus points: Add error handling that directs to a log
     - FIFOs/Named Pipes (`mkfifo`) (save for another time?)
+    - Challenge: Write an install script that takes a list of programs from a file.  
+        - Bonus points: Add error handling that directs to a log.  
 
 
 - Regex / Pattern Matching
