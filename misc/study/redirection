@@ -368,7 +368,7 @@ printf "Some commands prefer to read their input like this when using files.\n"
 printf "We could do this:\n"
 cat < file.txt
 
-printf "But cat can take a file as an argument already.\n"
+printf "But 'cat' can take a file as an argument already.\n"
 
 printf "Let's read the contents of a file into a variable.\n"
 
@@ -376,7 +376,72 @@ read -r CONTENTS < file.txt
 printf "%s\n" "$CONTENTS"
 
 printf "Now the contents of file.txt are in the variable CONTENTS.\n"
+printf "But, this only save the first line of the file into the variable.\n"
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Continuation
 printf "But what if we want to make sure the contents are stored line-by-line as an array?\n"
 
 # declare an array variable
@@ -961,18 +1026,91 @@ printf "So >&2 means 'point to wherever stderr goes to'.\n"
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Closing file descriptors
+
+printf "As we just learned, you can redirect file descriptors to other file descriptors.\n"
+printf "But what if you wanted to silence one?\n"
+
+printf "For example, if we wanted to silence stderr for a line:\n"
+cat somefile.txt 2>&-
+
+printf "This effectively closes file descriptor 2 (stderr) for the 'cat' command.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Redirecting for entire scripts
 printf "You can utilize the 'exec' function with redirects to do some cool things.\n"
-printf "For example, you can set redirections for all commands in the entire script.\n"
+printf "This allows you to set redirections for all commands in the entire script.\n"
 
 printf "Let's look at an example.\n"
 
 exec 2>error.log
 
-printf "This will redirect stderr to error.log for ALL commands inside the script.\n"
+printf "This will redirect stderr to error.log for ALL commands that come after it inside the script.\n"
 
-
-
+help exec
+printf "exec changes the shell's file descriptors.\n"
+printf "You probably don't want to do this in an interactive shell.\n"
 
 
 
