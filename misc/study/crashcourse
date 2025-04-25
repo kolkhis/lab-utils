@@ -11,6 +11,9 @@ printf "You typed: %s\n" "$INPUT"
 
 
 # conditionals
+true    # returns 0 (which is true in bash)
+false   # returns 1 (false in bash)
+
 if [[ -f ./hello.c ]]; then         # file exists and is a regular file
     return
 fi
@@ -23,7 +26,7 @@ if [[ $VAR == *hello* ]]; then      # VAR contains 'hello'
     printf 'Hi\n'
 fi
 
-if ! cd /home/kolkhis/testdir; then # error handling
+if ! cd /home/kolkhis/testdir; then # error handling (uses the exit code, 0 is true)
     return
 fi
 
@@ -41,10 +44,35 @@ else
 fi
 
 printf 'Arguments passed to the script are stored in $1, $2, $3, etc..\n'
+# Manual option parsing
 while [[ -n $1 ]]; do
     printf "Argument: %s\n" "$1"
     # the `shift` command pops out $1, and moves $2 to $1 --  does the same for all args
-    shift
+    case $1 in 
+        -s|--set-myvar)
+            if [[ -n $2 ]]; then
+                MYVAR=$2 
+                shift;
+            else
+                printf "No argument given to -s/--set-myvar\n"
+            fi
+            shift;
+            ;;
+        -v|--verbose)
+            printf "Setting verbose mode.\n"
+            # set a variable or something
+            shift;
+            ;;
+        -h|--help)
+            printf "Some help text.\n"
+            shift;
+            exit 0 # usually wanna exit after help cases
+            ;;
+        *)
+            printf "Unknown argument: %s\n" "$1"
+            shift;
+            ;;
+    esac
 done
 
 printf 'The default array holds all arguments given to the script: $@\n'
