@@ -47,7 +47,8 @@
         - `man://bash`, type `/order of redirections`
     - FIFOs/Named Pipes (`mkfifo`) (save for another time?)
     - Challenge: Write an install script that takes a list of programs from a file.  
-        - Bonus points: Add error handling that directs to a log.  
+        - Bonus points: Add error handling that directs error messages to a 
+          logfile.  
 
 
 - Regex / Pattern Matching

@@ -25,8 +25,73 @@
 
 
 
-printf "Redirection.\n"
 
+printf "Redirection and File I/O.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "If you don't understand something, stop me and we can work through it.\n"
 
 
 
@@ -90,7 +155,7 @@ printf "Redirection.\n"
 
 
 printf "Redirection is one of the most important parts of bash.\n"
-printf "It allows us to specify where we get our input, and where we send our output.\n"
+printf "We use it to specify where we get our input, and where we send our output.\n"
 
 
 
@@ -146,7 +211,7 @@ printf "It allows us to specify where we get our input, and where we send our ou
 
 
 
-printf "The most common redirection you've probably already used is a pipe '|' redirect.\n"
+printf "The most common redirection that you've probably already used is a pipe '|' redirect.\n"
 printf "These are known as pipelines.\n"
 printf "What a pipe does is takes the stdout from one command and passes it as stdin to another command.\n"
 
@@ -274,6 +339,7 @@ printf "Let's look at the other types of redirections.\n"
 printf "We can redirect output (stdout) with the '>' operator.\n"
 printf "This is usually to output to files.\n"
 
+touch file.txt # not needed
 printf "This will go in a file.\n" > file.txt
 
 printf "This takes the stdout and directs it into the file.\n"
@@ -372,6 +438,7 @@ printf "But 'cat' can take a file as an argument already.\n"
 
 printf "Let's read the contents of a file into a variable.\n"
 
+declare CONTENTS
 read -r CONTENTS < file.txt
 printf "%s\n" "$CONTENTS"
 
@@ -582,6 +649,7 @@ printf "There's a thing in bash called process substitution.\n"
 printf "It allow you to treat the output of a command as a file.\n"
 printf "This follows the same redirection principles as working with real files.\n"
 
+#######################
 
 printf "The syntax is <(cmd)\n"
 printf "Let's look at an example.\n"
@@ -593,6 +661,16 @@ printf "This will treat the output of the 'find' command as a file.\n"
 printf "That is, each line returned by 'find' is a line in the imaginary file.\n"
 
 
+printf "We can also do things like this:\n"
+diff <(ls dir1) <(ls dir2)  
+
+# same thing:
+ls dir1 > file1.txt
+ls dir2 > file2.txt
+diff file1.txt file2.txt
+
+
+printf "diff takes filenames as arguments, we can use process substitution instead."
 
 printf "A more solid example:\n"
 printf "We can utilize process substitution to read the output of a command into an array variable.\n"
@@ -824,6 +902,10 @@ printf "Let's redirect stderr to somewhere.\n"
 
 cat somefile 2> /dev/null
 
+# 0 stdin
+# 1 stdout
+# 2 stderr
+
 printf "This redirects only stderr to /dev/null, so stdout will remain untouched.\n"
 
 
@@ -880,19 +962,21 @@ printf "This redirects only stderr to /dev/null, so stdout will remain untouched
 
 # Attaching fds 
 printf "We can redirect both stdout and stderr by *attaching* the file descriptors.\n"
-cat somefile > /dev/null 2>&1
+cat somefile > /dev/null 2>&1 # GOOD
 
 printf "Note the order here. It matters.\n"
 printf "The shell evaluates the redirections before any command is evalutated.\n"
 
 printf "So, if you were to do:\n"
 
-cat somefile 2>&1 > /dev/null 
+cat somefile 2>&1 > /dev/null  # BAD
+
 printf "This would not work as intended.\n"
 
 printf "The redirects themselves can be anywhere, but the order matters.\n"
 
 printf "For example, this would work:\n"
+
 > /dev/null 2>&1 cat somefile
 
 printf "Because the redirects happen in the correct order, and are evaluated before the cmd is run.\n"
@@ -960,6 +1044,9 @@ printf "We can also redirect stdout to stderr.\n"
 printf "We utilize this is bash scripts to print error messages to stderr, where they belong.\n"
 
 printf >&2 "This will print to stderr.\n"
+
+# >&2
+# 1>&2
 
 printf "This effectively attaches stdout to stderr.\n"
 printf "This works because &2 is essentially a file (of type FIFO/named pipe).\n"
@@ -1046,7 +1133,9 @@ printf "As we just learned, you can redirect file descriptors to other file desc
 printf "But what if you wanted to silence one?\n"
 
 printf "For example, if we wanted to silence stderr for a line:\n"
-cat somefile.txt 2>&-
+
+cat somefile.txt 2>&-           # &- is a null fd
+cat somefile.txt 2>/dev/null    # Same thing kinda
 
 printf "This effectively closes file descriptor 2 (stderr) for the 'cat' command.\n"
 
@@ -1203,14 +1292,18 @@ Heredocs start with << LIMIT_STRING and are terminated with LIMIT_STRING.
 Your limit string can be anything, but you'll see a lot of 'EOF'
 EOF
 
+# Limit string can be anything
+cat << _limit_string
+Hi.
+_limit_string
+
 printf "Heredocs are usually directed to 'cat' or other command that takes a file via stdin."
 
 declare MY_VAR="Hello, world.\n"
-
 cat << EOF
 With this syntax, all variables and subshells are expanded.  
-So, I can say: $MY_VAR
-I can also call subshells: $(printf "Hello, world!")
+So, I can say: $MY_VAR # Hello, world.
+I can also call subshells: $(printf "Hello, world!") # Hello, world!
 EOF
 
 printf "There are ways to change how heredocs behave.\n"
@@ -1227,8 +1320,8 @@ So will this: $(printf "Hello, world!")
 EOF
 
 printf "We can redirect the output of heredocs on the first line.\n"
-
 printf "We can use a pipe:\n"
+
 cat << EOF | sudo tee ./testdoc.txt
 This text will be saved in the ./testdoc file.
 EOF
@@ -1238,6 +1331,14 @@ cat << EOF >> ./testdoc.txt
 This text will be appended to ./testdoc
 EOF
 
+
+
+
+
+
+# Herestrings
+
+entr -c bash -c "./testscript" < <(find . -name "testscript")
 
 
 

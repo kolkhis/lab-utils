@@ -1,0 +1,10 @@
+#!/bin/bash
+
+printf "This will go in a file.\n" > file.txt
+
+
+declare CONTENTS
+read -r CONTENTS < file.txt
+printf "Contents: %s\n" "$CONTENTS"
+
+
