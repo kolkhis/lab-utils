@@ -3,51 +3,85 @@
 declare CHROOT_DIR='/var/chroot'
 declare JAILED_USER='juvie'
 
-# declare -a BINARIES
-# BINARIES=("bash" "rbash" "ssh")
+declare -a BINARIES
+BINARIES=("bash" "rbash" "ssh")
 
-# declare -a SYSFILES
-# SYSFILES=("/etc/passwd" "/etc/group" "/etc/nsswitch.conf" "/etc/hosts")
+declare -a SYSFILES
+SYSFILES=("/etc/passwd" "/etc/group" "/etc/nsswitch.conf" "/etc/hosts")
+
+
+declare VERBOSE=0
+while [[ -n $1 ]]; do
+    case $1 in
+        -v|--verbose)
+            VERBOSE=1
+            shift;
+            ;;
+        -h|--help)
+            # TODO: Add help text
+            :
+            ;;
+    esac
+done
+
+debug() {
+    [[ -n $VERBOSE ]] && printf "[\033[33m DEBUG \033[0m]: %s\n" "$@"
+}
+
+setup-jailed-user() {
+    :
+}
 
 setup-chroot-dir() {
-    local -a BINARIES
-    BINARIES=("bash" "rbash" "ssh")
-    local -a SYSFILES
-    SYSFILES=("/etc/passwd" "/etc/group" "/etc/nsswitch.conf" "/etc/hosts")
-    local ALL_LLIBS
-
-    for BINARY in "${BINARIES[@]}"; do
-        local -a BIN_LLIBS
-        # Gather Link Libraries for the binary
-        IFS=$'\n' read -r -d '' -a BIN_LLIBS < <(ldd "$(which "$BINARY")" |
-            perl -ne 'print $1 . "\n" if s/^[^\/]*(\/.*)\(.*$/\1/')
-
-        printf "Binary: %s\n" "${BINARY}"
-        printf "LLIB: %s\n" "${BIN_LLIBS[@]}"
-        for LLIB in "${BIN_LLIBS[@]}"; do
-            cp "${LLIB}" "${CHROOT_DIR}/${LLIB}"
-        done
-    done
-
-    # printf "LLIBs:\n" 
-    # printf "%s\n" "${ALL_LLIBS[@]}"
-    # printf "Total number of Link Libraries: %s\n" "${#ALL_LLIBS[@]}"
-
-
-    printf "Setting up chroot jail environment.\n"
-    # [[ ! -d /var/chroot ]] && sudo mkdir -p /var/chroot
     
+    printf "Setting up chroot jail environment.\n"
+
     for SYSFILE in "${SYSFILES[@]}"; do
         printf "Copying system file: %s\n" "$SYSFILE"
+        if [[ ! -d  "${CHROOT_DIR}/$(dirname "$SYSFILE")" ]]; then
+            printf "Creating directory for %s at %s\n" "$SYSFILE" "$CHROOT_DIR/$(basename "$SYSFILE")"
+
+            # # Make the directory for the system file
+            # mkdir -p "${CHROOT_DIR}/$(dirname "$SYSFILE")"  || {
+            #     printf >&2 "Failed to create directory (%s) for %s!\n" \
+            #         "$(dirname "$SYSFILE")" \
+            #         "$SYSFILE"
+            # }
+
+        fi
+        printf "Copying system file %s to %s\n" "$SYSFILE" "${CHROOT_DIR}/$SYSFILE"
         # cp "$SYSFILE" "$CHROOT_DIR/$SYSFILE"
     done
 
-    # extract only paths
-    for LLIB in $(ldd /bin/bash | perl -ne 'print $1 . "\n" if s/^[^\/]*(\/.*)\(.*$/\1/'); do
-        # cp "$LLIB" "/var/chroot/$LLIB"
-        :
-    done 
+    for BINARY in "${BINARIES[@]}"; do
+        debug "Binary: %s\n" "${BINARY}"
+        BIN_PATH=$(which "$BINARY")
+        cp "$BIN_PATH" "${CHROOT_DIR}/${BIN_PATH}"
+
+        # Gather Link Libraries for the binary
+        local -a BIN_LLIBS
+        IFS=$'\n' read -r -d '' -a BIN_LLIBS < <(ldd "$BIN_PATH" |
+            perl -ne 'print $1 . "\n" if s/^[^\/]*(\/.*)\(.*$/\1/')
+
+        debug "LLIBs: %s\n" "${BIN_LLIBS[@]}"
+        for LLIB in "${BIN_LLIBS[@]}"; do
+            cp "${LLIB}" "${CHROOT_DIR}/${LLIB}"
+        done
+
+    done
+
+    printf "Creating the chroot directory (%s)\n" "${CHROOT_DIR}"
+    # [[ ! -d /var/chroot ]] && sudo mkdir -p /var/chroot
 
 }
 
 setup-chroot-dir
+
+# # extract only paths
+# for LLIB in $(ldd /bin/bash | perl -ne 'print $1 . "\n" if s/^[^\/]*(\/.*)\(.*$/\1/'); do
+#     printf "Copying linked library for %s: %s\n" "$BINARY" "$LLIB"
+#     # cp "$LLIB" "/var/chroot/$LLIB"
+# done 
+
+
+
