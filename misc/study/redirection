@@ -1148,3 +1148,97 @@ printf "You probably don't want to do this in an interactive shell.\n"
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Heredocs (herestrings too?)
+
+printf "Since we're talking about file I/O, I think this is a good time to mentions this.\n"
+
+cat << EOF
+In Bash (and other languages), there is a concept of a "heredoc."  
+A heredoc is a self-contained document right in the script (here) that is treated as a file (document).
+
+Heredocs are super useful for multiple different things.
+For example, dynamically generating files based on variables.
+
+Heredocs start with << LIMIT_STRING and are terminated with LIMIT_STRING.
+Your limit string can be anything, but you'll see a lot of 'EOF'
+EOF
+
+printf "Heredocs are usually directed to 'cat' or other command that takes a file via stdin."
+
+declare MY_VAR="Hello, world.\n"
+
+cat << EOF
+With this syntax, all variables and subshells are expanded.  
+So, I can say: $MY_VAR
+I can also call subshells: $(printf "Hello, world!")
+EOF
+
+printf "There are ways to change how heredocs behave.\n"
+
+cat <<- EOF
+	This syntax <<- will strip leading *tabs* (NOT spaces).
+	So these lines won't be indented.
+EOF
+
+cat << 'EOF'
+Surrounding the limit string with quotes will stop the heredoc from expanding variables/subshells.
+So, this will be literal: $MY_VAR (this won't expand)
+So will this: $(printf "Hello, world!")
+EOF
+
+printf "We can redirect the output of heredocs on the first line.\n"
+
+printf "We can use a pipe:\n"
+cat << EOF | sudo tee ./testdoc.txt
+This text will be saved in the ./testdoc file.
+EOF
+
+printf "We can use different redirects:\n"
+cat << EOF >> ./testdoc.txt
+This text will be appended to ./testdoc
+EOF
+
+
+
+
+
