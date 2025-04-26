@@ -1333,13 +1333,10 @@ EOF
 
 
 
-
-
-
 # Herestrings
+printf "Herestrings treat the string after it as a file for stdin.\n"
 
+entr -c bash -c "./testscript" <<< ./testscript
 entr -c bash -c "./testscript" < <(find . -name "testscript")
-
-
 
 
