@@ -6,8 +6,22 @@ declare JAILED_USER='juvie'
 declare -a BINARIES
 BINARIES=("bash" "rbash" "ssh")
 
-declare -a SYSFILES
-SYSFILES=("/etc/passwd" "/etc/group" "/etc/nsswitch.conf" "/etc/hosts")
+declare -a SYSFILES=(
+    "/etc/passwd"
+    "/etc/group"
+    "/etc/nsswitch.conf"
+    "/etc/hosts"
+)
+
+declare -a SPECIAL_FILES=(
+    "/dev/null "
+    "/dev/tty" 
+    "/dev/zero"
+    "/dev/random"
+    "/dev/urandom"
+)
+
+
 
 
 declare VERBOSE=0
@@ -50,7 +64,7 @@ setup-chroot-dir() {
 
         fi
         printf "Copying system file %s to %s\n" "$SYSFILE" "${CHROOT_DIR}/$SYSFILE"
-        # cp "$SYSFILE" "$CHROOT_DIR/$SYSFILE"
+        cp "$SYSFILE" "$CHROOT_DIR/$SYSFILE"
     done
 
     for BINARY in "${BINARIES[@]}"; do
@@ -63,7 +77,7 @@ setup-chroot-dir() {
         IFS=$'\n' read -r -d '' -a BIN_LLIBS < <(ldd "$BIN_PATH" |
             perl -ne 'print $1 . "\n" if s/^[^\/]*(\/.*)\(.*$/\1/')
 
-        debug "LLIBs: %s\n" "${BIN_LLIBS[@]}"
+        debug "LLIB for %s: %s\n" "$BINARY" "${BIN_LLIBS[@]}"
         for LLIB in "${BIN_LLIBS[@]}"; do
             cp "${LLIB}" "${CHROOT_DIR}/${LLIB}"
         done
@@ -74,26 +88,30 @@ setup-chroot-dir() {
     if ! [[ -d /var/chroot ]]; then
         printf "Directory not found.\n"
         printf "Creating the chroot directory (%s)\n" "${CHROOT_DIR}"
+        sudo mkdir "${CHROOT_DIR}" || {
+            printf >&2 "Failed to create chroot directory: %s\n" "${CHROOT_DIR}"
+        }
     fi
 
     # Create special files
-    printf "Making special files.\n"
-    
-    mknod -m 666 "${CHROOT_DIR}/dev/null" c 1 3 || { :;}
-    mknod -m 666 "${CHROOT_DIR}/dev/tty" c 5 0 || { :;}
-    mknod -m 666 "${CHROOT_DIR}/dev/zero" c 1 5 || { :;}
-    mknod -m 666 "${CHROOT_DIR}/dev/random" c 1 8 || { :;}
-    mknod -m 666 "${CHROOT_DIR}/dev/urandom" c 1 9 || { :;}
+    printf "Making character special files.\n"
+    for SPECIAL_FILE in "${SPECIAL_FILES[@]}"; do
+        local -a MAJOR_MINOR
+        read -r -d '' -a MAJOR_MINOR < <(
+            stat "$SPECIAL_FILE" | grep -i 'device type' | awk '{printf $(NF)"\n"}' | tr ',' ' '
+        )
+        mknod -m 666 "${CHROOT_DIR}/${SPECIAL_FILE}" c "${MAJOR_MINOR[@]}" || { 
+            printf >&2 "Failed to create special file: %s\n" "$SPECIAL_FILE";
+        }
+    done
+
+    # mknod -m 666 "${CHROOT_DIR}/dev/null" c 1 3 || { :;}
+    # mknod -m 666 "${CHROOT_DIR}/dev/tty" c 5 0 || { :;}
+    # mknod -m 666 "${CHROOT_DIR}/dev/zero" c 1 5 || { :;}
+    # mknod -m 666 "${CHROOT_DIR}/dev/random" c 1 8 || { :;}
+    # mknod -m 666 "${CHROOT_DIR}/dev/urandom" c 1 9 || { :;}
 
 }
 
 setup-chroot-dir
-
-# # extract only paths
-# for LLIB in $(ldd /bin/bash | perl -ne 'print $1 . "\n" if s/^[^\/]*(\/.*)\(.*$/\1/'); do
-#     printf "Copying linked library for %s: %s\n" "$BINARY" "$LLIB"
-#     # cp "$LLIB" "/var/chroot/$LLIB"
-# done 
-
-
 
