@@ -53,6 +53,13 @@
 
 - Regex / Pattern Matching
     - `=~`
+        - Sets
+        - Character classes
+        - Capture groups
+        - Quantifiers
+    - `==`
+        - Sets
+        - Character classes
     - `"${BASH_REMATCH[0]}"`: Whole match
     - `"${BASH_REMATCH[1]}"`: Capture group(s)
     - `[[ $var == *.md ]]`: Pattern matching
