@@ -486,13 +486,18 @@ printf "We can use sets and quantifiers inside capture groups too.\n"
 
 echo "abcdefg" | sed -E 's/([abc]*)defg/\1/'   # output: abc
 
-# echo "abcdefghjkl" | sed -E 's/([a-z]+)fg/\1/' # output: abcde
+# echo "abcdefghjkl" | sed -E 's/([a-z]+)fg/\1/' # output: abcdefghjkl
+printf "This is a fallback of 'sed'. All quantifiers are 'greedy' by default.\n"
+printf "There is no way in sed or bash to make quantifiers non-greedy.\n"
+printf "Enter perl.\n"
 
+printf "Making a quantifier non-greedy in perl is easy. Just add a '?' after the quantifier (e.g., '*?')\n"
 echo "abcdefghjkl" | perl -pe 's/([a-z]+?)hjkl/\1/' # output: abcde
 
 declare MY_VAR="Going to hang with the wife."
 [[ $MY_VAR =~ ^Going(.*)wife\. ]] && printf "Match: %s\n" "${BASH_REMATCH[1]}" 
 [[ $MY_VAR =~ ^Going(.*)(wife)\. ]] && printf "Match: %s\n" "${BASH_REMATCH[1]}" && printf "%s\n" "${BASH_REMATCH[2]}" 
+# perl / sed
 
 
 
