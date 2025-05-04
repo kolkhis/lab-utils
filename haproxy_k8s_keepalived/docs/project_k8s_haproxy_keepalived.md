@@ -774,8 +774,11 @@ cilium connectivity test
 ---
 
 ## Generating a New Join Token
-If you lose the original `kubeadm join` command or its token, you can generate a new
-one without resetting the entire cluster.  
+If you lose the original `kubeadm join` command or its token (generated when 
+initializing a cluster with `kubeadm init`), you can generate a new one without 
+resetting the entire cluster.  
+
+Use the `kubeadm token create` command to generate a new token.  
 ```bash
 kubeadm token create --print-join-command
 ```
