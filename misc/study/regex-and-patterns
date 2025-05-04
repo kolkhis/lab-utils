@@ -311,6 +311,18 @@ printf "We can also use sets to specify character classes.\n"
 # \s \w
 
 
+printf "If we're using Bash regex, we can't use \s or \w, but we can use pattern matching classes.\n"
+
+[[ "abc 123" =~ [[:space:]]+ ]] # Will match one or more of whitespace characters
+
+printf "But if we're using sed or perl, we can use \s and \w character classes.\n"
+echo "abc 123" | perl -pe 's/\s(.*)/\1/' # Output: abc123
+
+printf "We can also use sets to NEGATE character classes.\n"
+
+[[ "abcdefg" =~ [^xyz]+ ]] # Will match anything EXCEPT x, y, or z
+
+
 
 
 
@@ -486,7 +498,8 @@ printf "We can use sets and quantifiers inside capture groups too.\n"
 
 echo "abcdefg" | sed -E 's/([abc]*)defg/\1/'   # output: abc
 
-# echo "abcdefghjkl" | sed -E 's/([a-z]+)fg/\1/' # output: abcdefghjkl
+echo "abcdefghjkl" | sed -E 's/([a-z]+)fg/\1/' # output: abcdefghjkl
+
 printf "This is a fallback of 'sed'. All quantifiers are 'greedy' by default.\n"
 printf "There is no way in sed or bash to make quantifiers non-greedy.\n"
 printf "Enter perl.\n"
@@ -939,9 +952,25 @@ printf "TODO\n"
 
 
 
+declare VAR="string"
+grep -i -E "^$VAR$" /your/file
+
+perl -pe 'm/^string$/' /your/file
 
 
 
+# ?: Match zero or one of whatever is before it
+grep -i -E "[a-z]?"
+
+
+
+declare FILE='something.md'
+if [[ $FILE == something.?? ]]; then :; fi
+if [[ 'str' =~ .* ]]; then :; fi
+
+# \< \>
+# Quantifier {1,}
+#  {1,}
 
 
 
