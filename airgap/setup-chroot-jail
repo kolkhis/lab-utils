@@ -3,6 +3,9 @@
 declare CHROOT_DIR='/var/chroot'
 declare JAILED_USER='juvie'
 
+declare BASTION_HOST_IP='192.168.4.80'
+
+
 declare -a BINARIES
 BINARIES=("bash" "rbash" "ssh")
 
@@ -42,27 +45,25 @@ debug() {
     [[ -n $VERBOSE ]] && printf "[\033[33m DEBUG \033[0m]: %s\n" "$@"
 }
 
-setup-jailed-user() {
-    :
-}
-
 setup-chroot-dir() {
     
     printf "Setting up chroot jail environment.\n"
+
+    printf "Setting up directory structure.\n"
+
+    mkdir -p ${CHROOT_DIR}/{bin,lib,dev,etc,home,usr/bin,lib/x86_64-linux-gnu} || {
+        printf >&2 "Failed to create directory tree for chroot jail!\n"
+    }
 
     for SYSFILE in "${SYSFILES[@]}"; do
         printf "Copying system file: %s\n" "$SYSFILE"
         if [[ ! -d  "${CHROOT_DIR}/$(dirname "$SYSFILE")" ]]; then
             printf "Creating directory for %s at %s\n" "$SYSFILE" "$CHROOT_DIR/$(basename "$SYSFILE")"
-
-            # # Make the directory for the system file
-            # mkdir -p "${CHROOT_DIR}/$(dirname "$SYSFILE")"  || {
-            #     printf >&2 "Failed to create directory (%s) for %s!\n" \
-            #         "$(dirname "$SYSFILE")" \
-            #         "$SYSFILE"
-            # }
-
+            mkdir -p "$(dirname "$SYSFILE")" || {
+                printf >&2 "Failed to make directory for %s at %s\n" "$SYSFILE" "$(dirname "$SYSFILE")"
+            }
         fi
+
         printf "Copying system file %s to %s\n" "$SYSFILE" "${CHROOT_DIR}/$SYSFILE"
         cp "$SYSFILE" "$CHROOT_DIR/$SYSFILE"
     done
@@ -96,22 +97,34 @@ setup-chroot-dir() {
     # Create special files
     printf "Making character special files.\n"
     for SPECIAL_FILE in "${SPECIAL_FILES[@]}"; do
-        local -a MAJOR_MINOR
-        read -r -d '' -a MAJOR_MINOR < <(
-            stat "$SPECIAL_FILE" | grep -i 'device type' | awk '{printf $(NF)"\n"}' | tr ',' ' '
-        )
-        mknod -m 666 "${CHROOT_DIR}/${SPECIAL_FILE}" c "${MAJOR_MINOR[@]}" || { 
-            printf >&2 "Failed to create special file: %s\n" "$SPECIAL_FILE";
-        }
+        if [[ ! -c "$CHROOT_DIR/$SPECIAL_FILE" ]]; then
+            local -a MAJOR_MINOR=()
+            read -r -d '' -a MAJOR_MINOR < <(
+                stat "$SPECIAL_FILE" | grep -i 'device type' | awk '{printf $(NF)"\n"}' | tr ',' ' '
+            )
+            mknod -m 666 "${CHROOT_DIR}/${SPECIAL_FILE}" c "${MAJOR_MINOR[@]}" || { 
+                printf >&2 "Failed to create character special file: %s\n" "$SPECIAL_FILE";
+            }
+        else
+            printf "Character special file already exists: %s\n" "$CHROOT_DIR/$SPECIAL_FILE"
+        fi
     done
 
-    # mknod -m 666 "${CHROOT_DIR}/dev/null" c 1 3 || { :;}
-    # mknod -m 666 "${CHROOT_DIR}/dev/tty" c 5 0 || { :;}
-    # mknod -m 666 "${CHROOT_DIR}/dev/zero" c 1 5 || { :;}
-    # mknod -m 666 "${CHROOT_DIR}/dev/random" c 1 8 || { :;}
-    # mknod -m 666 "${CHROOT_DIR}/dev/urandom" c 1 9 || { :;}
+    printf "Copying Name Switch Service (NSS) files.\n"
+    cp -r /lib/x86_64-linux-gnu/*nss* /var/chroot/lib/x86_64-linux-gnu || {
+        printf >&2 "Failed to copy name switch service files!\n"
+    }
 
 }
 
-setup-chroot-dir
+setup-jailed-user() {
+    if [[ $(hostname -I | awk '{print $1}' | tr -d ' ') != "$BASTION_HOST_IP" ]]; then
+        printf >&2 "Your localhost is not the targeted bastion host.\n"
+    fi
+}
+
+
+setup-chroot-dir || {
+    printf >&2 "Failed to set up chroot directory!\n"
+}
 
