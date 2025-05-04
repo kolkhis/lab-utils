@@ -15,6 +15,11 @@ case $HOSTNAME in
         printf "Setting priority to: %s.\n" "${PRIORITY:=90}"
         printf "Setting state to: %s.\n" "${STATE:=BACKUP}"
         ;;
+    *lb*)
+        printf "Host is a tertiary load balancer.\n"
+        printf "Setting priority to: %s.\n" "${PRIORITY:=80}"
+        printf "Setting state to: %s.\n" "${STATE:=BACKUP}"
+        ;;
     *)
         printf "Couldn't determine what the priority should be based on the hostname.\n"
         ;;
@@ -73,9 +78,9 @@ done
 
 # debug variables
 cat << EOF
-Setting up Keepalived for $(hostname) - $(hostname -I | awk '{print $1}')
-STATE: ${STATE:?"ERROR: STATE must be set to either BACKUP or MASTER!"}
-PRIORITY: ${PRIORITY:?"ERROR: PRIORITY must be set to 1-100!"}
+Setting up Keepalived for ${HOSTNAME} - $(hostname -I | awk '{print $1}')
+STATE: ${STATE:?ERROR: STATE must be set to either BACKUP or MASTER!}
+PRIORITY: ${PRIORITY:?ERROR: PRIORITY must be set to 1-100!}
 EOF
 
 
