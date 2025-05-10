@@ -958,19 +958,22 @@ grep -i -E "^$VAR$" /your/file
 perl -pe 'm/^string$/' /your/file
 
 
-
 # ?: Match zero or one of whatever is before it
 grep -i -E "[a-z]?"
 
-
-
+ 
 declare FILE='something.md'
-if [[ $FILE == something.?? ]]; then :; fi
-if [[ 'str' =~ .* ]]; then :; fi
+if [[ $FILE == something.?? ]]; then :; fi  # a 2 letter file extension
+if [[ 'str' =~ .* ]]; then :; fi            # Match any character any number of times
 
 # \< \>
 # Quantifier {1,}
 #  {1,}
+
+
+
+
+
 
 
 
