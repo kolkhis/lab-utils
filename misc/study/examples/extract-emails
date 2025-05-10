@@ -1,0 +1,107 @@
+#!/bin/bash
+
+declare INPUT_FILE="./email-input-file.txt"
+
+printf "We can loop over the file and run a regex on each line.\n"
+while read -r LINE; do
+
+    if [[ $LINE =~ ([a-zA-Z0-9_\.]+@{1}[a-zA-Z\.]+) ]]; then
+        printf "%s\n" "${BASH_REMATCH[1]}"
+    fi
+
+done < "$INPUT_FILE"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# printf "Trying with Perl now.\n\n"
+# perl -ne 'print $1 . "\n" if s/([a-zA-Z0-9_\.]+@{1}[a-zA-Z\.]+)/\1/g' $INPUT_FILE
+# printf "Trying with -pe.\n\n"
+# perl -pe 's/([a-zA-Z0-9_\.]+@{1}[a-zA-Z\.]+)/\1/g' $INPUT_FILE
+# perl -pe 's/.*?([a-zA-Z\._]+?@{1}[a-zA-Z\.]+).*?/\1/' $INPUT_FILE
+
+
+# cat << 'EOF'
+# I didn't talk about all of the different character classes that can be used (didn't fully finish my talk this week) but you can look here for more reference material:
+# https://www.tutorialsteacher.com/regex/character-classes
+# Lots of good info on there. Specifically negating sets `[^abc]` (NOT a, b, or c).
+
+# Here's a challenge for this week.
+# We talked about using regex, so write a script to loop over this file and use regex to extract the emails from each line. 
+# ```txt
+# John Doe <john.doe@example.com>
+# jane99@domain.org
+# hello world
+# notanemail@@@something
+# user_name@host.co.uk
+# missingatsign.com
+# mary.jane@protonmail.com
+# ```
+
+# Just the emails. Here's what the output should look like:
+# ```txt
+# john.doe@example.com
+# jane99@domain.org
+# user_name@host.co.uk
+# mary.jane@protonmail.com
+# ```
+
+# You can use whatever tool you want for this (`sed`, `perl`, or just bash regex), as long as you use regex.
+# I will be completing this challenge too, we can go over the solutions next week
+# EOF

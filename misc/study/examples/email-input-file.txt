@@ -1,0 +1,7 @@
+John Doe <john.doe@example.com>
+jane99@domain.org
+hello world
+notanemail@@@something
+user_name@host.co.uk
+missingatsign.com
+mary.jane@protonmail.com

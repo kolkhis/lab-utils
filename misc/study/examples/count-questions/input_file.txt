@@ -1,0 +1,84 @@
+Technical
+
+1. How would you verify the filesystem type of a mounted filesystem? Is this different if it is unmounted? 
+
+2. Your virtualization team tells you they added a disk to your virtual Linux server. How would you check that a disk has been added to a system? How would you add it to the LVM system? 
+
+3. How do you check the last login of a user on the system? 
+
+4. Can you list all the open ports on a system? Can you show all the processes attached to any port? Why might you want to know this? 
+   - If you're outside - NMAP
+   - If you're inside (root) ss -ntulp | lsof -i :<port>
+
+5. How would you loop over a list of servers to validate they all have the same kernel? 
+
+6. What are special variables in BASH? Can you name a few and how you would use them? 
+
+7. What commands might you use to determine if a package is installed on a Redhat system? 
+
+8. What is PAM and how does it work in Linux?
+
+9. Can you tell me the common http error/return codes?
+
+10. You set up a new share for a set of users on their dev system. They have asked to ensure that only members of their group can access the directory, and that only memebers of their group can read or edit the files. What permissions are you putting on the directory and what command are you using to set them?
+
+11. What can you use to see all the processes touching port 22 on your server?
+
+12. You and your team have been trying to stop a process from deleting a file every night. What might you do to protect this file?
+
+13. You have a mounted filesystem on one of your servers. You have been tasked with ensuring that no users or processes on the server are capable of writing to that filesystem. How are you accomplishing this?
+
+
+
+
+Troubleshooting
+
+1. A ticket comes in for a user that cannot log in. Your manager comes and asks you to take it as it is high visibility. How do you troubleshoot their issue? (Their id is in the ticket as bblursky)
+
+2. A system is unreachable via port 80 and is causing a service disruption. You find the system responsive and ssh in, what are you doing? 
+
+3. A virtual machine is unavailable on the network. You are unsure of the state of the server. What are you doing to start recovery of this server?
+
+4. You are able to ssh into a server. The server is unable to ping outside of your company network. What are you checking and what tools might help you solve this? 
+
+5. A database won't start on a server. It had been running for months with no problems. You're seeing memory errors in the failure message but they make no sense to you. What are you doing?
+
+6. A postgres server is no longer responsive to your application. What are you doing to troubleshoot?
+
+7. You keep getting alerts that disk I/O is high on two servers in your application cluster. The other 3 servers do not seem to be affected. You find similar network traffic and processes on all 5 servers. What are you doing to try to solve the issue?\
+
+8. A ticket comes in that a user cannot access filesystems in their dev server. Other users can. This is the newest member to the team and you set up their access last week. What are you doing to troubleshoot their issue?
+
+9. You attempt to start an httpd process with the command `systemctl start httpd`. It will not start. You keep seeing something about /var/lib/httpd/httpd.pid cannot be removed by the process. You use `systemctl cat httpd` and find that the user is properly set as apache (48). What are you checking?
+
+10. Your system is properly carved up via the CIS benchmark standard. /var, /var/cache, and /var/log are on their own filesystems. You cannot run DNF as a "not enough space" error keeps popping up. Where are you checking?
+
+
+Operations
+
+1. How do you prioritize work? Two work tickets come in and they seem to be similar priority to you. What are you doing? 
+
+2. You have a task that you often perform to remediate some problem. The documentation is outdated and doesn't point to the right systems or tasks. How would you go about updating the documentation?
+
+3. You recently solved an issue for a customer facing outage. You get a meeting invite from your manager for a meeting in 2 hours. How do you prep and what are you bringing to the meeting? 
+
+4. You are working 3rd shift and during the backup process you notice two of the servers always have the same 2 disks become overly high on their I/O. They never go high and alert, but you just happen to see it on the monitors. What are you doing?
+
+5. Someone at the helpdesk has been calling you directly and asking for help 2 times a week, instead of using the oncall rotation schedule for your team. The fixes are always quick and they're very polite about it. What are you doing?
+
+
+
+Personality
+
+1. Can you tell me about a time you did the best work you could but the project or task still failed? What did you learn?
+ 
+2. How do you go about learning a new skill or task?
+
+3. Someone misinterprets an email that you send and sends an email to everyone on your team, including your manager and his manager. By the time you see it, the miscategorization has been repeated multiple times. How do you respond to this? 
+
+4. You are working third shift for a few weeks so someone can take leave. You have an issue and the lead directs you to a folder where they have cloned the git repository and tell you to just run the scripts out of there. You find out that it multiple versions back and are told that the new stuff never works anyway, so they just use that. The script you run fixes the problem and the alert goes away. What are you doing?
+
+5. You are on an operations call and you hear the VOIP team report a 100% uptime on production systems for the last week. You were called out during the week twice to fix their issue and know that it isn't actually fixed, your script just keeps restarting the program when RAM usage gets over 95%. What are you doing?
+
+6. You have a block of time for lunch scheduled on your calendar. It's the only time you've blocked off, but a project manager from a high profile team that works on the East Coast keeps adding you to meetings during that time and immediately following up with emails to you and your manager. What are you doing?
+

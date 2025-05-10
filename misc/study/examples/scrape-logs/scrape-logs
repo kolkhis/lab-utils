@@ -1,0 +1,40 @@
+#!/bin/bash
+# shellcheck disable=SC2029
+
+declare REMOTE_SERVER='kolkhis@192.168.4.66'
+# Tarball the whole dir of /var/log and exfil
+declare LOGFILE
+
+if [[ -n $1 ]]; then
+    LOGFILE=$1
+else
+    ssh $REMOTE_SERVER "sudo find /var/log -maxdepth 1 -type f"
+    read -r -p  "Select log file from above: " LOGFILE
+fi
+
+printf "Compressing and copying logfile: %s\n" "$LOGFILE"
+
+ssh $REMOTE_SERVER "sudo tar -czvf $LOGFILE.tar.gz $LOGFILE ||
+    printf 'Failed to compress!\n'"
+
+scp "$REMOTE_SERVER:$LOGFILE.tar.gz" "$(basename "$LOGFILE").tar.gz"
+
+
+
+
+##!/bin/bash
+#
+## Tarball the whole dir of /var/log and exfil
+#declare LOGFILE
+#
+#declare REMOTE_SERVER='kolkhis@192.168.4.66'
+#
+#ssh $REMOTE_SERVER 'sudo tar -czvf /var/log/all_logs.tar.gz --directory /var/log . ||
+#    printf "Failed to compress!\n"
+#    printf "Test\n"'
+#
+#scp "$REMOTE_SERVER:/var/log/all_logs.tar.gz" ./all_logs.tar.gz
+
+
+
+

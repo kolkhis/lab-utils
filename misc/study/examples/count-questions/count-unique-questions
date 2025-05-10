@@ -1,0 +1,49 @@
+#!/bin/bash
+
+
+
+declare INPUT_FILE="./input_file.txt"
+
+declare -a QUESTIONS
+declare -i LINE_COUNT
+declare -i QUESTION_COUNT=0
+
+while read -r LINE; do
+    [[ -z "$LINE" ]] && continue
+    LINE=$(echo "$LINE" | perl -pe 's/\s*$//')
+
+    if [[ ! $LINE == *\?* ]]; then 
+        printf "Line doesn't contain questions.\n"
+        continue
+    fi
+
+    if [[ $LINE =~ ^[0-9]+\.[\ ](.*)$ ]]; then 
+        declare LINE_TEXT="${BASH_REMATCH[1]}"
+        printf "Line contains a question.\n"
+    fi
+
+    printf "Line text: %s\n" "$LINE_TEXT"
+
+    QUESTION_MARKS="${LINE_TEXT//[^?]/}"
+
+    printf "Number of Question: %s\n" "${#QUESTION_MARKS}"
+
+    (( QUESTION_COUNT += "${#QUESTION_MARKS}" ))
+    (( LINE_COUNT++ ))
+
+done < "$INPUT_FILE"
+
+
+printf "Line count: %s\n " "$LINE_COUNT"
+
+printf "Total number of questions: %s\n" "$QUESTION_COUNT"
+
+    # printf "Character count: %s\n" "${#LINE}"
+    #[[ "$LINE" =~ ]]
+    # [[ "${#LINE}" -lt 30 ]] && continue
+    # declare TRIMMED_LINE
+
+#     if [[ ! $LINE == *\?* ]]; then 
+#         printf "Line doesn't contain questions.\n"
+#         continue
+#     fi
