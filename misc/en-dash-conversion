@@ -4,6 +4,7 @@ declare EN_DASH="–"
 declare OPEN_QUOTE='“'
 declare CLOSE_QUOTE='”'
 declare APOSTRAPHE="’"
+declare ELLIPSES="…"
 
 declare -a FILES
 read -r -d '' -a FILES < <(find ./src/ -name 'u*' -type f -name '*.md' -o -name '*.txt')
@@ -13,6 +14,7 @@ printf "File: %s\n" "${FILES[@]}"
 #     -e "s/(${OPEN_QUOTE}|${CLOSE_QUOTE})/\"/g" \
 #     -e "s/$EN_DASH/-/g" \
 #     -e "s/$APOSTRAPHE/'/g" \
+#     -e "s/$ELLIPSES/\.\.\./g" \
 #     "${FILES[@]}"
 
 perl -CSDA -Mutf8 -Mopen=:std,:encoding\(UTF-8\) -pi -e '
