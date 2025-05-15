@@ -2,9 +2,7 @@
 
 declare CHROOT_DIR='/var/chroot'
 declare JAILED_USER='juvie'
-
 declare BASTION_HOST_IP='192.168.4.80'
-
 
 declare -a BINARIES
 BINARIES=("bash" "rbash" "ssh")
@@ -23,9 +21,6 @@ declare -a SPECIAL_FILES=(
     "/dev/random"
     "/dev/urandom"
 )
-
-
-
 
 declare VERBOSE=0
 while [[ -n $1 ]]; do
@@ -46,11 +41,8 @@ debug() {
 }
 
 setup-chroot-dir() {
-    
-    printf "Setting up chroot jail environment.\n"
 
     printf "Setting up directory structure.\n"
-
     mkdir -p ${CHROOT_DIR}/{bin,lib,dev,etc,home,usr/bin,lib/x86_64-linux-gnu} || {
         printf >&2 "Failed to create directory tree for chroot jail!\n"
     }
@@ -77,6 +69,7 @@ setup-chroot-dir() {
         local -a BIN_LLIBS
         IFS=$'\n' read -r -d '' -a BIN_LLIBS < <(ldd "$BIN_PATH" |
             perl -ne 'print $1 . "\n" if s/^[^\/]*(\/.*)\(.*$/\1/')
+            # grep -o '/[^ ]*'
 
         debug "LLIB for %s: %s\n" "$BINARY" "${BIN_LLIBS[@]}"
         for LLIB in "${BIN_LLIBS[@]}"; do
@@ -119,12 +112,24 @@ setup-chroot-dir() {
 
 setup-jailed-user() {
     if [[ $(hostname -I | awk '{print $1}' | tr -d ' ') != "$BASTION_HOST_IP" ]]; then
-        printf >&2 "Your localhost is not the targeted bastion host.\n"
+        printf >&2 "Your localhost is not the targeted bastion host.\n" && return 1
     fi
+    useradd -m "${JAILED_USER}" || {
+        printf >&2 "Failed to add jailed user account!\n" && return 1
+    }
+    printf "User account %s succussfully added.\n" "$JAILED_USER"
+    local PASSWORD=
+    read -r -s -p "Enter password for user account: " PASSWORD
+
+    # TODO: test
+    printf "%s\n%s\n" "$PASSWORD" "$PASSWORD" | passwd "${JAILED_USER}"
+
 }
 
-
+    
+printf "Setting up chroot jail environment.\n"
 setup-chroot-dir || {
     printf >&2 "Failed to set up chroot directory!\n"
 }
+printf "\033[32mSuccessfully set up chroot directory.\033[0m\n"
 
