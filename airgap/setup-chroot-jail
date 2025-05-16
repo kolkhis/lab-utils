@@ -43,27 +43,39 @@ debug() {
 setup-chroot-dir() {
 
     printf "Setting up directory structure.\n"
-    mkdir -p ${CHROOT_DIR}/{bin,lib,dev,etc,home,usr/bin,lib/x86_64-linux-gnu} || {
-        printf >&2 "Failed to create directory tree for chroot jail!\n"
-    }
+
+    # sudo mkdir -p ${CHROOT_DIR}/{bin,lib,dev,etc,home,usr/bin,lib/x86_64-linux-gnu} || {
+    #     printf >&2 "Failed to create directory tree for chroot jail!\n"
+    # }
+
+    for dir in {bin,lib,dev,etc,home,usr/bin,lib/x86_64-linux-gnu}; do
+        if ! [[ -d ${CHROOT_DIR}/$dir ]]; then
+            sudo mkdir -p "${CHROOT_DIR}/$dir" || {
+                printf >&2 "Failed to create directory tree for chroot jail!\n" && return 1
+            }
+        else
+            printf "Directory already exists, skipping: %s\n" "$dir"
+        fi
+    done
 
     for SYSFILE in "${SYSFILES[@]}"; do
         printf "Copying system file: %s\n" "$SYSFILE"
         if [[ ! -d  "${CHROOT_DIR}/$(dirname "$SYSFILE")" ]]; then
             printf "Creating directory for %s at %s\n" "$SYSFILE" "$CHROOT_DIR/$(basename "$SYSFILE")"
-            mkdir -p "$(dirname "$SYSFILE")" || {
+            sudo mkdir -p "$(dirname "$SYSFILE")" || {
                 printf >&2 "Failed to make directory for %s at %s\n" "$SYSFILE" "$(dirname "$SYSFILE")"
             }
         fi
 
-        printf "Copying system file %s to %s\n" "$SYSFILE" "${CHROOT_DIR}/$SYSFILE"
-        cp "$SYSFILE" "$CHROOT_DIR/$SYSFILE"
+        printf "Copying system file %s to %s\n" "$SYSFILE" "${CHROOT_DIR}$SYSFILE"
+        sudo cp "$SYSFILE" "${CHROOT_DIR}${SYSFILE}"
     done
 
+    # Copy over binaries and their linked libraries
     for BINARY in "${BINARIES[@]}"; do
-        debug "Binary: %s\n" "${BINARY}"
+        debug "Binary: ${BINARY}"
         BIN_PATH=$(which "$BINARY")
-        cp "$BIN_PATH" "${CHROOT_DIR}/${BIN_PATH}"
+        sudo cp "$BIN_PATH" "${CHROOT_DIR}${BIN_PATH}"
 
         # Gather Link Libraries for the binary
         local -a BIN_LLIBS
@@ -71,38 +83,33 @@ setup-chroot-dir() {
             perl -ne 'print $1 . "\n" if s/^[^\/]*(\/.*)\(.*$/\1/')
             # grep -o '/[^ ]*'
 
-        debug "LLIB for %s: %s\n" "$BINARY" "${BIN_LLIBS[@]}"
+        printf "LLIB for %s: %s\n" "$BINARY" "${BIN_LLIBS[@]}"
         for LLIB in "${BIN_LLIBS[@]}"; do
-            cp "${LLIB}" "${CHROOT_DIR}/${LLIB}"
+            sudo cp "${LLIB}" "${CHROOT_DIR}${LLIB}"
         done
 
     done
 
-    # [[ ! -d /var/chroot ]] && sudo mkdir -p /var/chroot
-    if ! [[ -d /var/chroot ]]; then
-        printf "Directory not found.\n"
-        printf "Creating the chroot directory (%s)\n" "${CHROOT_DIR}"
-        sudo mkdir "${CHROOT_DIR}" || {
-            printf >&2 "Failed to create chroot directory: %s\n" "${CHROOT_DIR}"
-        }
-    fi
-
     # Create special files
     printf "Making character special files.\n"
     for SPECIAL_FILE in "${SPECIAL_FILES[@]}"; do
-        if [[ ! -c "$CHROOT_DIR/$SPECIAL_FILE" ]]; then
+        if [[ ! -c "${CHROOT_DIR}/${SPECIAL_FILE}" ]]; then
             local -a MAJOR_MINOR=()
+
             read -r -d '' -a MAJOR_MINOR < <(
-                stat "$SPECIAL_FILE" | grep -i 'device type' | awk '{printf $(NF)"\n"}' | tr ',' ' '
+                awk '/Device type/ {printf $(NF)"\n"}' < <(stat "$SPECIAL_FILE") | tr ',' ' '
             )
-            mknod -m 666 "${CHROOT_DIR}/${SPECIAL_FILE}" c "${MAJOR_MINOR[@]}" || { 
-                printf >&2 "Failed to create character special file: %s\n" "$SPECIAL_FILE";
+
+            sudo mknod -m 666 "${CHROOT_DIR}${SPECIAL_FILE}" c "${MAJOR_MINOR[@]}" || { 
+                printf >&2 "Failed to create character special file: %s\n" "${SPECIAL_FILE}";
             }
+
         else
-            printf "Character special file already exists: %s\n" "$CHROOT_DIR/$SPECIAL_FILE"
+            printf "Character special file already exists: %s\n" "${CHROOT_DIR}${SPECIAL_FILE}"
         fi
     done
 
+    # Copy name switch service files for network functionality
     printf "Copying Name Switch Service (NSS) files.\n"
     cp -r /lib/x86_64-linux-gnu/*nss* /var/chroot/lib/x86_64-linux-gnu || {
         printf >&2 "Failed to copy name switch service files!\n"
