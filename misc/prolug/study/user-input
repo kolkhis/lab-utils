@@ -1,0 +1,1094 @@
+#!/bin/bash
+# shellcheck disable=SC2016
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Getting User Input.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "When writing shell scripts, sometimes we have variables that we (as the programmer) don't know the value of.\n"
+printf "So, we set up these variables to read from the user.\n"
+
+printf "An example, a script to install an arbitrary package:\n"
+
+declare PACKAGE
+read -r -p "Enter package name: " PACKAGE
+
+sudo apt-get install -y "$PACKAGE" || { printf >&2 "Failed to install package: %s\n" "$PACKAGE"; }
+
+printf "This is a way to read a single value from the user.\n"
+printf "However, this method makes the script interactive, which is typically not what we want.\n"
+printf "We usually want to write our scripts to be able to run, start to finish, with one command.\n"
+
+
+printf "So how do we do that?\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "We'd use command line arguments.\n"
+
+printf "We've talked about where the command line arguments are stored.\n"
+printf 'The $@ array holds all arguments. The $# variable is the number of arguments.\n'
+
+printf 'Each argument can be accessed individually with $1, $2, $3, etc.\n'
+
+printf "We'll use all of these to parse command line arguments.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "There are a couple different ways to parse command line arguments.\n"
+
+
+printf "This is my preferred way:\n"
+while [[ -n $1 ]]; do
+    printf "We handle the parsing logic in here.\n"
+done
+
+printf 'This is a loop that says "while the value of $1 is non-zero, keep running"\n' 
+
+printf "Let's look at a more thorough example.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Let's look at how we actually handle the parsing logic.\n"
+
+while [[ -n $1 ]]; do
+    case $1 in
+        -h|--help)
+            # remember, use | to specify multiple patterns
+            printf "Print out some help text.\n"
+            shift;
+            printf "usually we exit after this command.\n"
+            exit 0
+            ;;
+        -v|--version)
+            printf "Print out the program version.\n"
+            shift;
+            printf "We usually exit after this one too.\n"
+            exit 0
+            ;;
+        *)
+            printf "Unknown option. Discarding.\n"
+            shift;
+            ;;
+    esac
+done
+
+printf "Now, we're not doing anything substantial with these flags.\n"
+printf "This is just to show you how 'shift' works.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf 'The "shift" command removes the value of $1, and $2 becomes $1, $3 becomes $2, etc.\n'
+
+cat << 'EOF'
+Let's look at the command:
+
+./my-script -v -h
+
+$1 = '-v'
+$2 = '-h'
+$3 is empty
+
+shift
+
+$1 = '-h'
+$2 is empty
+EOF
+
+printf "That's how 'shift' enables us to use:"
+while [[ -n $1 ]]; do shift; done
+
+printf 'Once we have parsed all CLI arguments, the $@ array (holds all $1, $2, etc) will be empty.\n'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf 'There is another way to do this, instead of "-n $1" \n'
+printf 'The $# variable holds the number of command line arguments.\n'
+
+while [[ $# -gt 0 ]]; do 
+    case $1 in
+        -h|--help)
+            printf "Print some help text.\n"
+            shift
+            exit 0
+            ;;
+        -v|--version)
+            printf "Print the version.\n"
+            shift;
+            exit 0
+            ;;
+        *)
+            printf "Unknown argument: %s\n" "$1"
+            shift;
+            ;;
+    esac
+done
+
+printf "So that's another way to do the while loop.\n"
+printf "Let's look at another one.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+while [[ -n $1 && $1 =~ ^- ]]; do
+    shift
+done
+printf 'This one will only continue if $1 starts with a dash (-)\n'
+printf "This will help prevent us from getting rid of non-option arguments (e.g., filenames, other args)\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Okay, so let's look at an example where we pass an argument to a flag.\n"
+
+printf "Let's define a variable with a default value that we're gonna change\n"
+
+declare MY_VAR='default value'
+
+printf "We'll keep it simple.\n"
+while [[ -n $1 ]]; do
+    case $1 in
+        -s|--set-var)  # -s "my value" 
+
+            printf "We need to check if another argument was passed after -s (our var value)\n"
+            if [[ -n $2 ]] && [[ ! $2 =~ ^- ]]; then
+                MY_VAR=$2 && shift;
+                printf "DEBUG - MY_VAR was set to: %s\n" "${MY_VAR}"
+            else
+                printf "The -s (--set-var) option was given but no valid values were specified.\n" && exit 1
+            fi
+            shift;  # Always shift at the end of your case
+            ;;
+        *)
+            printf "Unknown argument: %s\n" "$1"
+            shift;
+            ;;
+    esac
+done
+
+printf "Let's look at that a little closer.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Rundown recap
+printf "Recap:\n"
+if [[ -n $1 ]] && [[ ! $2 =~ ^- ]]; then
+    printf 'We are checking that there is another arg after $1 ($2)\n.'
+    printf 'We are also making sure that arg ($2) does not start with a dash (-)\n'
+    MY_VAR=$2 && shift; # We're immediately popping $2 into $1 since we know the arg was there
+else
+    printf 'The -s option was given but either $2 did not exist or it started with a dash.\n' && exit 1
+fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "We could handle that assignment logic a little differently if we want.\n"
+while [[ -n $1 ]]; do
+    case $1 in
+        -s|--set-var)  # -s "my value" 
+            shift; # shifting at the top of the case
+            [[ -n $1 ]] && [[ ! $1 =~ ^- ]] && MY_VAR=$1 && shift ||
+                printf "The -s (--set-var) option was given but no valid values were specified.\n" && exit 1
+            ;;
+        *)
+            printf "Unknown argument: %s\n" "$1"
+            shift;
+            ;;
+    esac
+done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Using short-circuit logic
+while [[ -n $1 ]]; do
+    case $1 in
+        -s|--set-var) 
+            [[ -n $2 ]] && [[ ! $2 =~ ^- ]] && MY_VAR=$2 && shift || 
+                printf >&2 "The -s (--set-var) option was given but no valid values were specified.\n"
+            shift;
+            ;;
+        *)
+            printf "Unknown argument: %s\n" "$1"
+            shift;
+            ;;
+    esac
+done
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Ending arguments with --
+
+printf "We often use '--' to specify the end of arguments.\n"
+
+printf "We can account for that in our while loop condition.\n"
+while [[ $1 =~ ^- && ! $1 == "--" ]]; do
+    case $1 in
+        -s|--set-var) 
+            [[ -n $2 ]] && [[ ! $2 =~ ^- ]] && MY_VAR=$2 && shift || 
+                printf >&2 "The -s (--set-var) option was given but no valid values were specified.\n"
+            shift;
+            ;;
+        *)
+            printf "Unknown argument: %s\n" "$1"
+            shift;
+            ;;
+    esac
+done
+
+if [[ "$1" == '--' ]]; then  
+    shift;  # Clean up the argument list 
+fi  
+
+printf 'We changed the while loop from [[ -n $1 ]] to [[ $1 =~ ^- && ! $1 == "--" ]]\n'
+printf 'So it will run until $1 does not start with a dash or it finds -- as the arg.\n'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Honorable mention: getopts.\n"
+printf "The 'getopts' command is a shell builtin that is used to parse option arguments.\n"
+
+printf "This is done in a similar way to the way I've shown you (while/case), but it uses special syntax.\n"
+
+declare MY_FILE='default value'
+
+while getopts ":hvf:" OPT; do
+    case $OPT in
+        h) 
+            printf "Print help text.\n" 
+            exit 0
+            ;;
+        v)
+            printf "Print version.\n"
+            exit 0
+            ;;
+        f)
+            MY_FILE="$OPTARG"
+            printf "Filename was specified: %s\n" "$MY_FILE"
+            ;;
+        \?) 
+            printf "Unknown option given: %s\n" "$OPTARG" 
+            printf "This is a special case that is hit when the arg doesn't match the argument string.\n"
+            ;;
+        *) 
+            printf "This case handles everything else.\n"
+            ;;
+    esac
+done
+
+
+printf "Your custom options are specified in the option string.\n"
+
+printf 'In this case: %s\n' "hvf:" 
+
+printf "The colon after the 'f' tells 'getopts' that you need an argument to that option. (e.g., -f FILENAME)\n"
+    printf "The argument after -f will be stored in the OPTARG variable.\n"
+
+printf "The drawback of using 'getopts': it does not support long options.\n"
+
+# '--filename filename_here' not supported
+# '-f filename' supported
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "So, whether using getopts or parsing your arguments manually, you now have the tools to do it.\n"
+printf "Now, let's put these lessons into practice.\n"
+
+# Add example in countdown
+
+cat << 'EOF'
+Some ideas:
+1. User management script
+    - Create new system users with optional flags
+    - Opts: -u|--username 'user-name' [-h 'home-dir'] [-s 'shell']
+
+2. Backup script
+    - Back up a directory with optional compression and destination
+    - Opts: -c|--compress [-d|--dest 'dir']
+
+3. Package bulk installer
+    - Install multiple packages by reading cli args, prompt if none are provided
+    - Utilize $@, check arg count, fallback to 'read'
+    - Less parsing for this one, moreso validation.
+
+4. Template generator
+    - Generate a file from a predefined template, populate with user input 
+    - Opts: --name 'Weekly Report' --author 'Connor'
+
+5. SSH Key Deployer
+    - Upload local public ssh key to remote host
+    - Opts: --host "hostname" --user "remote-user" --key ""
+    - Key defaults to ~/.ssh/id_ed25519.pub (or ~/.ssh/id_*.pub)
+
+6. Cron Helper
+    - Programmatically add a cron job via a script w/ CLI args
+    - Opts: --cmd "command here" --time '0 2 * * *'
+    - Use command grouping to add to current crontab 
+    - { crontab -l 2>/dev/null; printf "%s\n" "$entry"; } | crontab -
+
+EOF
+
+
+
+
+
+
+
+
+
+
+cat << EOF
+Other resources:
+
+https://kolkhis.github.io/tech-notes/linux/bash/cli_arguments
+give it a star if it helps :)
+
+help getopts
+EOF
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

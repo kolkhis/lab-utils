@@ -1,0 +1,46 @@
+#!/bin/bash
+
+declare MY_VAR='default value'
+
+printf "Value of MY_VAR: %s\n" "$MY_VAR"
+
+while [[ -n $1 ]]; do
+    case $1 in
+        -s|--set-var)
+            printf "We need to check if another argument was passed after -s (our var value)\n"
+            if [[ -n $2 ]] && [[ ! $2 =~ ^- ]]; then
+                MY_VAR=$2 && shift;
+                printf "DEBUG - MY_VAR was set to: %s\n" "${MY_VAR}"
+            else
+                printf "The -s (--set-var) option was given but no valid values were specified.\n" && exit 1
+            fi
+            shift;
+            ;;
+        *)
+            printf "Unknown argument: %s\n" "$1"
+            shift;
+            ;;
+    esac
+done
+
+printf "Value of MY_VAR: %s\n" "$MY_VAR"
+
+
+
+
+
+
+# # Using short-circuit logic 
+# while [[ -n $1 ]]; do
+#     case $1 in
+#         -v|--set-var)
+#             [[ -n $2 ]] && [[ ! $2 =~ ^- ]] && MY_VAR=$2 && shift ||
+#                 printf >&2 "The -v (--set-var) option was given but no valid values were specified.\n"
+#             shift;
+#             ;;
+#         *)
+#             printf "Unknown argument: %s\n" "$1"
+#             shift;
+#             ;;
+#     esac
+# done

@@ -1,0 +1,86 @@
+#!/bin/bash
+
+# Copy SSH key to remote server
+
+declare HOST_FILENAME
+declare REMOTE_HOST
+declare REMOTE_USER
+declare KEY_FILE
+
+while [[ -n $1 ]]; do
+    case $1 in
+
+        -f|--file)
+            printf "Reading from file.\n"
+            [[ -n $2 ]] && HOST_FILENAME=$2 && shift;
+            shift;
+            ;;
+
+        -s|--server)
+            [[ -n $2 ]] && REMOTE_HOST=$2 && shift;
+            printf "Copying to server.\n"
+            shift;
+            ;;
+
+        -u|--user)
+            [[ -n $2 ]] && REMOTE_USER=$2 && shift;
+            printf "Using remote user: %s\n" "$REMOTE_USER"
+            shift;
+            ;;
+
+        -k|--keyfile)
+            [[ -n $2 ]] && KEY_FILE=$2 && shift;
+            printf "Using keyfile\n"
+            shift;
+            ;;
+
+        *)
+            printf "Unknown option.\n"
+            shift;
+            ;;
+
+    esac
+done
+
+: "${REMOTE_USER:=$USER}"
+
+if [[ -z $KEY_FILE ]]; then
+    for f in ~/.ssh/*.pub; do
+        KEY_FILE=$f && break
+        printf "File here: %s\n" "$f"
+    done
+fi
+
+: "${KEY_FILE:=$HOME/.ssh/id_ed25519.pub}"
+
+
+
+
+
+
+# Adding a ssh key to the ~/.ssh/authorized_keys (for the remote user)
+
+if [[ -z $HOST_FILENAME && -n $REMOTE_HOST ]]; then
+    ssh-copy-id -i "$KEY_FILE" "$REMOTE_HOST"
+    exit 0
+fi
+
+
+if [[ -n $HOST_FILENAME ]]; then
+    declare -a IP_LIST
+    mapfile -t IP_LIST < "$HOST_FILENAME"
+
+    for IP in "${IP_LIST[@]}"; do
+        printf "Copying to server: %s\n" "${REMOTE_USER}@$IP"
+        timeout 10 ssh-copy-id -i "$KEY_FILE" "${REMOTE_USER}@${IP}" || {
+            printf >&2 "Failed to copy id to host: %s\n" "${REMOTE_USER}@$IP"
+        }
+    done
+
+fi
+
+
+
+
+
+
