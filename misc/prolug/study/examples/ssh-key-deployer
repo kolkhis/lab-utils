@@ -80,6 +80,12 @@ if [[ -n $HOST_FILENAME ]]; then
 fi
 
 
+# Parse ~/.ssh/config for list of hosts
+# declare -a HOSTS;
+# read -r -d '' -a HOSTS < <(awk '/Hostname/ {print $2}' ~/.ssh/config);
+# printf "Host: %s\n" "${HOSTS[@]}"
+
+
 
 
 
