@@ -27,7 +27,7 @@ declare -a SYSFILES=(
 )
 
 declare -a SPECIAL_FILES=(
-    "/dev/null "
+    "/dev/null"
     "/dev/tty" 
     "/dev/zero"
     "/dev/random"
