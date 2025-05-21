@@ -10,6 +10,7 @@
 #   - Add more defense (maybe)?
 #       - SELinux/AppArmor/Seccomp
 #       - iptables/nftables rule to restrict jailed user to SSH only to certain hosts
+#   - Use readonly bind mount?
 
 declare CHROOT_DIR='/var/chroot'
 declare JAILED_USER='juvie'
@@ -171,10 +172,21 @@ setup-jailed-user() {
 configure-ssh(){
     # Set up the bastion script and rules for the jailed user
     if ! grep -qi "Match User ${JAILED_USER}" /etc/ssh/sshd_config; then
-        sudo sed -i -E "\$a Match User ${JAILED_USER}\nChrootDirectory ${CHROOT_DIR}\n" \
-            /etc/ssh/sshd_config || {
+        {
+	    cat <<- EOF | sudo tee -a /etc/ssh/sshd_config
+		Match User $JAILED_USER
+		    ChrootDirectory $CHROOT_DIR
+		    PasswordAuthentication yes
+		    AuthenticationMethods password
+		EOF
+        } || {
             printf >&2 "Failed to add entry for user in /etc/ssh/sshd_config!\n" && return 1
         }
+        # sudo sed -i -E "\$a Match User ${JAILED_USER}\nChrootDirectory ${CHROOT_DIR}\n" \
+        #     /etc/ssh/sshd_config || {
+        #     printf >&2 "Failed to add entry for user in /etc/ssh/sshd_config!\n" && return 1
+        # }
+
         printf "Added ChrootDirectory rule for %s\n" "$JAILED_USER"
     else
         printf "Entry already found in /etc/ssh/sshd_config. Skipping.\n"
@@ -190,22 +202,25 @@ configure-ssh(){
 
     
 printf "Setting up chroot jail environment in: %s\n" "$CHROOT_DIR"
+
 setup-chroot-dir || {
     printf >&2 "Failed to set up chroot directory!\n" && exit 1
 }
-printf "\033[32mSuccessfully set up chroot directory in %s\033[0m\n" "$CHROOT_DIR"
 
+printf "\033[32mSuccessfully set up chroot directory in %s\033[0m\n" "$CHROOT_DIR"
 printf "Attempting to set up a user account for jailed user: %s\n" "$JAILED_USER"
+
 setup-jailed-user || {
     printf >&2 "Failed to set up jailed user!\n" && exit 1
 }
+
 printf "\033[32mSuccessfully set up jailed user: %s\033[0m\n" "$JAILED_USER"
-
-
 printf "Attempting to configure SSH rules for jailed user.\n"
+
 configure-ssh || {
     printf >&2 "Failed to configure ssh rules for jailed user!\n" && exit 1
 }
+
 printf "\033[32mSuccessfully set up jailed user.\033[0m\n"
 
 
