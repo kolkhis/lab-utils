@@ -116,8 +116,8 @@ setup-chroot-dir() {
         IFS=$'\n' read -r -d '' -a BIN_LLIBS < <(ldd "$BIN_PATH" | grep -o '/[^ ]*' )
             # perl -ne 'print "$1\n" if s/^[^\/]*(\/.*)\s*\(.*$/\1/')
 
-        printf "LLIB for %s: %s\n" "$BINARY" "${BIN_LLIBS[@]}"
         for LLIB in "${BIN_LLIBS[@]}"; do
+            debug "LLIB for $BINARY - ${LLIB}"
             if ! stat "${CHROOT_DIR}${LLIB}" > /dev/null 2>&1; then
                 sudo cp "${LLIB}" "${CHROOT_DIR}${LLIB}" || {
                     err; printf >&2 "Failed to copy linked library '%s' to destination: %s" \
