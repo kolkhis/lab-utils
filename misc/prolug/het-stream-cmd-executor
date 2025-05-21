@@ -1,0 +1,47 @@
+#!/bin/bash
+
+declare -a EXCLUDE_CMDS=(
+    "rm -rf /"
+    "rm --no-preserve-root"
+    "cat /dev/urandom"
+    "cat /dev/random"
+    ":(){:|:&}"
+)
+
+# Directory to watch
+WATCH_FILE="/data/stream_write/stream_answers"
+
+# Watch for events (create, modify, delete, etc.)
+while read -r event; do
+
+    # Show the command entry
+    line=$(tail -n 1 "$WATCH_FILE")
+    user="$(awk -F: '{print $1}' <<< "$line")"
+    source="$(awk -F: '{print $2}' <<< "$line")"
+    command="$(awk -F: '{print $3}' <<< "$line")"
+
+    printf "User: \033[32m%s\033[0m answered on \033[32m%s\033[0m. Their command is: \033[33m%s\033[0m\n" \
+            "$user" "$source" "$command"
+
+    # Select a server to use
+    num=$(( (RANDOM % 5) + 15 ))
+    printf "Using rocky%s\n" "$num"
+
+    sleep 2
+
+    # Check connectivity
+    if ! ping -c 1 rocky$num > /dev/null 2>&1; then
+        printf "The server 'rocky%s' is unreachable!\n" "$num"
+        continue
+    fi
+
+    # skip if user is a douchebag
+    if [[ "${EXCLUDE_CMDS[*]}" =~ ${command} ]]; then
+        printf "Good one, \033[32m%s\033[0m 😘 \n" "$user" && continue
+    fi
+
+    # Execute the command
+    timeout 15 ssh -i /root/.ssh/cluster_key rocky$num "timeout 15 $command"
+
+done < <(inotifywait -m -r -e create,modify,delete "$WATCH_FILE")
+
