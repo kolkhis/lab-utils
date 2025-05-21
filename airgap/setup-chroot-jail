@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# TODO(improvements): 
+#    - Use 'install' instead of 'cp' for copying binaries
+#    - Implement logging
+#       - Use industry standard logging format
+#       - Integrate with logging tool
+#           - Mount /dev/log and use logger + rsyslog? 
+#           - Promtail? 
+#   - Add more defense (maybe)?
+#       - SELinux/AppArmor/Seccomp
+#       - iptables/nftables rule to restrict jailed user to SSH only to certain hosts
+
 declare CHROOT_DIR='/var/chroot'
 declare JAILED_USER='juvie'
 declare BASTION_HOST_IP='192.168.4.80'
@@ -25,6 +36,14 @@ declare -a SPECIAL_FILES=(
 declare VERBOSE=0
 while [[ -n $1 ]]; do
     case $1 in
+        -c|--chroot-dir)
+            { [[ -n $2 && ! $2 =~ ^- ]] && shift && CHROOT_DIR=$1; } || {
+                printf >&2 "The -c/--chroot-dir option was given with no valid argument.\n"
+                exit 1
+            }
+            printf "Chroot directory set to %s\n" "$CHROOT_DIR"
+            shift
+            ;;
         -v|--verbose)
             VERBOSE=1
             shift;
@@ -54,7 +73,7 @@ setup-chroot-dir() {
                 printf >&2 "Failed to create directory tree for chroot jail!\n" && return 1
             }
         else
-            printf "Directory already exists, skipping: %s\n" "$dir"
+            debug "Directory already exists, skipping: $dir"
         fi
     done
 
@@ -73,9 +92,11 @@ setup-chroot-dir() {
 
     # Copy over binaries and their linked libraries
     for BINARY in "${BINARIES[@]}"; do
-        debug "Binary: ${BINARY}"
+        debug "Copying binary: ${BINARY}"
         BIN_PATH=$(which "$BINARY")
-        sudo cp "$BIN_PATH" "${CHROOT_DIR}${BIN_PATH}"
+        sudo cp "$BIN_PATH" "${CHROOT_DIR}${BIN_PATH}" || {
+            printf >&2 "Failed to copy binary (%s) to destination: %s" "$BINARY" "${CHROOT_DIR}${BIN_PATH}"
+        }
 
         # Gather Link Libraries for the binary
         local -a BIN_LLIBS
@@ -85,7 +106,16 @@ setup-chroot-dir() {
 
         printf "LLIB for %s: %s\n" "$BINARY" "${BIN_LLIBS[@]}"
         for LLIB in "${BIN_LLIBS[@]}"; do
-            sudo cp "${LLIB}" "${CHROOT_DIR}${LLIB}"
+            if ! stat "${CHROOT_DIR}${LLIB}" > /dev/null 2>&1; then
+                sudo cp "${LLIB}" "${CHROOT_DIR}${LLIB}" || {
+                    printf >&2 "Failed to copy linked library (%s) to destination: %s" \
+                        "$LLIB" \
+                        "${CHROOT_DIR}${LLIB}"
+                }
+            else
+                printf "Linked library exists in destination: %s. Skipping.\n" \
+                    "${CHROOT_DIR}${LLIB}"
+            fi
         done
 
     done
@@ -111,7 +141,7 @@ setup-chroot-dir() {
 
     # Copy name switch service files for network functionality
     printf "Copying Name Switch Service (NSS) files.\n"
-    cp -r /lib/x86_64-linux-gnu/*nss* /var/chroot/lib/x86_64-linux-gnu || {
+    sudo cp -r /lib/x86_64-linux-gnu/*nss* "$CHROOT_DIR/lib/x86_64-linux-gnu" || {
         printf >&2 "Failed to copy name switch service files!\n"
     }
 
