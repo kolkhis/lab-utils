@@ -108,20 +108,19 @@ setup-chroot-dir() {
         debug "Copying binary: ${BINARY}"
         BIN_PATH=$(which "$BINARY")
         sudo cp "$BIN_PATH" "${CHROOT_DIR}${BIN_PATH}" || {
-            err; printf >&2 "Failed to copy binary (%s) to destination: %s\n" "$BINARY" "${CHROOT_DIR}${BIN_PATH}"
+            err; printf >&2 "Failed to copy binary '%s' to destination: %s\n" "$BINARY" "${CHROOT_DIR}${BIN_PATH}"
         }
 
         # Gather Link Libraries for the binary
         local -a BIN_LLIBS
-        IFS=$'\n' read -r -d '' -a BIN_LLIBS < <(ldd "$BIN_PATH" |
-            perl -ne 'print "$1\n" if s/^[^\/]*(\/.*)\s*\(.*$/\1/')
-            # grep -o '/[^ ]*'
+        IFS=$'\n' read -r -d '' -a BIN_LLIBS < <(ldd "$BIN_PATH" | grep -o '/[^ ]*' )
+            # perl -ne 'print "$1\n" if s/^[^\/]*(\/.*)\s*\(.*$/\1/')
 
         printf "LLIB for %s: %s\n" "$BINARY" "${BIN_LLIBS[@]}"
         for LLIB in "${BIN_LLIBS[@]}"; do
             if ! stat "${CHROOT_DIR}${LLIB}" > /dev/null 2>&1; then
                 sudo cp "${LLIB}" "${CHROOT_DIR}${LLIB}" || {
-                    err; printf >&2 "Failed to copy linked library (%s) to destination: %s" \
+                    err; printf >&2 "Failed to copy linked library '%s' to destination: %s" \
                         "$LLIB" \
                         "${CHROOT_DIR}${LLIB}"
                 }
