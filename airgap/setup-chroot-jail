@@ -114,7 +114,7 @@ setup-chroot-dir() {
         # Gather Link Libraries for the binary
         local -a BIN_LLIBS
         IFS=$'\n' read -r -d '' -a BIN_LLIBS < <(ldd "$BIN_PATH" |
-            perl -ne 'print $1 . "\n" if s/^[^\/]*(\/.*)\(.*$/\1/')
+            perl -ne 'print "$1\n" if s/^[^\/]*(\/.*)\s*\(.*$/\1/')
             # grep -o '/[^ ]*'
 
         printf "LLIB for %s: %s\n" "$BINARY" "${BIN_LLIBS[@]}"
