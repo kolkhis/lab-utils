@@ -140,11 +140,12 @@ setup-chroot-dir() {
 
             read -r -d '' -a MAJOR_MINOR < <(
                 awk '/Device type/ {print $(NF)"\n"}' < <(stat "$SPECIAL_FILE") | tr ',' ' '
-            )
+            ) || {
+                err; printf >&2 "Failed to read major/minor device numbers!\n"
+            }
 
             sudo mknod -m 666 "${CHROOT_DIR}${SPECIAL_FILE}" c "${MAJOR_MINOR[@]}" || { 
                 err; printf >&2 "Failed to create character special file: %s\n" "${SPECIAL_FILE}";
-                return 1
             }
 
         else
