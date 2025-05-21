@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2120
 
 # TODO(improvements): 
 #    - Use 'install' instead of 'cp' for copying binaries
@@ -34,11 +35,25 @@ declare -a SPECIAL_FILES=(
 )
 
 declare VERBOSE=0
+
+debug() {
+    [[ -n $VERBOSE ]] && printf "[\033[33m DEBUG \033[0m]: %s\n" "$@"
+}
+
+err() {
+    printf >&2 "[\033[31m ERROR \033[0m]: "
+    if [[ $# -gt 0 ]]; then
+        printf "%s\n" "$*"
+    fi
+}
+
+
+
 while [[ -n $1 ]]; do
     case $1 in
         -c|--chroot-dir)
             { [[ -n $2 && ! $2 =~ ^- ]] && shift && CHROOT_DIR=$1; } || {
-                printf "\033[31m"; printf >&2 "The -c/--chroot-dir option was given with no valid argument.\n"
+                err; printf >&2 "The -c/--chroot-dir option was given with no valid argument.\n"
                 exit 1
             }
             printf "Chroot directory set to %s\n" "$CHROOT_DIR"
@@ -55,22 +70,19 @@ while [[ -n $1 ]]; do
     esac
 done
 
-debug() {
-    [[ -n $VERBOSE ]] && printf "[\033[33m DEBUG \033[0m]: %s\n" "$@"
-}
 
 setup-chroot-dir() {
 
     printf "Setting up directory structure.\n"
 
     # sudo mkdir -p ${CHROOT_DIR}/{bin,lib,dev,etc,home,usr/bin,lib/x86_64-linux-gnu} || {
-    #     printf "\033[31m"; printf >&2 "Failed to create directory tree for chroot jail!\n"
+    #     err; printf >&2 "Failed to create directory tree for chroot jail!\n"
     # }
 
     for dir in {bin,lib,dev,etc,home,usr/bin,lib/x86_64-linux-gnu}; do
         if ! [[ -d ${CHROOT_DIR}/$dir ]]; then
             sudo mkdir -p "${CHROOT_DIR}/$dir" || {
-                printf "\033[31m"; printf >&2 "Failed to create directory tree for chroot jail!\n" && return 1
+                err; printf >&2 "Failed to create directory tree for chroot jail!\n" && return 1
             }
         else
             debug "Directory already exists, skipping: $dir"
@@ -82,7 +94,8 @@ setup-chroot-dir() {
         if [[ ! -d  "${CHROOT_DIR}$(dirname "$SYSFILE")" ]]; then
             printf "Creating directory for %s at %s\n" "$SYSFILE" "$CHROOT_DIR/$(basename "$SYSFILE")"
             sudo mkdir -p "$(dirname "$SYSFILE")" || {
-                printf "\033[31m"; printf >&2 "Failed to make directory for %s at %s\n" "$SYSFILE" "$(dirname "$SYSFILE")"
+                err;
+                printf >&2 "Failed to make directory for %s at %s\n" "$SYSFILE" "$(dirname "$SYSFILE")"
             }
         fi
 
@@ -95,7 +108,7 @@ setup-chroot-dir() {
         debug "Copying binary: ${BINARY}"
         BIN_PATH=$(which "$BINARY")
         sudo cp "$BIN_PATH" "${CHROOT_DIR}${BIN_PATH}" || {
-            printf "\033[31m"; printf >&2 "Failed to copy binary (%s) to destination: %s\n" "$BINARY" "${CHROOT_DIR}${BIN_PATH}"
+            err; printf >&2 "Failed to copy binary (%s) to destination: %s\n" "$BINARY" "${CHROOT_DIR}${BIN_PATH}"
         }
 
         # Gather Link Libraries for the binary
@@ -108,7 +121,7 @@ setup-chroot-dir() {
         for LLIB in "${BIN_LLIBS[@]}"; do
             if ! stat "${CHROOT_DIR}${LLIB}" > /dev/null 2>&1; then
                 sudo cp "${LLIB}" "${CHROOT_DIR}${LLIB}" || {
-                    printf "\033[31m"; printf >&2 "Failed to copy linked library (%s) to destination: %s" \
+                    err; printf >&2 "Failed to copy linked library (%s) to destination: %s" \
                         "$LLIB" \
                         "${CHROOT_DIR}${LLIB}"
                 }
@@ -131,8 +144,7 @@ setup-chroot-dir() {
             )
 
             sudo mknod -m 666 "${CHROOT_DIR}${SPECIAL_FILE}" c "${MAJOR_MINOR[@]}" || { 
-                printf "\033[31m"; printf >&2 "Failed to create character special file: %s\n" "${SPECIAL_FILE}";
-                printf "\033[0m"
+                err; printf >&2 "Failed to create character special file: %s\n" "${SPECIAL_FILE}";
                 return 1
             }
 
@@ -144,34 +156,30 @@ setup-chroot-dir() {
     # Copy name switch service files for network functionality
     printf "Copying Name Switch Service (NSS) files.\n"
     sudo cp -r /lib/x86_64-linux-gnu/*nss* "$CHROOT_DIR/lib/x86_64-linux-gnu" || {
-        printf "\033[31m"; printf >&2 "Failed to copy name switch service files!\n"
+        err; printf >&2 "Failed to copy name switch service files!\n"
     }
 
 }
 
 setup-jailed-user() {
     if [[ $(hostname -I | awk '{print $1}' | tr -d ' ') != "$BASTION_HOST_IP" ]]; then
-        printf "\033[31m"; printf >&2 "Your localhost is not the targeted bastion host.\n" 
-        printf "\033[0m"
+        err; printf >&2 "Your localhost is not the targeted bastion host.\n" 
         return 1
     fi
     sudo useradd -m "${JAILED_USER}" || {
-        printf "\033[31m"; printf >&2 "Failed to add jailed user account!\n" 
-        printf "\033[0m"
+        err; printf >&2 "Failed to add jailed user account!\n" 
         return 1
     }
     printf "User account %s succussfully added.\n" "$JAILED_USER"
 
     local PASSWORD=
     read -r -s -p "Enter password for user account: " PASSWORD || {
-        printf "\033[31m"; printf >&2 "Failed to read password for user: %s\n" "$JAILED_USER"
-        printf "\033[0m"
+        err; printf >&2 "Failed to read password for user: %s\n" "$JAILED_USER"
     }
 
     printf "Setting password for user: %s\n" "${JAILED_USER}"
     printf "%s\n%s\n" "$PASSWORD" "$PASSWORD" | sudo passwd "${JAILED_USER}" || {
-        printf "\033[31m"; printf >&2 "Failed to set password for user: %s\n" "$JAILED_USER" 
-        printf "\033[0m"
+        err; printf >&2 "Failed to set password for user: %s\n" "$JAILED_USER" 
         return 1
     }
 
@@ -188,13 +196,12 @@ configure-ssh(){
 		    AuthenticationMethods password
 		EOF
         } || {
-            printf "\033[31m"; printf >&2 "Failed to add entry for user in /etc/ssh/sshd_config!\n" 
-            printf "\033[0m"
+            err; printf >&2 "Failed to add entry for user in /etc/ssh/sshd_config!\n" 
             return 1
         }
         # sudo sed -i -E "\$a Match User ${JAILED_USER}\nChrootDirectory ${CHROOT_DIR}\n" \
         #     /etc/ssh/sshd_config || {
-        #     printf "\033[31m"; printf >&2 "Failed to add entry for user in /etc/ssh/sshd_config!\n" && return 1
+        #     err; printf >&2 "Failed to add entry for user in /etc/ssh/sshd_config!\n" && return 1
         # }
 
         printf "Added ChrootDirectory rule for %s\n" "$JAILED_USER"
@@ -205,8 +212,7 @@ configure-ssh(){
     printf "Restarting SSH daemon...\n"
 
     sudo systemctl restart ssh || {
-        printf "\033[31m"; printf >&2 "Failed to restart SSH!\n"
-        printf "\033[0m"
+        err; printf >&2 "Failed to restart SSH!\n"
         return 1
     }
 
@@ -216,7 +222,7 @@ configure-ssh(){
 printf "Setting up chroot jail environment in: %s\n" "$CHROOT_DIR"
 
 setup-chroot-dir || {
-    printf "\033[31m"; printf >&2 "Failed to set up chroot directory!\n"; printf "\033[0m" 
+    err; printf >&2 "Failed to set up chroot directory!\n"; 
     exit 1
 }
 
@@ -224,17 +230,14 @@ printf "\033[32mSuccessfully set up chroot directory in %s\033[0m\n" "$CHROOT_DI
 printf "Attempting to set up a user account for jailed user: %s\n" "$JAILED_USER"
 
 setup-jailed-user || {
-    printf "\033[31m"; printf >&2 "Failed to set up jailed user!\n" && exit 1
+    err; printf >&2 "Failed to set up jailed user!\n" && exit 1
 }
 
 printf "\033[32mSuccessfully set up jailed user: %s\033[0m\n" "$JAILED_USER"
 printf "Attempting to configure SSH rules for jailed user.\n"
 
 configure-ssh || {
-    printf "\033[31m"
-    printf >&2 "Failed to configure ssh rules for jailed user!\n"; 
-    printf "\033[0m" 
-    exit 1
+    err; printf >&2 "Failed to configure ssh rules for jailed user!\n"; exit 1
 
 }
 
