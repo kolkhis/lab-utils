@@ -1,8 +1,8 @@
-- Writing your first bash script
+- [x] Writing your first bash script
     - Check OS of current machine?
     - Check network connection?
 
-- Conditionals
+- [x] Conditionals
     - Main rant 
         - exit codes
         - `true`/`false`
@@ -23,7 +23,7 @@
         * Bonus points: Use conditional operators to print error messages if commands fail (hint: `||`).  
         * For instance, maybe a script that prints something out in a certain color based on the argument.
 
-- Getting user input
+- [x] Getting user input
     - `read`
     - CLI args (`$@`, `$*`, `$1`...)
     - Argument parsing
@@ -32,7 +32,7 @@
 
 - Reading from a file
 
-- Redirection
+- [x] Redirection
     - Pipelines (`|`)
     - Redirecting to/from Files (`> file`, `< file`)
         - Process substitution?
@@ -51,7 +51,7 @@
           logfile.  
 
 
-- Regex / Pattern Matching
+- [ ] Regex / Pattern Matching (Partially done)
     - `=~`
         - Sets
         - Character classes
@@ -65,7 +65,7 @@
     - `[[ $var == *.md ]]`: Pattern matching
 
 
-- Content transformations
+- [ ] Content transformations
     - After/with regex
     - `sed`
         - `-i` / `-i.bak`
@@ -81,7 +81,7 @@
         - `tr/a-z/A-Z/`
     - `tr`
 
-- Parameter expansions
+- [ ] Parameter expansions
     - ```bash
       "${VAR//old/new}"
       "${VAR##prefix}"
@@ -95,13 +95,13 @@
       "${VAR@U}" # same thing (POSIX-compliant?)
       ```
 
-- Using arrays 
+- [ ] Using arrays 
     - `${ARR[@]}`
     - `${ARR[*]}`
     - `${ARR[0]}`
     - POSIX doesn't have arrays.
 
-- Associative arrays?
+- [ ] Associative arrays?
     - ```bash
       declare -A DICT
       DICT=(
@@ -110,24 +110,28 @@
       )
       ```
 
-- Process Substitution
+- [ ] Process Substitution
     - `<(cmd)`
     - Pretend to be a file
 
-- Command Grouping 
+- [ ] Command Grouping 
     - `{ ... }` / `( ... )`
     - Sharing output
 
-- Error handling
+- [ ] Error handling
     - `trap`
 
-- Debugging
+- [ ] Debugging
     - `set -x`
     - `printf` / `echo`
 
-- Backgrounding processes
+- [ ] Backgrounding processes
     - Combining with FIFOs?
 
-- Bash Programmable Completion
+- [ ] Bash Programmable Completion
     - `complete -A command <smth>`
+
+- Cron? Less "bash" and more "linux in general"
+    - Cron daily runs at 3:14 AM every morning on a linux system.  
+
 
