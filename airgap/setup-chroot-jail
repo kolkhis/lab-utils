@@ -14,10 +14,10 @@
 
 declare CHROOT_DIR='/var/chroot'
 declare JAILED_USER='juvie'
-declare BASTION_HOST_IP='192.168.4.80'
+declare BASTION_HOST_IP='192.168.4.74'
 
 declare -a BINARIES
-BINARIES=("bash" "rbash" "ssh")
+BINARIES=("rbash" "ssh")
 
 declare -a SYSFILES=(
     "/etc/passwd"
@@ -80,7 +80,7 @@ setup-chroot-dir() {
 
     for SYSFILE in "${SYSFILES[@]}"; do
         printf "Copying system file: %s\n" "$SYSFILE"
-        if [[ ! -d  "${CHROOT_DIR}/$(dirname "$SYSFILE")" ]]; then
+        if [[ ! -d  "${CHROOT_DIR}$(dirname "$SYSFILE")" ]]; then
             printf "Creating directory for %s at %s\n" "$SYSFILE" "$CHROOT_DIR/$(basename "$SYSFILE")"
             sudo mkdir -p "$(dirname "$SYSFILE")" || {
                 printf >&2 "Failed to make directory for %s at %s\n" "$SYSFILE" "$(dirname "$SYSFILE")"
