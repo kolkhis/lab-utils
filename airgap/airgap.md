@@ -458,6 +458,10 @@ ssh jaileduser@bastion
           mount -o remount,bind,ro,nosuid,nodev,noexec /bin /var/chroot/bin
           ```
 
+* [ ] Copy over `~/.ssh/config` file to give access to all local inventory's
+  hostnames, IPs, etc.  
+    - Run script from host user environment?
+
 * [ ] Make jail setup script idempotent
 
     * [x] Before copying libraries and binaries, check stat on the destination path and skip 
