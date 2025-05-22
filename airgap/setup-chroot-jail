@@ -193,21 +193,25 @@ setup-jailed-user() {
         err; printf >&2 "Failed to set password for user: %s\n" "$JAILED_USER" 
         return 1
     }
+}
+
+configure-user-shell(){
 
     if ! [[ -f "./${BASTION_SCRIPT}" ]]; then
-        err; printf >&2 "There's no bastion script to copy in the current directory!\n"
+        err; printf >&2 "There's no bastion script to copy in the current directory!\n" && return 1
     else
         sudo cp "./$BASTION_SCRIPT" "${CHROOT_DIR}/bin/${BASTION_SCRIPT}" || {
             err;printf >&2 "Failed to copy %s to %s/bin/%s" "$BASTION_SCRIPT" "$CHROOT_DIR" "$BASTION_SCRIPT"
+            return 1
         }
         debug "Successfully copied ${BASTION_SCRIPT} to ${CHROOT_DIR}/bin/${BASTION_SCRIPT}."
 
         sudo sed -iE "/${JAILED_USER}/s,/bin/b\?a\?sh,/bin/${BASTION_SCRIPT}," /etc/passwd || {
-            err;printf >&2 "Failed to replace default shell in /etc/passwd! \n"
+            err;printf >&2 "Failed to replace default shell in /etc/passwd! \n" && return 1
         }
         debug "Successfully added ${BASTION_SCRIPT} as shell for ${JAILED_USER}."
     fi
-
+    return 0
 }
 
 configure-ssh(){
@@ -247,28 +251,33 @@ configure-ssh(){
 
 }
 
-
+# User account setup
 printf "Attempting to set up a user account for jailed user: %s\n" "$JAILED_USER"
-
 setup-jailed-user || {
     err; printf >&2 "Failed to set up jailed user!\n" && exit 1
 }
-
 printf "\033[32mSuccessfully set up jailed user: %s\033[0m\n" "$JAILED_USER"
 
+# Directory setup
 printf "Setting up chroot jail environment in: %s\n" "$CHROOT_DIR"
 setup-chroot-dir || {
     err; printf >&2 "Failed to set up chroot directory!\n"; 
     exit 1
 }
-
 printf "\033[32mSuccessfully set up chroot directory in %s\033[0m\n" "$CHROOT_DIR"
-printf "Attempting to configure SSH rules for jailed user.\n"
 
+# User shell setup
+printf "Attempting to configure user's shell...\n"
+configure-user-shell || {
+    err;printf >&2 "Failed to set up user's shell to %s\n" "$BASTION_SCRIPT"
+}
+printf "\033[32mSuccessfully set up user's shell!\033[0m\n"
+
+# SSH configuration
+printf "Attempting to configure SSH rules for jailed user.\n"
 configure-ssh || {
     err; printf >&2 "Failed to configure ssh rules for jailed user!\n"; exit 1
 }
-
 printf "\033[32mSuccessfully set up jailed user.\033[0m\n"
 
 
