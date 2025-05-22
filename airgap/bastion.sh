@@ -1,5 +1,11 @@
 #!/usr/bin/rbash
 
+export PATH=/bin:/usr/bin
+declare -i VERBOSE
+declare REMOTE_USER=kolkhis
+declare DESTINATION=192.168.4.11
+declare ENDPOINT
+
 # TODO(perf): 
 #   - Read from an SSH config for list of available connections
 #       - Format?
@@ -7,18 +13,57 @@
 #           - Hostname?
 #           - User@Hostname?
 #       - Parse with perl, awk, grep
+#   - Problem: This script does not have access to those parsing programs.  
+#       - Solution:
+#           - Parse in setup script and read from file for choices.
 
-# export PATH=/bin:/usr/bin
 
-declare FREE_USER=kolkhis
-declare DESTINATION=192.168.4.11
+debug(){
+    [[ $VERBOSE -gt 0 ]] && printf "[\x1b[33mDEBUG\x1b[0m]: %s\n" "$*"
+}
+
+err() {
+    printf >&2 "[ \033[31mERROR\033[0m ]: " 
+}
+
+parse-ssh-file() {
+    # TODO: Finish this -- dynamically generate choices based on SSH config file.
+    local CONFIG_FILE=
+    { [[ -f ~/.ssh/config ]] && CONFIG_FILE="$HOME/.ssh/config"; } || 
+        { [[ -f /etc/ssh/ssh_config ]] && CONFIG_FILE="/etc/ssh/ssh_config"; }
+    debug "Using config file: $CONFIG_FILE"
+}
+
+go-to-destination() {
+    ssh "${REMOTE_USER}@${DESTINATION}" || {
+        err; printf >&2 "Failed to SSH to %s as %s!!!\n" "$DESTINATION" "$REMOTE_USER"
+        return 1
+    }
+}
+
+while [[ -n $1 ]]; do
+    case $1 in
+        -v|--verbose)
+            VERBOSE=1
+            ;;
+        *)
+            ;;
+    esac
+done
+
+
+if [[ -f ~/.ssh/config ]] || [[ -f /etc/ssh/ssh_config ]]; then
+    parse-ssh-file
+fi
+
 
 declare INPUT
 read -r -n 2 -t 20 -p "Welcome!
 Select one of the following:
 
 1. Connect to DestinationHost
-2. Exit
+2. Enter custom destination
+3. Exit
 
 > " INPUT
 
@@ -26,10 +71,17 @@ if [[ -n $INPUT ]]; then
     case $INPUT in
         1)
             printf "Going to DestinationHost.\n"
-            ssh "${FREE_USER}@${DESTINATION}"
+            go-to-destination
             exit 0
             ;;
         2)
+            read -r -p "Enter SSH destination (user@ip): " ENDPOINT
+            REMOTE_USER="${ENDPOINT%%@*}"
+            DESTINATION="${ENDPOINT##*@}"
+            debug "Going to '$DESTINATION' as '$USER'"
+            go-to-destination
+            ;;
+        3)
             printf "Leaving now.\n"
             exit 0
             ;;
