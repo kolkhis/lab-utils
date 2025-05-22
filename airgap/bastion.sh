@@ -1,4 +1,4 @@
-#!/bin/rbash
+#!/usr/bin/rbash
 
 # TODO(perf): 
 #   - Read from an SSH config for list of available connections
@@ -8,7 +8,7 @@
 #           - User@Hostname?
 #       - Parse with perl, awk, grep
 
-export PATH=/bin:/usr/bin
+# export PATH=/bin:/usr/bin
 
 declare FREE_USER=kolkhis
 declare DESTINATION=192.168.4.11
