@@ -16,8 +16,14 @@
 declare CHROOT_DIR='/var/chroot'
 declare JAILED_USER='juvie'
 declare BASTION_HOST_IP='192.168.4.74'
+declare BASTION_SCRIPT='bastion.sh'
+declare RBASH_PATH
+RBASH_PATH=$(which rbash)
 
-declare -a BINARIES=("rbash" "ssh")
+declare -a BINARIES=(
+    "rbash"
+    "ssh"
+)
 
 declare -a SYSFILES=(
     "/etc/passwd"
@@ -37,7 +43,7 @@ declare -a SPECIAL_FILES=(
 declare VERBOSE=0
 
 debug() {
-    [[ -n $VERBOSE ]] && printf "[\033[33m DEBUG \033[0m]: %s\n" "$@"
+    [[ $VERBOSE -gt 0 ]] && printf "[\033[33m DEBUG \033[0m]: %s\n" "$@"
 }
 
 err() {
@@ -62,6 +68,9 @@ while [[ -n $1 ]]; do
         -v|--verbose)
             VERBOSE=1
             shift;
+            ;;
+        -s|--script)
+            [[ -n $2 ]] && shift && BASTION_SCRIPT=$2 || printf >&2 "No valid argument passed to -s/--script\n"
             ;;
         -h|--help)
             # TODO: Add help text
@@ -140,9 +149,7 @@ setup-chroot-dir() {
 
             read -r -d '' -a MAJOR_MINOR < <(
                 awk '/Device type/ {print $(NF)"\n"}' < <(stat "$SPECIAL_FILE") | tr ',' ' '
-            ) || {
-                err; printf >&2 "Failed to read major/minor device numbers!\n"
-            }
+            ) 
 
             debug "$SPECIAL_FILE - Major: ${MAJOR_MINOR[0]}, Minor: ${MAJOR_MINOR[1]}"
 
@@ -164,17 +171,18 @@ setup-chroot-dir() {
 }
 
 setup-jailed-user() {
+    local PASSWORD=
+
     if [[ $(hostname -I | awk '{print $1}' | tr -d ' ') != "$BASTION_HOST_IP" ]]; then
         err; printf >&2 "Your localhost is not the targeted bastion host.\n" 
-        return 1
     fi
+
     sudo useradd -m "${JAILED_USER}" || {
         err; printf >&2 "Failed to add jailed user account!\n" 
         return 1
     }
-    printf "User account %s succussfully added.\n" "$JAILED_USER"
 
-    local PASSWORD=
+    printf "User account %s succussfully added.\n" "$JAILED_USER"
     read -r -s -p "Enter password for user account: " PASSWORD || {
         err; printf >&2 "Failed to read password for user: %s\n" "$JAILED_USER"
     }
@@ -185,13 +193,23 @@ setup-jailed-user() {
         return 1
     }
 
+    if ! [[ -f $BASTION_SCRIPT ]]; then
+        err; printf >&2 "There's no bastion script to copy in the current directory!\n"
+    else
+        sudo cp "$BASTION_SCRIPT" "/var/chroot/bin/$BASTION_SCRIPT" || {
+            err;printf >&2 "Failed to copy %s to /var/chroot/bin/%s" "$BASTION_SCRIPT" "$BASTION_SCRIPT"
+        }
+    fi
+
 }
 
 configure-ssh(){
+
     # Set up the bastion script and rules for the jailed user
+
     if ! grep -qi "Match User ${JAILED_USER}" /etc/ssh/sshd_config; then
         {
-	    cat <<- EOF | sudo tee -a /etc/ssh/sshd_config
+	    cat <<- EOF | sudo tee -a /etc/ssh/sshd_config > /dev/null 2>&1
 		Match User $JAILED_USER
 		    ChrootDirectory $CHROOT_DIR
 		    PasswordAuthentication yes
@@ -201,6 +219,7 @@ configure-ssh(){
             err; printf >&2 "Failed to add entry for user in /etc/ssh/sshd_config!\n" 
             return 1
         }
+
         # sudo sed -i -E "\$a Match User ${JAILED_USER}\nChrootDirectory ${CHROOT_DIR}\n" \
         #     /etc/ssh/sshd_config || {
         #     err; printf >&2 "Failed to add entry for user in /etc/ssh/sshd_config!\n" && return 1
@@ -217,10 +236,10 @@ configure-ssh(){
         err; printf >&2 "Failed to restart SSH!\n"
         return 1
     }
+    printf "\033[32mSuccessfully restarted SSH!\033[0m\n"
 
 }
 
-    
 printf "Setting up chroot jail environment in: %s\n" "$CHROOT_DIR"
 
 setup-chroot-dir || {
@@ -240,7 +259,6 @@ printf "Attempting to configure SSH rules for jailed user.\n"
 
 configure-ssh || {
     err; printf >&2 "Failed to configure ssh rules for jailed user!\n"; exit 1
-
 }
 
 printf "\033[32mSuccessfully set up jailed user.\033[0m\n"
