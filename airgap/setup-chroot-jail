@@ -13,13 +13,15 @@
 #       - iptables/nftables rule to restrict jailed user to SSH only to certain hosts
 #   - Use readonly bind mount?
 
+# TODO(feat): 
+#   - Parse SSH config script and somehow present those choices to user in bastion.sh
+#       - Parsing must happen in setup.
+#       - Can not happen in bastion script due to limited binary access (no sed,awk,perl)
+
 declare CHROOT_DIR='/var/chroot'
 declare JAILED_USER='juvie'
 declare BASTION_HOST_IP='192.168.4.74'
 declare BASTION_SCRIPT='bastion.sh'
-
-declare RBASH_PATH
-RBASH_PATH=$(which rbash)
 
 declare -a BINARIES=(
     "rbash"
