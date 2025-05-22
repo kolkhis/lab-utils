@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if grep -i 'juvie' /etc/passwd; then
+    sudo userdel -r juvie || {
+        printf >&2 "Failed to remove the user 'juvie'!\n"
+    }
+fi
+
+if [[ -d /var/chroot ]]; then
+    sudo rm -rf /var/chroot || {
+        printf >&2 "Failed to remove /var/chroot!\n"
+    }
+fi
