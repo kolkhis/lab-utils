@@ -199,10 +199,9 @@ setup-jailed-user() {
         sudo cp "$BASTION_SCRIPT" "/var/chroot/bin/$BASTION_SCRIPT" || {
             err;printf >&2 "Failed to copy %s to /var/chroot/bin/%s" "$BASTION_SCRIPT" "$BASTION_SCRIPT"
         }
-        sudo sed -iE "/${JAILED_USER}/s,/bin/b?a?sh,/bin/${BASTION_SCRIPT},"
+        sudo sed -iE "/${JAILED_USER}/s,/bin/b?a?sh,/bin/${BASTION_SCRIPT}," /etc/passwd
     fi
 
-    
 }
 
 configure-ssh(){
