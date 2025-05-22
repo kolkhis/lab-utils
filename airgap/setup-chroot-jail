@@ -200,7 +200,7 @@ setup-jailed-user() {
             err;printf >&2 "Failed to copy %s to %s/bin/%s" "$BASTION_SCRIPT" "$CHROOT_DIR" "$BASTION_SCRIPT"
         }
 
-        sudo sed -iE "/${JAILED_USER}/s,/bin/b?a?sh,/bin/${BASTION_SCRIPT}," /etc/passwd || {
+        sudo sed -iE "/${JAILED_USER}/s,/bin/b\?a\?sh,/bin/${BASTION_SCRIPT}," /etc/passwd || {
             err;printf >&2 "Failed to replace default shell in /etc/passwd! \n"
         }
     fi
