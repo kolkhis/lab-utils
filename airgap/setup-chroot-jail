@@ -17,6 +17,7 @@ declare CHROOT_DIR='/var/chroot'
 declare JAILED_USER='juvie'
 declare BASTION_HOST_IP='192.168.4.74'
 declare BASTION_SCRIPT='bastion.sh'
+
 declare RBASH_PATH
 RBASH_PATH=$(which rbash)
 
@@ -193,16 +194,18 @@ setup-jailed-user() {
         return 1
     }
 
-    if ! [[ -f $BASTION_SCRIPT ]]; then
+    if ! [[ -f "./${BASTION_SCRIPT}" ]]; then
         err; printf >&2 "There's no bastion script to copy in the current directory!\n"
     else
-        sudo cp "$BASTION_SCRIPT" "${CHROOT_DIR}/bin/${BASTION_SCRIPT}" || {
+        sudo cp "./$BASTION_SCRIPT" "${CHROOT_DIR}/bin/${BASTION_SCRIPT}" || {
             err;printf >&2 "Failed to copy %s to %s/bin/%s" "$BASTION_SCRIPT" "$CHROOT_DIR" "$BASTION_SCRIPT"
         }
+        debug "Successfully copied ${BASTION_SCRIPT} to ${CHROOT_DIR}/bin/${BASTION_SCRIPT}."
 
         sudo sed -iE "/${JAILED_USER}/s,/bin/b\?a\?sh,/bin/${BASTION_SCRIPT}," /etc/passwd || {
             err;printf >&2 "Failed to replace default shell in /etc/passwd! \n"
         }
+        debug "Successfully added ${BASTION_SCRIPT} as shell for ${JAILED_USER}."
     fi
 
 }
@@ -244,14 +247,7 @@ configure-ssh(){
 
 }
 
-printf "Setting up chroot jail environment in: %s\n" "$CHROOT_DIR"
 
-setup-chroot-dir || {
-    err; printf >&2 "Failed to set up chroot directory!\n"; 
-    exit 1
-}
-
-printf "\033[32mSuccessfully set up chroot directory in %s\033[0m\n" "$CHROOT_DIR"
 printf "Attempting to set up a user account for jailed user: %s\n" "$JAILED_USER"
 
 setup-jailed-user || {
@@ -259,6 +255,14 @@ setup-jailed-user || {
 }
 
 printf "\033[32mSuccessfully set up jailed user: %s\033[0m\n" "$JAILED_USER"
+
+printf "Setting up chroot jail environment in: %s\n" "$CHROOT_DIR"
+setup-chroot-dir || {
+    err; printf >&2 "Failed to set up chroot directory!\n"; 
+    exit 1
+}
+
+printf "\033[32mSuccessfully set up chroot directory in %s\033[0m\n" "$CHROOT_DIR"
 printf "Attempting to configure SSH rules for jailed user.\n"
 
 configure-ssh || {
