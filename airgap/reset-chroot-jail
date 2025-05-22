@@ -1,13 +1,20 @@
 #!/bin/bash
 
-if grep -i 'juvie' /etc/passwd; then
-    sudo userdel -r juvie || {
-        printf >&2 "Failed to remove the user 'juvie'!\n"
-    }
-fi
+remove-chroot-dir(){
+    if [[ -d /var/chroot ]]; then
+        sudo rm -rf /var/chroot || {
+            printf >&2 "Failed to remove /var/chroot!\n" && exit 1
+        }
+    fi
+}
 
-if [[ -d /var/chroot ]]; then
-    sudo rm -rf /var/chroot || {
-        printf >&2 "Failed to remove /var/chroot!\n"
-    }
-fi
+remove-jailed-user(){
+    if grep -i 'juvie' /etc/passwd; then
+        sudo userdel -r juvie || {
+            printf >&2 "Failed to remove the user 'juvie'!\n" && return 1
+        }
+    fi
+}
+
+remove-chroot-dir
+remove-jailed-user
