@@ -196,10 +196,13 @@ setup-jailed-user() {
     if ! [[ -f $BASTION_SCRIPT ]]; then
         err; printf >&2 "There's no bastion script to copy in the current directory!\n"
     else
-        sudo cp "$BASTION_SCRIPT" "/var/chroot/bin/$BASTION_SCRIPT" || {
-            err;printf >&2 "Failed to copy %s to /var/chroot/bin/%s" "$BASTION_SCRIPT" "$BASTION_SCRIPT"
+        sudo cp "$BASTION_SCRIPT" "${CHROOT_DIR}/bin/${BASTION_SCRIPT}" || {
+            err;printf >&2 "Failed to copy %s to %s/bin/%s" "$BASTION_SCRIPT" "$CHROOT_DIR" "$BASTION_SCRIPT"
         }
-        sudo sed -iE "/${JAILED_USER}/s,/bin/b?a?sh,/bin/${BASTION_SCRIPT}," /etc/passwd
+
+        sudo sed -iE "/${JAILED_USER}/s,/bin/b?a?sh,/bin/${BASTION_SCRIPT}," /etc/passwd || {
+            err;printf >&2 "Failed to replace default shell in /etc/passwd! \n"
+        }
     fi
 
 }
