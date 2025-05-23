@@ -1,18 +1,61 @@
 #!/bin/bash
 
-declare -a EXCLUDE_CMDS=(
-    "rm -rf /"
-    "rm --no-preserve-root"
-    "cat /dev/urandom"
-    "cat /dev/random"
-    ":(){:|:&}"
+declare -a EXCLUDE_KEYWORDS=(
+    'rm -rf /'
+    '--no-preserve-root'
+    'cat /dev/urandom'
+    'cat /dev/random'
+    ':(){:|:&}'
+    '\x1b'
+    '\033'
+    '\e'
+    '\u001b'
 )
 
 # Directory to watch
 WATCH_FILE="/data/stream_write/stream_answers"
 
+is-forkbomb() {
+    local CMD
+    local PARSED
+    [[ -z $1 ]] && printf "No input provided to function!\n" && return 0
+    CMD="$1"
+    PARSED=$(
+        perl -ne 'print $1 if m/(.{1,}\s*\(\s*\)\s*[{]\s*.{1,}\s*[|]\s*.{1,}\s*&\s*[}]).*/' <<< "$CMD"
+    )
+    printf "Parsed command: %s\n" "$PARSED"
+    [[ -z $PARSED ]] && return 1
+    [[ -n $PARSED ]] && printf "Forkbomb detected in '%s' -- This part: %s\n" \
+        "\033[31m$CMD\033[0m" \
+        "\033[33m$PARSED\033[0m" && return 0
+
+}
+
+
+is-malicious-cmd() {
+    # return true (0) if cmd is malicious
+    local CMD
+    [[ -z $1 ]] && printf "No input provided to function!\n" && return 0
+    CMD="$1"
+
+    is-forkbomb "$CMD" && return 0
+
+    [[ "${EXCLUDE_KEYWORDS[*]}" =~ ${CMD} ]] &&
+        printf "Illegal command: %s\n" "$CMD" && return 0
+
+    # extra layer of check (for control seqs)
+    for EX in "${EXCLUDE_KEYWORDS[@]}"; do
+        [[ $CMD =~ ${EX} ]] &&
+            printf "Illegal substring found in command %s: %s\n" "$CMD" "$EX" &&
+            return 1
+    done
+    
+    return 1
+}
+
+
 # Watch for events (create, modify, delete, etc.)
-while read -r event; do
+while read -r _; do
 
     # Show the command entry
     line=$(tail -n 1 "$WATCH_FILE")
@@ -20,8 +63,10 @@ while read -r event; do
     source="$(awk -F: '{print $2}' <<< "$line")"
     command="$(awk -F: '{print $3}' <<< "$line")"
 
-    printf "User: \033[32m%s\033[0m answered on \033[32m%s\033[0m. Their command is: \033[33m%s\033[0m\n" \
-            "$user" "$source" "$command"
+    printf "User: %s answered on %s. Their command is: %s\n" \
+            "\033[32m$user\033[0m" \
+            "\033[32m$source\033[0m]" \
+            "\033[33m$command\033[0m"
 
     # Select a server to use
     num=$(( (RANDOM % 5) + 15 ))
@@ -36,9 +81,9 @@ while read -r event; do
     fi
 
     # skip if user is a douchebag
-    if [[ "${EXCLUDE_CMDS[*]}" =~ ${command} ]]; then
-        printf "Good one, \033[32m%s\033[0m 😘 \n" "$user" && continue
-    fi
+    is-malicious-cmd "$command" &&
+        printf "Good one, \033[31m%s\033[0m 😘 \n" "$user" &&
+        continue
 
     # Execute the command
     timeout 15 ssh -i /root/.ssh/cluster_key rocky$num "timeout 15 $command"
