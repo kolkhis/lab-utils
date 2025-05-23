@@ -32,15 +32,6 @@ Select one of the following:
 #       - Solution:
 #           - Parse in setup script and read from file for choices.
 
-
-debug(){
-    [[ $VERBOSE -gt 0 ]] && printf "[\x1b[33mDEBUG\x1b[0m]: %s\n" "$*"
-}
-
-err() {
-    printf "[ \033[31mERROR\033[0m ]: " 
-}
-
 # parse-ssh-file() {
 #     # TODO: Finish this -- dynamically generate choices based on SSH config file.
 #     # Must happen in setup? No access to parsing tools (sed, awk, perl)
@@ -49,6 +40,19 @@ err() {
 #         { [[ -f /etc/ssh/ssh_config ]] && CONFIG_FILE="/etc/ssh/ssh_config"; }
 #     debug "Using config file: $CONFIG_FILE"
 # }
+
+# if [[ -f ~/.ssh/config ]] || [[ -f /etc/ssh/ssh_config ]]; then
+#     parse-ssh-file
+# fi
+
+
+debug(){
+    [[ $VERBOSE -gt 0 ]] && printf "[\x1b[33mDEBUG\x1b[0m]: %s\n" "$*"
+}
+
+err() {
+    printf "[ \033[31mERROR\033[0m ]: " 
+}
 
 go-to-destination() {
     if ! ping -c 1 "$DESTINATION"; then
@@ -60,21 +64,6 @@ go-to-destination() {
         return 1
     }
 }
-
-while [[ -n $1 ]]; do
-    case $1 in
-        -v|--verbose)
-            VERBOSE=1
-            ;;
-        *)
-            ;;
-    esac
-done
-
-
-# if [[ -f ~/.ssh/config ]] || [[ -f /etc/ssh/ssh_config ]]; then
-#     parse-ssh-file
-# fi
 
 get-user-input(){
     local INPUT
@@ -116,6 +105,20 @@ get-user-input(){
     fi
 
 }
+
+while [[ -n $1 ]]; do
+    case $1 in
+        -v|--verbose)
+            VERBOSE=1
+            shift;
+            ;;
+        *)
+            printf "Unknown argument: %s\n" "$1"
+            shift;
+            ;;
+    esac
+done
+
 
 
 declare -i CONNECTED=0
