@@ -51,7 +51,7 @@ is-malicious-cmd() {
     for EX in "${EXCLUDE_KEYWORDS[@]}"; do
         [[ $CMD =~ ${EX} ]] &&
             printf "Illegal substring found in command %s: %s\n" "$CMD" "$EX" &&
-            return 1
+            return 0
     done
     
     return 1
