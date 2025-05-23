@@ -1,6 +1,6 @@
 #!/usr/bin/rbash
 
-export PATH=/bin:/usr/bin
+# export PATH=/bin:/usr/bin
 declare -i VERBOSE
 
 declare DEFAULT_USER='kolkhis'
