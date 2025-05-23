@@ -17,7 +17,7 @@ WATCH_FILE="/data/stream_write/stream_answers"
 
 is-forkbomb() {
     local CMD
-    local PARSED
+    local PARSED=
     [[ -z $1 ]] && printf "No input provided to function!\n" && return 0
     CMD="$1"
     PARSED=$(
