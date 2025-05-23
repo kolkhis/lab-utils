@@ -38,25 +38,25 @@ debug(){
 }
 
 err() {
-    printf >&2 "[ \033[31mERROR\033[0m ]: " 
+    printf "[ \033[31mERROR\033[0m ]: " 
 }
 
-parse-ssh-file() {
-    # TODO: Finish this -- dynamically generate choices based on SSH config file.
-    # Must happen in setup? No access to parsing tools (sed, awk, perl)
-    local CONFIG_FILE=
-    { [[ -f ~/.ssh/config ]] && CONFIG_FILE="$HOME/.ssh/config"; } || 
-        { [[ -f /etc/ssh/ssh_config ]] && CONFIG_FILE="/etc/ssh/ssh_config"; }
-    debug "Using config file: $CONFIG_FILE"
-}
+# parse-ssh-file() {
+#     # TODO: Finish this -- dynamically generate choices based on SSH config file.
+#     # Must happen in setup? No access to parsing tools (sed, awk, perl)
+#     local CONFIG_FILE=
+#     { [[ -f ~/.ssh/config ]] && CONFIG_FILE="$HOME/.ssh/config"; } || 
+#         { [[ -f /etc/ssh/ssh_config ]] && CONFIG_FILE="/etc/ssh/ssh_config"; }
+#     debug "Using config file: $CONFIG_FILE"
+# }
 
 go-to-destination() {
-    if ! ping -c 1 "$DESTINATION" > /dev/null 2>&1; then
-        err; printf >&2 "Destination host is unresponsive!\n" && return 1
+    if ! ping -c 1 "$DESTINATION"; then
+        err; printf "Destination host is unresponsive!\n" && return 1
     fi
 
     ssh "${REMOTE_USER:-$DEFAULT_USER}@${DESTINATION}" || {
-        err; printf >&2 "Failed to SSH to %s as %s!\n" "$DESTINATION" "${REMOTE_USER:-$DEFAULT_USER}"
+        err; printf "Failed to SSH to %s as %s!\n" "$DESTINATION" "${REMOTE_USER:-$DEFAULT_USER}"
         return 1
     }
 }
@@ -88,7 +88,7 @@ get-user-input(){
             1)
                 printf "Going to DestinationHost.\n"
                 go-to-destination || {
-                    printf >&2 "Failed to connect!\n" && exit 1
+                    printf "Failed to connect!\n" && exit 1
                 }
                 exit 0
                 ;;
@@ -98,7 +98,7 @@ get-user-input(){
                 DESTINATION="${ENDPOINT##*@}"
                 debug "Going to '$DESTINATION' as '$USER'"
                 go-to-destination || {
-                    printf >&2 "Failed to connect!\n" && exit 1
+                    printf "Failed to connect!\n" && exit 1
                 }
                 ;;
             3)
