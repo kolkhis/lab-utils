@@ -2,9 +2,24 @@
 
 export PATH=/bin:/usr/bin
 declare -i VERBOSE
-declare REMOTE_USER=kolkhis
+
+declare DEFAULT_USER='kolkhis'
+
+declare REMOTE_USER
 declare DESTINATION=192.168.4.11
 declare ENDPOINT
+
+declare PROMPT_STRING="
+Welcome!
+Select one of the following:
+
+1. Connect to DestinationHost
+2. Enter custom destination
+3. Exit
+
+> "
+
+
 
 # TODO(perf): 
 #   - Read from an SSH config for list of available connections
@@ -28,6 +43,7 @@ err() {
 
 parse-ssh-file() {
     # TODO: Finish this -- dynamically generate choices based on SSH config file.
+    # Must happen in setup? No access to parsing tools (sed, awk, perl)
     local CONFIG_FILE=
     { [[ -f ~/.ssh/config ]] && CONFIG_FILE="$HOME/.ssh/config"; } || 
         { [[ -f /etc/ssh/ssh_config ]] && CONFIG_FILE="/etc/ssh/ssh_config"; }
@@ -35,8 +51,12 @@ parse-ssh-file() {
 }
 
 go-to-destination() {
-    ssh "${REMOTE_USER}@${DESTINATION}" || {
-        err; printf >&2 "Failed to SSH to %s as %s!!!\n" "$DESTINATION" "$REMOTE_USER"
+    if ! ping -c 1 "$DESTINATION" > /dev/null 2>&1; then
+        err; printf >&2 "Destination host is unresponsive!\n" && return 1
+    fi
+
+    ssh "${REMOTE_USER:-$DEFAULT_USER}@${DESTINATION}" || {
+        err; printf >&2 "Failed to SSH to %s as %s!\n" "$DESTINATION" "${REMOTE_USER:-$DEFAULT_USER}"
         return 1
     }
 }
@@ -52,49 +72,54 @@ while [[ -n $1 ]]; do
 done
 
 
-if [[ -f ~/.ssh/config ]] || [[ -f /etc/ssh/ssh_config ]]; then
-    parse-ssh-file
-fi
+# if [[ -f ~/.ssh/config ]] || [[ -f /etc/ssh/ssh_config ]]; then
+#     parse-ssh-file
+# fi
 
+get-user-input(){
+    local INPUT
+    read -r -n 2 -t 20 -p "$PROMPT_STRING" INPUT
 
-declare INPUT
-read -r -n 2 -t 20 -p "Welcome!
-Select one of the following:
+    local CONNECTED=0
 
-1. Connect to DestinationHost
-2. Enter custom destination
-3. Exit
+    if [[ -n $INPUT ]]; then
 
-> " INPUT
+        case $INPUT in
+            1)
+                printf "Going to DestinationHost.\n"
+                go-to-destination || {
+                    printf >&2 "Failed to connect!\n" && exit 1
+                }
+                exit 0
+                ;;
+            2)
+                read -r -p "Enter SSH destination (user@ip): " ENDPOINT
+                REMOTE_USER="${ENDPOINT%%@*}"
+                DESTINATION="${ENDPOINT##*@}"
+                debug "Going to '$DESTINATION' as '$USER'"
+                go-to-destination || {
+                    printf >&2 "Failed to connect!\n" && exit 1
+                }
+                ;;
+            3)
+                printf "Leaving now.\n"
+                exit 0
+                ;;
+            [^0-9])
+                printf "You can only enter numbers.\n"
+                exit 1
+                ;;
+            *)
+                printf "Unknown input. Goodbye.\n"
+                exit 1
+                ;;
+        esac
 
-if [[ -n $INPUT ]]; then
-    case $INPUT in
-        1)
-            printf "Going to DestinationHost.\n"
-            go-to-destination
-            exit 0
-            ;;
-        2)
-            read -r -p "Enter SSH destination (user@ip): " ENDPOINT
-            REMOTE_USER="${ENDPOINT%%@*}"
-            DESTINATION="${ENDPOINT##*@}"
-            debug "Going to '$DESTINATION' as '$USER'"
-            go-to-destination
-            ;;
-        3)
-            printf "Leaving now.\n"
-            exit 0
-            ;;
-        [^0-9])
-            printf "You can only enter numbers.\n"
-            exit 1
-            ;;
-        *)
-            printf "Unknown input. Goodbye.\n"
-            exit 1
-            ;;
-    esac
-fi
+    fi
+
+}
+
+get-user-input
 
 exit 0
 
