@@ -26,6 +26,7 @@ declare BASTION_SCRIPT='bastion.sh'
 declare -a BINARIES=(
     "rbash"
     "ssh"
+    "ping"
 )
 
 declare -a SYSFILES=(
