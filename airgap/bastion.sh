@@ -80,17 +80,15 @@ get-user-input(){
     local INPUT
     read -r -n 2 -t 20 -p "$PROMPT_STRING" INPUT
 
-    local CONNECTED=0
-
     if [[ -n $INPUT ]]; then
 
         case $INPUT in
             1)
                 printf "Going to DestinationHost.\n"
                 go-to-destination || {
-                    printf "Failed to connect!\n" && exit 1
+                    printf "Failed to connect!\n" && return 1
                 }
-                exit 0
+                return 0
                 ;;
             2)
                 read -r -p "Enter SSH destination (user@ip): " ENDPOINT
@@ -98,20 +96,20 @@ get-user-input(){
                 DESTINATION="${ENDPOINT##*@}"
                 debug "Going to '$DESTINATION' as '$USER'"
                 go-to-destination || {
-                    printf "Failed to connect!\n" && exit 1
+                    printf "Failed to connect!\n" && return 1
                 }
                 ;;
             3)
                 printf "Leaving now.\n"
-                exit 0
+                return 0
                 ;;
             [^0-9])
                 printf "You can only enter numbers.\n"
-                exit 1
+                return 1
                 ;;
             *)
                 printf "Unknown input. Goodbye.\n"
-                exit 1
+                return 1
                 ;;
         esac
 
@@ -119,7 +117,16 @@ get-user-input(){
 
 }
 
-get-user-input
+
+declare -i CONNECTED=0
+
+# - If trying to connect to unresponsive host, kick back to input prompt
+while [[ -z $CONNECTED ]]; do
+    get-user-input || {
+        printf "Failed to connect!" && continue
+    }
+    CONNECTED=1
+done
 
 exit 0
 
