@@ -43,6 +43,10 @@ is-malicious-cmd() {
     [[ "${EXCLUDE_KEYWORDS[*]}" =~ ${CMD} ]] &&
         printf "Illegal command: %s\n" "$CMD" && return 0
 
+    [[ $CMD =~ ([[:cntrl:]]) ]] &&
+        printf "Illegal character found: %s\n" "${BASH_REMATCH[1]}" &&
+        return 0
+
     # extra layer of check (for control seqs)
     for EX in "${EXCLUDE_KEYWORDS[@]}"; do
         [[ $CMD =~ ${EX} ]] &&
