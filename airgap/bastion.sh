@@ -19,8 +19,6 @@ Select one of the following:
 
 > "
 
-
-
 # TODO(perf): 
 #   - Read from an SSH config for list of available connections
 #       - Format?
@@ -63,6 +61,7 @@ go-to-destination() {
         err; printf "Failed to SSH to %s as %s!\n" "$DESTINATION" "${REMOTE_USER:-$DEFAULT_USER}"
         return 1
     }
+    return 0
 }
 
 get-user-input(){
@@ -87,6 +86,7 @@ get-user-input(){
                 go-to-destination || {
                     printf "Failed to connect!\n" && return 1
                 }
+                return 0
                 ;;
             3)
                 printf "Leaving now.\n"
@@ -119,19 +119,14 @@ while [[ -n $1 ]]; do
     esac
 done
 
-
-
-declare -i CONNECTED=0
-
 # - If trying to connect to unresponsive host, kick back to input prompt
-while [[ -z $CONNECTED ]]; do
-    get-user-input || {
-        printf "Failed to connect!" && continue
-    }
-    CONNECTED=1
-done
+#   - Tried: 
+#       - While loop w/ continue and 'CONNECTED' flag (locale error)
+#       - For loop w/ attempts and connected flag (kicks back to jump box prompt after exiting destination)
+
+get-user-input || {
+    printf "Failed to connect!" # && continue
+}
 
 exit 0
-
-
 
