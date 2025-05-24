@@ -17,6 +17,10 @@
 #   - Parse SSH config script and somehow present those choices to user in bastion.sh
 #       - Parsing must happen in setup.
 #       - Can not happen in bastion script due to limited binary access (no sed,awk,perl)
+#   - Set up log file (/var/log/jumpbox.log)
+#
+#   - Set up fail2ban (different script?)
+#   - Set up monitoring stack (different script?)
 
 declare CHROOT_DIR='/var/chroot'
 declare JAILED_USER='juvie'
@@ -282,6 +286,4 @@ configure-ssh || {
     err; printf >&2 "Failed to configure ssh rules for jailed user!\n"; exit 1
 }
 printf "\033[32mSuccessfully set up jailed user.\033[0m\n"
-
-
 
