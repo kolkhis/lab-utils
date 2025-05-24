@@ -426,9 +426,9 @@ ssh jaileduser@bastion
 
 ## Enhancements (TODO)
 
-* [ ] Log all access attempts to a file (inside the jail).
+* [ ] Log all external access attempts to a file (inside the jail).
 
-  E.g.,
+  E.g., when a user tries to connect to an external host from within the jump server.  
   ```bash
   logfile="/var/log/bastion_access.log"
   echo "$(date): User input '$INPUT'" >> "$logfile"
@@ -436,6 +436,8 @@ ssh jaileduser@bastion
     - To keep it inside the jail, mount `/dev/log` and use `logger` with `rsyslog`.
         - `man logger`
         - `man rsyslog`
+
+* [ ] Set up fail2ban for jumpserver.
 
 * [ ] Support multiple destinations
     * [ ] Read from an SSH config file for destinations. Dynamically generate prompt for user
