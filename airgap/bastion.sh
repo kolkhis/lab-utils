@@ -9,6 +9,8 @@ declare REMOTE_USER
 declare DESTINATION=192.168.4.11
 declare ENDPOINT
 
+declare LOGFILE='/var/log/jumpserver.log'
+
 declare PROMPT_STRING="
 Welcome!
 Select one of the following:
@@ -52,7 +54,12 @@ err() {
     printf "[ \033[31mERROR\033[0m ]: " 
 }
 
+log-entry(){
+    [[ $# -gt 0 ]] && printf "[%s]: %s\n" "$(date +%D-%T)" "$*" >> "$LOGFILE"
+}
+
 go-to-destination() {
+    log-entry "User attempting to connect to ${REMOTE_USER:-$DEFAULT_USER}@$DESTINATION"
     if ! ping -c 1 "$DESTINATION"; then
         err; printf "Destination host is unresponsive!\n" && return 1
     fi
@@ -80,9 +87,21 @@ get-user-input(){
                 ;;
             2)
                 read -r -p "Enter SSH destination (user@ip): " ENDPOINT
+
+                # POSIX-comliant:
+                # REMOTE_USER="$(printf "%s" "$ENDPOINT" | cut -d '@' -f 1)"
+                # DESTINATION="$(printf "%s" "$ENDPOINT" | cut -d '@' -f 2)"
+
                 REMOTE_USER="${ENDPOINT%%@*}"
                 DESTINATION="${ENDPOINT##*@}"
+
+                # TODO(perf): Check if user was specified, along with @. If not, use
+                # default user and handle @
+                [[ $REMOTE_USER == "$DESTINATION" ]] &&
+                    printf "No user given. Using %s.\n" "${REMOTE_USER:=$DEFAULT_USER}"
+
                 debug "Going to '$DESTINATION' as '$USER'"
+                log-entry "Custom location provided: ${REMOTE_USER}@${DESTINATION}"
                 go-to-destination || {
                     printf "Failed to connect!\n" && return 1
                 }
@@ -126,6 +145,7 @@ done
 
 get-user-input || {
     printf "Failed to connect!" # && continue
+    log-entry "Failed connection to ${REMOTE_USER}@${DESTINATION}"
 }
 
 exit 0
