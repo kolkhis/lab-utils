@@ -12,6 +12,14 @@ declare -a EXCLUDE_KEYWORDS=(
     '\u001b'
 )
 
+
+declare -A COLORS=(
+    [red]=$'\033[31m'
+    [green]=$'\033[32m'
+    [yellow]=$'\033[33m'
+    [reset]=$'\033[0m'
+)
+
 # Directory to watch
 WATCH_FILE="/data/stream_write/stream_answers"
 
@@ -26,8 +34,8 @@ is-forkbomb() {
     printf "Parsed command: %s\n" "$PARSED"
     [[ -z $PARSED ]] && return 1
     [[ -n $PARSED ]] && printf "Forkbomb detected in '%s' -- This part: %s\n" \
-        "\033[31m$CMD\033[0m" \
-        "\033[33m$PARSED\033[0m" && return 0
+        "${COLORS[red]}${CMD}${COLORS[reset]}" \
+        "${COLORS[green]}${PARSED}${COLORS[reset]}" && return 0
 
 }
 
@@ -69,9 +77,9 @@ while read -r _; do
     command="$(awk -F: '{print $3}' <<< "$line")"
 
     printf "User: %s answered on %s. Their command is: %s\n" \
-            "\033[32m$user\033[0m" \
-            "\033[32m$source\033[0m]" \
-            "\033[33m$command\033[0m"
+            "${COLORS[green]}$user${COLORS[reset]}" \
+            "${COLORS[green]}$source${COLORS[reset]}]" \
+            "${COLORS[yellow]}$command${COLORS[reset]}"
 
     # Select a server to use
     num=$(( (RANDOM % 5) + 15 ))
@@ -87,7 +95,7 @@ while read -r _; do
 
     # skip if user is a douchebag
     is-malicious-cmd "$command" &&
-        printf "Good one, \033[31m%s\033[0m 😘 \n" "$user" &&
+        printf "Good one, ${COLORS[red]}%s${COLORS[reset]} 😘 \n" "$user" &&
         continue
 
     # Execute the command
