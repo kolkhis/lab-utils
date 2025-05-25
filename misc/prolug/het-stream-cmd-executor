@@ -5,6 +5,7 @@ declare -a EXCLUDE_KEYWORDS=(
     '--no-preserve-root'
     'cat /dev/urandom'
     'cat /dev/random'
+    'virsh'
     ':(){:|:&}'
     '\x1b'
     '\033'
