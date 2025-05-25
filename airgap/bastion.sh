@@ -9,7 +9,7 @@ declare REMOTE_USER
 declare DESTINATION=192.168.4.11
 declare ENDPOINT
 
-declare LOGFILE='/var/log/jumpserver.log'
+declare LOGFILE='/var/log/bastion.log'
 
 declare PROMPT_STRING="
 Welcome!
