@@ -3,14 +3,18 @@
 # export PATH=/bin:/usr/bin
 declare -i VERBOSE
 
+declare REMOTE_USER
 declare DEFAULT_USER='kolkhis'
 
-declare REMOTE_USER
+
+# TODO(perf): Make destination(s) an array 
+#   - Associative array?
+#       [hostname]=192.168.4.11
+
 declare DESTINATION=192.168.4.11
 declare ENDPOINT
 
 declare LOGFILE='/var/log/bastion.log'
-
 declare PROMPT_STRING="
 Welcome!
 Select one of the following:
