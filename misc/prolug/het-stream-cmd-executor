@@ -82,11 +82,11 @@ main() {
         mapfile -d : -t LINE < <(tail -n 1 "${WATCH_FILE}")
         user="${LINE[0]}"
         source="${LINE[1]}"
-        command="${LINE[2]}"
+        command="${LINE[2]//\n//}"
 
         printf "User: %s answered on %s. Their command is: %s\n" \
                 "${COLORS[green]}${user}${COLORS[reset]}" \
-                "${COLORS[green]}${source}${COLORS[reset]}]" \
+                "${COLORS[green]}${source}${COLORS[reset]}" \
                 "${COLORS[yellow]}${command}${COLORS[reset]}"
 
         # Select a server to use
