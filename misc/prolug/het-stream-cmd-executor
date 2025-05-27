@@ -1,5 +1,6 @@
 #!/bin/bash
 # shellcheck disable=SC2120
+shopt -s extquote
 
 declare WATCH_FILE="/data/stream_write/stream_answers"
 
@@ -8,6 +9,8 @@ declare -a EXCLUDE_KEYWORDS=(
     '--no-preserve-root'
     'cat /dev/urandom'
     'cat /dev/random'
+    '/dev/random'
+    '/dev/urandom'
     'virsh'
     ':(){:|:&}'
     '\x1b'
