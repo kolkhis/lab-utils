@@ -68,39 +68,49 @@ is-malicious-cmd() {
 }
 
 
-# Watch for events (create, modify, delete, etc.)
-while read -r _; do
+main() {
+    # Watch for events (create, modify, delete, etc.)
+    while read -r _; do
 
-    # Show the command entry
-    line=$(tail -n 1 "$WATCH_FILE")
-    user="$(awk -F: '{print $1}' <<< "$line")"
-    source="$(awk -F: '{print $2}' <<< "$line")"
-    command="$(awk -F: '{print $3}' <<< "$line")"
+        local -a LINE=()
+        mapfile -d : -t LINE < <(tail -n 1 "${WATCH_FILE}")
+        user="${LINE[0]}"
+        source="${LINE[1]}"
+        command="${LINE[2]}"
 
-    printf "User: %s answered on %s. Their command is: %s\n" \
-            "${COLORS[green]}$user${COLORS[reset]}" \
-            "${COLORS[green]}$source${COLORS[reset]}]" \
-            "${COLORS[yellow]}$command${COLORS[reset]}"
+        printf "User: %s answered on %s. Their command is: %s\n" \
+                "${COLORS[green]}$user${COLORS[reset]}" \
+                "${COLORS[green]}$source${COLORS[reset]}]" \
+                "${COLORS[yellow]}$command${COLORS[reset]}"
 
-    # Select a server to use
-    num=$(( (RANDOM % 5) + 15 ))
-    printf "Using rocky%s\n" "$num"
+        # Select a server to use
+        num=$(( (RANDOM % 5) + 15 ))
+        printf "Using rocky%s\n" "$num"
 
-    sleep 2
+        sleep 2
 
-    # Check connectivity
-    if ! ping -c 1 rocky$num > /dev/null 2>&1; then
-        printf "The server 'rocky%s' is unreachable!\n" "$num"
-        continue
-    fi
+        # Check connectivity
+        if ! ping -c 1 rocky$num > /dev/null 2>&1; then
+            printf "The server 'rocky%s' is unreachable!\n" "$num"
+            continue
+        fi
 
-    # skip if user is a douchebag
-    is-malicious-cmd "$command" &&
-        printf "Good one, ${COLORS[red]}%s${COLORS[reset]} 😘 \n" "$user" &&
-        continue
+        # skip if user is a douchebag
+        is-malicious-cmd "$command" &&
+            printf "Good one, %s 😘\n" "${COLORS[red]}${user}${COLORS[reset]}" &&
+            continue
 
-    # Execute the command
-    timeout 15 ssh -i /root/.ssh/cluster_key rocky$num "timeout 15 $command"
+        # Execute the command
+        timeout 15 ssh -i /root/.ssh/cluster_key rocky$num "timeout 15 $command"
 
-done < <(inotifywait -m -r -e create,modify,delete "$WATCH_FILE")
+    done < <(inotifywait -m -r -e create,modify,delete "$WATCH_FILE")
+}
+
+if ! type inotifywait > /dev/null 2>&1; then
+    printf "The inotify-tools package is not installed!\n" && exit 1;
+fi
+
+main || {
+    printf >&2 "Script encountered error!\n" && exit 1
+}
 
