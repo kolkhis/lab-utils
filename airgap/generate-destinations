@@ -1,0 +1,83 @@
+#!/bin/bash
+
+# Generate a list of destinations for bastion.sh
+# Destination list based on a SSH config file (to be provided separately)
+
+
+declare SSH_CONFIG_FILE
+declare INPUT_FILE
+
+declare -a DESTINATIONS
+
+
+parse-args(){
+    while [[ -n $1 ]]; do
+        case $1 in
+            -f|--input-file)
+                [[ -n $2 ]] && shift && INPUT_FILE=$1 || return 1
+                printf "Generating destinations based on the file: %s\n" "$INPUT_FILE"
+                shift
+                ;;
+            -c|--config-file)
+                { [[ -n $2 ]] && shift && SSH_CONFIG_FILE=$1; } || {
+                    printf >&2 "The -c/--config-file argument was given but no file specified.\n" &&
+                    return 1; }
+                printf "Using SSH config file: %s\n" "$SSH_CONFIG_FILE"
+                shift;
+                ;;
+            *)
+                printf "Unknown argument: %s\n" "$1"
+                shift;
+                ;;
+        esac
+    done
+    return 0
+}
+
+parse-args "$@" || {
+    printf >&2 "Failed to parse arguments!\n" && exit 1
+}
+
+parse-input-file() {
+    : "This function is reserved for extending functionality in the future."
+    : "We will allow for a custom input format."
+}
+
+parse-ssh-config(){
+    # Parse the SSH config file
+    #   - Output into more easily parsed file?
+    #   - E.g., each line:
+    #     user@hostname
+
+    [[ -z $SSH_CONFIG_FILE || ! -f $SSH_CONFIG_FILE ]] && return 1
+    
+    local -a ENTRIES=()
+    # awk '/^Host/ {printf "%s ", $2} /User/ {printf "%s@", $2} /Hostname/ {printf "%s\n", $2}' ~/.ssh/config
+    mapfile -t ENTRIES < <(
+        awk '/^Host/ {printf "%s ", $2} /User/ {printf "%s@", $2} /Hostname/ {printf "%s\n", $2}' "$SSH_CONFIG_FILE"
+    )
+
+    # TODO(validation): Use regex to check if each entry is formatted correctly
+    # (e.g., user@hostname ) -- must be SSH-ready.
+    for n in "${!ENTRIES[@]}"; do printf "entry number %s: %s\n" "$n" "${ENTRIES[$n]}"; done
+
+    # TODO(feat): Number the lines. Allow user to either enter the number or the
+    # 'Host' (not Hostname) to traverse to the machine
+
+    while read -r line; do
+        :
+    done < "$SSH_CONFIG_FILE"
+
+    
+
+}
+
+
+if ! [[ -f ${SSH_CONFIG_FILE:=$HOME/.ssh/config} ]]; then
+    printf "There is no SSH config file at %s\n" "$SSH_CONFIG_FILE"
+    exit 1
+fi
+
+
+
+
