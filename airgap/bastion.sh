@@ -1,4 +1,5 @@
 #!/usr/bin/rbash
+# shellcheck disable=SC2120
 
 # export PATH=/bin:/usr/bin
 declare -i VERBOSE
@@ -13,6 +14,7 @@ declare DESTINATION_FILE='/var/chroot/destinations.txt'
 #       [hostname]=192.168.4.11
 
 
+declare -a DESTINATIONS
 declare DESTINATION=192.168.4.11
 declare ENDPOINT
 
@@ -21,7 +23,7 @@ declare PROMPT_STRING="
 Welcome!
 Select one of the following:
 
-1. Connect to DestinationHost
+1. Connect to a pre-configured destination host
 2. Enter custom destination
 3. Exit
 
@@ -65,22 +67,43 @@ go-to-destination() {
     return 0
 }
 
+# TODO(perf): 
+#   - [ ] Handle this failure gracefully and only present user with options that exist.  
+#   - [ ] Do not display this error message to jailed user
+#       - Redirect stderr to logfile not readable by jailed user?
+
 parse-destinations(){ 
-    [[ -f ./destinations.txt ]]
+    [[ -f "$DESTINATION_FILE" ]] || return 1
+    mapfile -t DESTINATIONS < "$DESTINATION_FILE" || return 1
+    [[ "${#DESTINATION[@]}" -gt 0 ]] && printf "Gathered list of destinations.\n" ||
+        printf "Could not gather list of destinations. Enter manually or exit.\n"
+    declare destination_prompt
+    destination_prompt="Pick a destination (select by hostname, first column): $(printf "%s\n" "${DESTINATIONS[@]}")"
+    return 0
 }
 
+parse-destinations || {
+    err; printf >&2 "Failed to parse destinations file: %s\n" "$DESTINATION_FILE"
+}
+
+
 get-user-input(){
+    [[ -n $1 ]] && PROMPT_STRING=$1
     local INPUT
     read -r -n 2 -t 20 -p "$PROMPT_STRING" INPUT
 
     if [[ -n $INPUT ]]; then
-
         case $INPUT in
             1)
-                printf "Going to DestinationHost.\n"
-                go-to-destination || {
-                    printf "Failed to connect!\n" && return 1
-                }
+                # TODO(perf):
+                #   - This case will call get-user-input with a new PROMPT_STRING and
+                #     will carry over to the [^0-9] case to connect to a destination in
+                #     ${DESTINATIONS[@]}
+                printf "Connect to a pre-configured host:\n"
+                [[ ${#DESTINATIONS[@]} -gt 0 ]] || err "No destinations to read from!" && exit 1
+                local new_prompt
+                new_prompt=
+                # get-user-input "$(printf "%s\n" "${DESTINATIONS[@]")"
                 return 0
                 ;;
             2)
@@ -107,15 +130,28 @@ get-user-input(){
                 }
                 return 0
                 ;;
+
             3)
                 printf "Leaving now.\n"
                 return 0
                 ;;
+
             [^0-9])
-                printf "You can only enter numbers.\n"
-                debug "User entered invalid input: $INPUT"
+                : "This should be a destination in" "${DESTINATIONS[@]}"
+                debug "User entered input: $INPUT"
+                if [[ "${DESTINATIONS[*]}" =~ $INPUT ]]; then
+                    # TODO: Extract the correct destination based on input
+                    debug "User input matched in destinations: $INPUT"
+                    for d in "${DESTINATIONS[@]}"; do
+                        if grep -qi "$INPUT" <<< "$d"; then
+                            DESTINATION="${d##* }"
+                            debug "Destination extracted: $DESTINATION"
+                        fi
+                    done
+                fi
                 return 1
                 ;;
+
             *)
                 printf "Unknown input. Goodbye.\n"
                 return 1
