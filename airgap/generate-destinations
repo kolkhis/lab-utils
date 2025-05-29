@@ -4,13 +4,15 @@
 # Generate a list of destinations for bastion.sh
 # Destination list based on a SSH config file (to be provided separately)
 
+# TODO(feat): Allow use of an ansible inventory file (.ini, .yaml)
+
 
 declare SSH_CONFIG_FILE
 declare INPUT_FILE
 declare OUTPUT_FILE='./destinations.txt'
 declare VERBOSE=1
-
 declare -a DESTINATIONS
+
 
 debug() {
     (( VERBOSE )) || return 1
@@ -31,8 +33,7 @@ err() {
 
 
 parse-args(){
-
-    [[ -z $# ]] && debug "No args to parse." && return 0
+    [[ $# -eq 0 ]] && debug "No args to parse." && return 0
     while [[ -n $1 ]]; do
         case $1 in
             -o|--output-file)
@@ -53,8 +54,12 @@ parse-args(){
                 printf "Using SSH config file: %s\n" "$SSH_CONFIG_FILE"
                 shift;
                 ;;
+            -q|--quiet) VERBOSE=0; shift;
+                ;;
+            -v|--verbose) VERBOSE=1; shift;
+                ;;
             -h|--help)
-                printf "Usage: ./generate-destinations [-c SSH_CONFIG_FILE] \n"
+                printf "Usage: ./generate-destinations [-c SSH_CONFIG_FILE] [-o|--output-file FILE] [--verbose] [--quiet] \n"
                 exit 0;
                 ;;
             *)
@@ -65,7 +70,6 @@ parse-args(){
     done
 
     return 0
-
 }
 
 parse-input-file() {
@@ -74,45 +78,27 @@ parse-input-file() {
 }
 
 parse-ssh-config(){
-    # Parse the SSH config file
-    #   - Output into more easily parsed file?
-    #   - E.g., each line:
-    #     user@hostname
+    # Parse the SSH config file to a "host user@hostname" formatted file 
+    # Each line is parsed, validated to have internal IP and SSH-ready
 
     [[ -z $SSH_CONFIG_FILE || ! -f $SSH_CONFIG_FILE ]] && return 1
-    
+
     local -a ENTRIES=()
-    # awk '/^Host/ {printf "%s ", $2} /User/ {printf "%s@", $2} /Hostname/ {printf "%s\n", $2}' ~/.ssh/config
     mapfile -t ENTRIES < <(
         awk '/^Host/ {printf "%s ", $2} /User/ {printf "%s@", $2} /Hostname/ {printf "%s\n", $2}' "$SSH_CONFIG_FILE"
     )
 
     [[ "${#ENTRIES[@]}" -eq 0 ]] && err "Failed to parse file (parsed input is empty)\n" && return 1
-    # ${ENTRIES[@]} contents (first column Host, then User@Hostname):
-    # rocky streamer1@prolug.asuscomm.com
-    # pve kolkhis@192.168.4.49
-    # desmond kolkhis@192.168.4.53
-
-
-    # - [x] TODO(validation): Use regex to check if each entry is formatted correctly
-    # (e.g., user@hostname ) -- must be SSH-ready.
-    # - [ ] TODO(feat): Number the lines. Allow user to either enter the number or the
-    # 'Host' (not Hostname) to traverse to the machine
 
     for n in "${!ENTRIES[@]}"; do
-        printf "entry number %s: %s\n" "$n" "${ENTRIES[$n]}";
-        local parsed_destination
+        debug "Entry number $n: ${ENTRIES[$n]}";
+        local parsed_destination=
         parsed_destination=$(perl -ne 'print "$1 $2" if m/(\w+)\s*(\w+@\d{3}\.\d{3}\.\d{1,3}\.\d{1,3})/' <<< "${ENTRIES[$n]}")
-        [[ -z $parsed_destination ]] && printf "Bad entry: %s\n " "${ENTRIES[$n]}" && continue
+        [[ -z $parsed_destination ]] && printf "Bad entry, skipping: %s\n" "${ENTRIES[$n]}" && continue
         debug "Parsed entry: $parsed_destination"
         DESTINATIONS=("${DESTINATIONS[@]}" "$parsed_destination")
     done
-
-
-    while read -r line; do
-        :
-    done < "$SSH_CONFIG_FILE"
-
+    return 0
 }
 
 output-destinations(){
@@ -135,9 +121,6 @@ main() {
 
     output-destinations > "$OUTPUT_FILE"
 }
+
 main "$@"
-
-
-
-
 
