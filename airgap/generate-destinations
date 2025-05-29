@@ -72,6 +72,10 @@ parse-args(){
     return 0
 }
 
+parse-ansible-inventory(){
+    : "Reserved for future functionality."
+}
+
 parse-input-file() {
     : "This function is reserved for extending functionality in the future."
     : "Will allow for a custom input format."
