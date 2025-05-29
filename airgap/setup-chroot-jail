@@ -27,8 +27,9 @@ declare JAILED_USER='juvie'
 declare BASTION_HOST_IP='192.168.4.74'
 declare BASTION_SCRIPT='bastion.sh'
 declare LOG_FILE='./chroot-setup.log'
+declare DESTINATIONS_OUTPUT_FILE="$CHROOT_DIR/destinations.txt"
 
-exec > "$LOG_FILE"
+# exec > "$LOG_FILE"
 
 declare -a BINARIES=(
     "rbash"
@@ -257,7 +258,7 @@ configure-ssh(){
 
 parse-ssh-file() {
     if [[ -f ~/.ssh/config && -f ./generate-destinations ]]; then
-        ./generate-destinations -f ~/.ssh/config -o destinations.txt || {
+        ./generate-destinations -f ~/.ssh/config -o "$DESTINATIONS_OUTPUT_FILE" || {
             printf >&2 "Error in destination generation script!\n" && return 1
         }
     else
@@ -265,6 +266,7 @@ parse-ssh-file() {
     fi
     return 0
 }
+
 
 parse-ssh-file || {
     printf >&2 "Failed to parse ssh file. Using default destinations.\n" 
