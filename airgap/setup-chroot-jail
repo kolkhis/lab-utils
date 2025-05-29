@@ -268,11 +268,6 @@ parse-ssh-file() {
 }
 
 
-parse-ssh-file || {
-    printf >&2 "Failed to parse ssh file. Using default destinations.\n" 
-}
-
-
 # User account setup
 printf "Attempting to set up a user account for jailed user: %s\n" "$JAILED_USER"
 setup-jailed-user || {
@@ -298,7 +293,16 @@ printf "\033[32mSuccessfully set up user's shell!\033[0m\n"
 # SSH configuration
 printf "Attempting to configure SSH rules for jailed user.\n"
 configure-ssh || {
-    err; printf >&2 "Failed to configure ssh rules for jailed user!\n"; exit 1
+    err; printf >&2 "Failed to configure ssh rules for jailed user!\n"; exit 1;
 }
 printf "\033[32mSuccessfully set up jailed user.\033[0m\n"
+
+printf "Attempting to generate destinations based on SSH config.\n"
+parse-ssh-file || {
+    err; printf >&2 "Failed to parse ssh file.\n"; exit 1;
+}
+printf "\033[32mSuccessfully generated destinations file at: %s\033[0m\n" "$DESTINATIONS_OUTPUT_FILE"
+
+
+
 
