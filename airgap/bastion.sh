@@ -5,11 +5,13 @@ declare -i VERBOSE
 
 declare REMOTE_USER
 declare DEFAULT_USER='kolkhis'
+declare DESTINATION_FILE='/var/chroot/destinations.txt'
 
 
 # TODO(perf): Make destination(s) an array 
 #   - Associative array?
 #       [hostname]=192.168.4.11
+
 
 declare DESTINATION=192.168.4.11
 declare ENDPOINT
@@ -32,6 +34,10 @@ Select one of the following:
 #   - Problem: This script does not have access to those parsing programs.  
 #       - Solution:
 #           - Parse in setup script and read from file for choices.
+# TODO(feat): 
+#   - [ ] Read from destinations.txt for choices to give to user
+
+
 debug() {
     [[ $VERBOSE -gt 0 ]] && printf "[\x1b[33mDEBUG\x1b[0m]: %s\n" "$*"
 }
@@ -57,6 +63,10 @@ go-to-destination() {
         return 1
     }
     return 0
+}
+
+parse-destinations(){ 
+    [[ -f ./destinations.txt ]]
 }
 
 get-user-input(){
