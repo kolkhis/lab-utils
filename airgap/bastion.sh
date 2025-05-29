@@ -26,30 +26,12 @@ Select one of the following:
 > "
 
 # TODO(perf): 
-#   - Read from an SSH config for list of available connections
-#       - Format?
-#           - Host?
-#           - Hostname?
-#           - User@Hostname?
+#   - [x] Read from an SSH config for list of available connections
+#       - Format - `host user@hostname`
 #       - Parse with perl, awk, grep
 #   - Problem: This script does not have access to those parsing programs.  
 #       - Solution:
 #           - Parse in setup script and read from file for choices.
-
-# parse-ssh-file() {
-#     # TODO: Finish this -- dynamically generate choices based on SSH config file.
-#     # Must happen in setup? No access to parsing tools (sed, awk, perl)
-#     local CONFIG_FILE=
-#     { [[ -f ~/.ssh/config ]] && CONFIG_FILE="$HOME/.ssh/config"; } || 
-#         { [[ -f /etc/ssh/ssh_config ]] && CONFIG_FILE="/etc/ssh/ssh_config"; }
-#     debug "Using config file: $CONFIG_FILE"
-# }
-
-# if [[ -f ~/.ssh/config ]] || [[ -f /etc/ssh/ssh_config ]]; then
-#     parse-ssh-file
-# fi
-
-
 debug() {
     [[ $VERBOSE -gt 0 ]] && printf "[\x1b[33mDEBUG\x1b[0m]: %s\n" "$*"
 }
