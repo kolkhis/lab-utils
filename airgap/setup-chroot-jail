@@ -26,6 +26,9 @@ declare CHROOT_DIR='/var/chroot'
 declare JAILED_USER='juvie'
 declare BASTION_HOST_IP='192.168.4.74'
 declare BASTION_SCRIPT='bastion.sh'
+declare LOG_FILE='./chroot-setup.log'
+
+exec > "$LOG_FILE"
 
 declare -a BINARIES=(
     "rbash"
@@ -57,7 +60,7 @@ debug() {
 err() {
     printf >&2 "[\033[31m ERROR \033[0m]: "
     if [[ $# -gt 0 ]]; then
-        printf "%s\n" "$*"
+        printf >&2 "%s\n" "$*"
     fi
 }
 
@@ -237,12 +240,6 @@ configure-ssh(){
             err; printf >&2 "Failed to add entry for user in /etc/ssh/sshd_config!\n" 
             return 1
         }
-
-        # sudo sed -i -E "\$a Match User ${JAILED_USER}\nChrootDirectory ${CHROOT_DIR}\n" \
-        #     /etc/ssh/sshd_config || {
-        #     err; printf >&2 "Failed to add entry for user in /etc/ssh/sshd_config!\n" && return 1
-        # }
-
         printf "Added ChrootDirectory rule for %s\n" "$JAILED_USER"
     else
         printf "Entry already found in /etc/ssh/sshd_config. Skipping.\n"
@@ -257,6 +254,22 @@ configure-ssh(){
     printf "\033[32mSuccessfully restarted SSH!\033[0m\n"
 
 }
+
+parse-ssh-file() {
+    if [[ -f ~/.ssh/config && -f ./generate-destinations ]]; then
+        ./generate-destinations -f ~/.ssh/config -o destinations.txt || {
+            printf >&2 "Error in destination generation script!\n" && return 1
+        }
+    else
+        printf >&2 "No SSH file to parse for destinations!\n" && return 1
+    fi
+    return 0
+}
+
+parse-ssh-file || {
+    printf >&2 "Failed to parse ssh file. Using default destinations.\n" 
+}
+
 
 # User account setup
 printf "Attempting to set up a user account for jailed user: %s\n" "$JAILED_USER"
