@@ -1,0 +1,819 @@
+#!/bin/bash
+# shellcheck disable=SC2154,SC2016
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Parameter Expansion.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Parameter expansion is a feature of bash.\n"
+printf "That means it's not technically POSIX-compliant.\n"
+
+printf "It's a way to modify values in-place.\n"
+
+printf "What does that mean?"
+printf "When you're using that variable, you can modify it without an extra line.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "The syntax is as follows:\n"
+
+${variable<operator><args>}
+
+printf "You must call the variable with braces { } -- parameter expansion is not available otherwise.\n"
+
+printf "There are a few operators that are available, each with their own functionality.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Let's look at an example.\n"
+
+    declare name="connor"
+
+printf "Let's make the first letter uppercase.\n"
+
+    printf "Name: %s\n" "${name^}"
+    # output: Connor
+
+printf "The ^ makes the first letter uppercase.\n"
+printf "This is a bashism.\n"
+
+printf "Other shells will use the syntax:\n"
+
+    printf "Name: %s\n" "${name@u}"
+    # output: Connor
+
+printf "We can also make the entire string uppercase if we want.\n"
+
+    printf "Name: %s\n" "${name^^}"
+    # output: CONNOR
+
+printf "Or we can use the <operator><argument> syntax:\n"
+
+    printf "Name: %s\n" "${name@U}"
+    # output: CONNOR
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "So that's one way to use parameter expansion.\n"
+printf "We can use parameter expansions in a lot of other ways too.\n"
+
+printf "For example, if we want to perform a substitution on a string without using 'sed' or 'perl'\n"
+
+    declare my_string="remove the word word"
+
+    printf "%s\n" "${my_string/word/}"
+    # Output: remove the word
+
+printf "This removes the first occurrence of the word 'word'\n"
+printf "If we wanted to remove *all* of the occurrences of 'word', we would do this:\n"
+
+    printf "%s\n" "${my_string//word/}"
+    # Output: remove the
+
+printf "This is extremely useful and can save you an external call to sed or perl.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Another way to use parameter expansions is to trim suffixes and prefixes.\n"
+
+printf "Say we have an absolute path to a file, but we want to strip out the path for just the filename.\n"
+
+    declare my_file="/home/kolkhis/notes/mkdocs.yml"
+    printf "%s\n" "${my_file##*/}"
+    # Output: mkdocs.yml
+
+printf "As you can see, this uses a *pattern* (or *glob*) to match characters.\n"
+
+printf "The ## is the operator for stripping prefixes.\n"
+printf "Like the last one, we can use a single # to match only the first occurence.\n"
+
+    declare my_file="/home/kolkhis/notes/mkdocs.yml"
+    printf "%s\n" "${my_file#/*/}"
+    # Output: kolkhis/notes/mkdocs.yml
+
+printf "This has many other uses than just for filenames.\n"
+
+printf "If we just wanted the file extension:\n"
+
+    declare my_file="/home/kolkhis/notes/mkdocs.yml"
+    printf "%s\n" "${my_file##*.}"
+    # Output: yml
+
+printf "Now we know what type of file it is.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Similarly, we can use the % operator to strip out suffixes.\n" ""
+
+    declare my_file="/home/kolkhis/notes/mkdocs.yml"
+    printf "%s\n" "${my_file%.yml}"
+    # Output: /home/kolkhis/notes/mkdocs
+
+printf "We could also use it to strip out the filename to see the directory structure.\n"
+
+    declare my_file="/home/kolkhis/notes/mkdocs.yml"
+    printf "%s\n" "${my_file%/*}"
+    # Output: /home/kolkhis/notes
+
+printf "This can be good for validating that a file is where it should be.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# default values
+printf "We can also use parameter expansion to set default values for variables.\n"
+printf "I personally use this one *a lot*.\n"
+
+printf "Let's create an empty variable.\n"
+
+    declare my_var
+    printf "%s\n" "${my_var}"
+
+printf "Let's use a default value for it.\n"
+
+    printf "%s\n" "${my_var:-Hello world}"
+    # Output: Hello world
+    printf "%s\n" "${my_var}"
+    # Output: 
+
+printf "This will use the default value that was given for that printf call.\n"
+printf "However, the variable will remain empty.\n"
+
+printf "We can use another operator to both use *and* assign the variable a default value.\n"
+
+    printf "%s\n" "${my_var:=Hello world}"
+    # Output: Hello world
+    printf "%s\n" "${my_var}"
+    # Output: Hello world
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Length
+printf "We can use a 'type' of parameter expansion to get the length of a variable.\n"
+
+printf "You may have seen this one before.\n"
+
+    declare a_string="Hello, world!"
+    printf "Length of a_string: %s\n" "${#a_string}"
+    # Output: Length of a_string: 13
+
+printf "This can also be used to get the number of elements in an array.\n"
+
+    declare -a my_arr=("one" "two" "three")
+    printf "Number of elements: %s\n" "${#my_arr[@]}"
+    # Output: Number of elements: 3
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Parameter expansions can also be performed on every element in an array.\n"
+printf "Let's look at the same one:\n"
+
+    declare -a my_arr=("one" "two" "three")
+    printf "%s\n" "${my_arr[@]^}"
+    printf "%s\n" "${my_arr[@]@u}"
+    printf "%s\n" "${my_arr[@]@U}"
+
+    printf "%s\n" "one" "two" "three" # same thing
+    # Output:
+    #   One
+    #   Two
+    #   Three
+
+printf "Since [@] expands the array into all its separate elements, the expansion will be performed on each one.\n"
+
+printf "If we wanted to combine the array into a single string and capitalize the first letter:\n"
+
+    declare -a my_arr=("one" "two" "three")
+    printf "%s\n" "${my_arr[*]^}"
+    # Output:
+    #   One two three
+    printf "%s\n" "${my_arr[*]@u}"
+
+printf "This can be done with *any* array and *any* parameter expansion.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Overview of operators
+
+printf "--------------- Parameter Transformations ---------------\n"
+cat <<- 'EOC'
+
+Parameter Transformation Operators (on single variables) 
+${var@U} - Convert everythings to uppercase.
+${var^^} - Convert everythings to uppercase.
+${var@u} - Capitalizes the first character.
+${var^} - Capitalizes the first character.
+${var@L} - Converts everything to lowercase.
+${var,,} - Convert everythings to lowercase.
+${var,} - Converts first character to lowercase.
+${var@Q} - Quotes the value, making it safe to reuse as input.
+${var@E} - Expands escape sequences (like $'...' syntax).
+${var@P} - Expand as a prompt string (PS1).
+${var@A} - Returns an assignment statement to recreate the variable with its attributes.
+${var@K} - Produces a quoted version of the value, displaying arrays as key-value pairs.
+${var@a} - Returns the variable's attribute flags (like readonly, exported).
+
+Using transformations on arrays:
+${@^} - Converts the first character of each parameter to uppercase.
+${*^} - Converts the first character of the combined string to uppercase
+${@^^} - Converts all characters to uppercase, as separate items
+${*^^} - Converts all characters to uppercase as one string
+${@,} - Lowercases the first character of each parameter
+${*,} - Lowercases only the first character of the combined string
+Using the letters (requires the @):
+${@@Q} - Quotes each parameter individually
+${*@Q} - Quotes the entire combined string
+${@@A} - Returns an assignment statement to recreate the array.
+${*@A} - Returns an assignment statement to recreate the string.
+
+Arrays tl;dr: 
+    $@ / ${@} applies to each individually
+    $* / ${*} combines and applies to the combined string.
+[@] and [*] will only use values in dictionaries. Use ${!arr[@|*]} to use keys.
+
+EOC
+
+
+declare arg
+{ 
+    [[ -z $1 ]] && printf "No arguments found for examples. Exiting.\n" && exit 0; 
+} || {
+    : "${arg:=$1}"
+}
+
+
+printf -- "--------------- First Argument ---------------\n"
+printf '${arg@L} - lowercase: %s\n' "${arg@L}"
+printf '${arg@Q} - quoted: %s\n' "${arg@Q}"
+printf '${arg@K} - quoted, key/value: %s\n' "${arg@K}"
+printf '${arg@a} - attributes: %s\n' "${arg@a}"
+printf '${arg@u} - TitleCase: %s\n' "${arg@u}"
+printf '${arg@U} - Uppercase: %s\n' "${arg@U}"
+printf -- "------------- Array of Arguments -------------\n"
+printf '${@^} - Capitalize each parameter: %s\n' "${@^}"
+printf '${*^} - Capitalize only the first letter of the combined string: %s\n' "${*^}"
+printf '${@^^} - Uppercase each parameter completely: %s\n' "${@^^}"
+printf '${*^^} - Uppercase the entire combined string: %s\n' "${*^^}"
+printf '${@,} - Lowercase the first character of each parameter: %s\n' "${@,}"
+printf '${*,} - Lowercase only the first character of the combined string: %s\n' "${*,}"
+printf '${@,,} - Lowercase all characters of each parameter: %s\n' "${@,}"
+printf '${*,,} - Lowercase all characters of the combined string: %s\n' "${*,}"
+printf '${@@Q} - Quote each parameter individually: %s\n' "${@@Q}"
+printf '${*@Q} - Quote the entire combined string: %s\n' "${*@Q}"
+printf '${*@Q} - Quote the entire combined string: %s\n' "${*@Q}"
+printf '${@@A} - Return an array that contains statements to recreate each variable: %s\n' "${@@A}"
+printf '${*@A} - Return an assignment statement to recreate the variables: %s\n' "${*@A}"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Talk about ${!arr[@]}
+
+declare -a my_arr=("one" "two" "three")
+
+for n in "${!my_arr[@]}"; do
+    printf "Index: %s\n" "$n"
+    printf "Value: %s\n" "${my_arr[$n]}"
+done
+
+
+printf "This one prints the keys of the array.\n"
+
+    printf "%s\n" "${!my_arr[@]}"
+
+declare -A ass_arr=( [one]="Hello" [two]="World" [three]="Hi again" )
+
+
