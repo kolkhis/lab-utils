@@ -813,7 +813,34 @@ done
 printf "This one prints the keys of the array.\n"
 
     printf "%s\n" "${!my_arr[@]}"
+    # Output: 
+    # 0
+    # 1
+    # 2
+
+printf "The keys of a regular array will just be the indices.\n"
+printf "The keys of an associative array will be the keys.\n"
+
 
 declare -A ass_arr=( [one]="Hello" [two]="World" [three]="Hi again" )
 
+    printf "%s\n" "${!ass_arr[@]}"
+    # Output:
+    # two
+    # three
+    # one
 
+printf "Bash doesn't maintain the order of the elements in associative arrays.\n"
+
+cat << EOF
+CHALLENGE
+
+If anyone wants a challenge this week:
+Write a script that will take a file as an argument and display info about the file using parameter expansions. That means no calls out to `sed`, `perl`, `awk`, `basename`, etc.
+File info should include:
+- Full filename  
+- File extension  
+- Filename without the extension  
+- File location  
+- Parent directory name (not full path)  
+EOF
