@@ -113,7 +113,7 @@ get-user-input(){
                     printf "%-8s %-18s %s\n" "Target:" "${line%% *}" "${line##* }" 
                 done
                 )
-                get-user-input "$(printf "%s\n" "${DESTINATIONS[@]")"
+                get-user-input "$new_prompt"
                 ;;
             2)
                 read -r -p "Enter SSH destination (user@ip): " ENDPOINT
