@@ -1,7 +1,7 @@
-#!/usr/bin/rbash
+#!/usr/bin/bash
 # shellcheck disable=SC2120
 
-# export PATH=/bin:/usr/bin
+#export PATH=/bin:/usr/bin
 declare -i VERBOSE
 
 declare REMOTE_USER
@@ -19,14 +19,15 @@ declare DESTINATION=192.168.4.11
 declare ENDPOINT
 
 declare LOGFILE='/var/log/bastion.log'
+
 declare PROMPT_STRING="
 Welcome!
 Select one of the following:
-
+ 
 1. Connect to a pre-configured destination host
 2. Enter custom destination
 3. Exit
-
+ 
 > "
 
 # TODO(perf): 
@@ -78,7 +79,8 @@ parse-destinations(){
     [[ "${#DESTINATION[@]}" -gt 0 ]] && printf "Gathered list of destinations.\n" ||
         printf "Could not gather list of destinations. Enter manually or exit.\n"
     declare destination_prompt
-    destination_prompt="Pick a destination (select by hostname, first column): $(printf "%s\n" "${DESTINATIONS[@]}")"
+    destination_prompt="Pick a destination (select by hostname, first column): $(printf "\n"; printf "%s\n" "${DESTINATIONS[@]}")"
+    printf "%s\n" "$destination_prompt"
     return 0
 }
 
