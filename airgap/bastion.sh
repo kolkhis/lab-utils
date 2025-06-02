@@ -62,7 +62,9 @@ go-to-destination() {
         # log-entry "Server unreachable: $DESTINATION"
     fi
 
-    ssh "${REMOTE_USER:-$DEFAULT_USER}@${DESTINATION}" || {
+    if ! [[ $DESTINATION =~ @ ]]; then DESTINATION="${REMOTE_USER:-$DEFAULT_USER}@${DESTINATION}"; fi
+
+    ssh "$DESTINATION" || {
         err; printf "Failed to SSH to %s as %s!\n" "$DESTINATION" "${REMOTE_USER:-$DEFAULT_USER}"
         # log-entry "SSH command failed for ${REMOTE_USER}@${DESTINATION}"
         return 1
