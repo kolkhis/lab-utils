@@ -6,7 +6,7 @@ declare -i VERBOSE
 
 declare REMOTE_USER
 declare DEFAULT_USER='kolkhis'
-declare DESTINATION_FILE='/var/chroot/destinations.txt'
+declare DESTINATION_FILE='/destinations.txt'
 
 
 # TODO(perf): Make destination(s) an array 
