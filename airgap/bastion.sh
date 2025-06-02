@@ -84,9 +84,9 @@ parse-destinations(){
     PROMPT_STRING=$(
     printf "Enter a destination (by name) from the list below:\n"
     for line in "${DESTINATIONS[@]}"; do
-        printf "%-8s %-18s %s\n" "-" "${line%% *}" "${line##* }" 
+        printf "%-3s %-18s %s\n" "-" "${line%% *}" "${line##* }" 
     done
-    printf "\n"
+    printf $'\n'
     )
 
     # # Output destinations
@@ -152,7 +152,7 @@ get-user-input(){
                 return 0
                 ;;
 
-            [[:alpha:]])
+            [[:alpha:]]*)
                 : "This should be a destination in" "${DESTINATIONS[@]}"
                 debug "User entered input: $INPUT"
 
