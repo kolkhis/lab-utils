@@ -109,6 +109,7 @@ get-user-input(){
                 #   - This case will call get-user-input with a new PROMPT_STRING and
                 #     will carry over to the [^0-9] case to connect to a destination in
                 #     ${DESTINATIONS[@]}
+
                 printf "Connect to a pre-configured host:\n"
                 [[ ${#DESTINATIONS[@]} -gt 0 ]] || { err && printf "No destinations to read from!\n" && exit 1; }
                 # Output destinations
@@ -191,6 +192,9 @@ while [[ -n $1 ]]; do
             ;;
     esac
 done
+
+
+printf "\x1b[2J\x1b[H" # clear
 
 parse-destinations || {
     err; printf >&2 "Failed to parse destinations file: %s\n" "$DESTINATION_FILE"
