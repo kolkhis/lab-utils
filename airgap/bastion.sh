@@ -77,7 +77,7 @@ go-to-destination() {
 
 parse-destinations(){ 
     [[ -f "$DESTINATION_FILE" ]] || return 1
-    mapfile -t DESTINATIONS < "$DESTINATION_FILE" || return 1
+    mapfile -t DESTINATIONS < "$DESTINATION_FILE" && printf "Mapped destination file.\n"
     [[ "${#DESTINATION[@]}" -gt 0 ]] && printf "Gathered list of destinations.\n" ||
         printf "Could not gather list of destinations. Enter manually or exit.\n"
     declare destination_prompt
@@ -85,11 +85,6 @@ parse-destinations(){
     printf "%s\n" "$destination_prompt"
     return 0
 }
-
-parse-destinations || {
-    err; printf >&2 "Failed to parse destinations file: %s\n" "$DESTINATION_FILE"
-}
-
 
 get-user-input(){
     [[ -n $1 ]] && PROMPT_STRING=$1
@@ -184,6 +179,12 @@ done
 #   - Tried: 
 #       - While loop w/ continue and 'CONNECTED' flag (locale error)
 #       - For loop w/ attempts and connected flag (kicks back to jump box prompt after exiting destination)
+
+parse-destinations || {
+    err; printf >&2 "Failed to parse destinations file: %s\n" "$DESTINATION_FILE"
+}
+
+
 
 get-user-input || {
     printf "Failed to connect!" # && continue
