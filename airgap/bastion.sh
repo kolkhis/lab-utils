@@ -162,7 +162,8 @@ get-user-input(){
                     debug "User input matched in destinations: $INPUT"
                     for d in "${DESTINATIONS[@]}"; do
                         if [[ $INPUT == "${d%% *}" ]]; then 
-                            go-to-destination "${d##* }"
+                            DESTINATION="${d##* }"
+                            go-to-destination # "${d##* }"
                         fi
                     done
                 fi
