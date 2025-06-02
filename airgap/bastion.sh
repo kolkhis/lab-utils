@@ -106,10 +106,14 @@ get-user-input(){
                 #     ${DESTINATIONS[@]}
                 printf "Connect to a pre-configured host:\n"
                 [[ ${#DESTINATIONS[@]} -gt 0 ]] || err "No destinations to read from!" && exit 1
+                # Output destinations
                 local new_prompt
-                new_prompt=
-                # get-user-input "$(printf "%s\n" "${DESTINATIONS[@]")"
-                return 0
+                new_prompt=$(
+                for line in "${DESTINATIONS[@]}"; do
+                    printf "%-8s %-18s %s\n" "Target:" "${line%% *}" "${line##* }" 
+                done
+                )
+                get-user-input "$(printf "%s\n" "${DESTINATIONS[@]")"
                 ;;
             2)
                 read -r -p "Enter SSH destination (user@ip): " ENDPOINT
@@ -144,13 +148,14 @@ get-user-input(){
             [^0-9])
                 : "This should be a destination in" "${DESTINATIONS[@]}"
                 debug "User entered input: $INPUT"
-                if [[ "${DESTINATIONS[*]}" =~ $INPUT ]]; then
+
+                if [[ ${DESTINATIONS[*]} =~ ${INPUT} ]]; then
+
                     # TODO: Extract the correct destination based on input
                     debug "User input matched in destinations: $INPUT"
                     for d in "${DESTINATIONS[@]}"; do
-                        if grep -qi "$INPUT" <<< "$d"; then
-                            DESTINATION="${d##* }"
-                            debug "Destination extracted: $DESTINATION"
+                        if [[ $INPUT == ${d%% *} ]]; then 
+                            go-to-destination "${d##* }"
                         fi
                     done
                 fi
