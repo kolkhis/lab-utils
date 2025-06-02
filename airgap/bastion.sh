@@ -78,24 +78,29 @@ go-to-destination() {
 parse-destinations(){ 
     [[ -f "$DESTINATION_FILE" ]] || return 1
     mapfile -t DESTINATIONS < "$DESTINATION_FILE" && printf "Mapped destination file.\n"
-    [[ "${#DESTINATION[@]}" -gt 0 ]] && printf "Gathered list of destinations.\n" ||
-        printf "Could not gather list of destinations. Enter manually or exit.\n"
-    # declare destination_prompt
-    # destination_prompt="Pick a destination (select by hostname, first column): $(printf "\n"; printf "%s\n" "${DESTINATIONS[@]}")"
+    { [[ "${#DESTINATION[@]}" -gt 0 ]] && printf "Gathered list of destinations.\n"; } ||
+        { printf "Could not gather list of destinations. Enter manually or exit.\n" && return 1; }
 
-    # Output destinations
+    PROMPT_STRING=$(
+    printf "Enter a destination (by name) from the list below:\n"
     for line in "${DESTINATIONS[@]}"; do
-        printf "%-8s %-18s %s\n" "Target:" "${line%% *}" "${line##* }" 
+        printf "%-8s %-18s %s\n" "-" "${line%% *}" "${line##* }" 
     done
+    printf "\n"
+    )
 
-    # printf "%s\n" "$destination_prompt"
+    # # Output destinations
+    # for line in "${DESTINATIONS[@]}"; do
+    #     printf "%-8s %-18s %s\n" "Target:" "${line%% *}" "${line##* }" 
+    # done
+
     return 0
 }
 
 get-user-input(){
     [[ -n $1 ]] && PROMPT_STRING=$1
-    local INPUT
-    read -r -n 2 -t 20 -p "$PROMPT_STRING" INPUT
+    local INPUT=
+    read -r -n 11 -t 30 -p "$PROMPT_STRING" INPUT
 
     if [[ -n $INPUT ]]; then
         case $INPUT in
@@ -105,13 +110,14 @@ get-user-input(){
                 #     will carry over to the [^0-9] case to connect to a destination in
                 #     ${DESTINATIONS[@]}
                 printf "Connect to a pre-configured host:\n"
-                [[ ${#DESTINATIONS[@]} -gt 0 ]] || err "No destinations to read from!" && exit 1
+                [[ ${#DESTINATIONS[@]} -gt 0 ]] || { err && printf "No destinations to read from!\n" && exit 1; }
                 # Output destinations
                 local new_prompt
                 new_prompt=$(
                 for line in "${DESTINATIONS[@]}"; do
                     printf "%-8s %-18s %s\n" "Target:" "${line%% *}" "${line##* }" 
                 done
+                printf "\n"
                 )
                 get-user-input "$new_prompt"
                 ;;
@@ -145,7 +151,7 @@ get-user-input(){
                 return 0
                 ;;
 
-            [^0-9])
+            [[:alpha:]])
                 : "This should be a destination in" "${DESTINATIONS[@]}"
                 debug "User entered input: $INPUT"
 
@@ -154,7 +160,7 @@ get-user-input(){
                     # TODO: Extract the correct destination based on input
                     debug "User input matched in destinations: $INPUT"
                     for d in "${DESTINATIONS[@]}"; do
-                        if [[ $INPUT == ${d%% *} ]]; then 
+                        if [[ $INPUT == "${d%% *}" ]]; then 
                             go-to-destination "${d##* }"
                         fi
                     done
@@ -186,16 +192,9 @@ while [[ -n $1 ]]; do
     esac
 done
 
-# - If trying to connect to unresponsive host, kick back to input prompt
-#   - Tried: 
-#       - While loop w/ continue and 'CONNECTED' flag (locale error)
-#       - For loop w/ attempts and connected flag (kicks back to jump box prompt after exiting destination)
-
 parse-destinations || {
     err; printf >&2 "Failed to parse destinations file: %s\n" "$DESTINATION_FILE"
 }
-
-
 
 get-user-input || {
     printf "Failed to connect!" # && continue
