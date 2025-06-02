@@ -21,7 +21,7 @@ declare ENDPOINT
 declare LOGFILE='/var/log/bastion.log'
 
 declare PROMPT_STRING="
-Welcome!
+
 Select one of the following:
  
 1. Connect to a pre-configured destination host
@@ -49,11 +49,10 @@ err() {
     printf "[ \033[31mERROR\033[0m ]: " 
 }
 
-log-entry() {
-    # TODO(logging): Sort out redirection for logging -- logger? rsyslog?
-    # [[ $# -gt 0 ]] && printf "[%s]: %s\n" "$(date +%D-%T)" "$*" >> "$LOGFILE"
-    :
-}
+# log-entry() {
+#     # TODO(logging): Sort out redirection for logging -- logger? rsyslog?
+#     [[ $# -gt 0 ]] && printf "[%s]: %s\n" "$(date +%D-%T)" "$*" >> "$LOGFILE"
+# }
 
 go-to-destination() {
 #    log-entry "User attempting to connect to ${REMOTE_USER:-$DEFAULT_USER}@$DESTINATION"
@@ -72,11 +71,6 @@ go-to-destination() {
     return 0
 }
 
-# TODO(perf): 
-#   - [ ] Handle this failure gracefully and only present user with options that exist.  
-#   - [ ] Do not display this error message to jailed user
-#       - Redirect stderr to logfile not readable by jailed user?
-
 parse-destinations(){ 
     [[ -f "$DESTINATION_FILE" ]] || return 1
     mapfile -t DESTINATIONS < "$DESTINATION_FILE" && printf "Mapped destination file.\n"
@@ -84,17 +78,12 @@ parse-destinations(){
         { printf "Could not gather list of destinations. Enter manually or exit.\n" && return 1; }
 
     PROMPT_STRING=$(
-    printf "Enter a destination (by name) from the list below:\n"
-    for line in "${DESTINATIONS[@]}"; do
-        printf "%-3s %-18s %s\n" "-" "${line%% *}" "${line##* }" 
-    done
-    printf $'\n'
+        printf "Enter a destination (by name) from the list below:\n"
+        for line in "${DESTINATIONS[@]}"; do
+            printf "%-3s %-18s %s\n" "-" "${line%% *}" "${line##* }" 
+        done
+        printf $'\n'
     )
-
-    # # Output destinations
-    # for line in "${DESTINATIONS[@]}"; do
-    #     printf "%-8s %-18s %s\n" "Target:" "${line%% *}" "${line##* }" 
-    # done
 
     return 0
 }
@@ -102,15 +91,13 @@ parse-destinations(){
 get-user-input(){
     [[ -n $1 ]] && PROMPT_STRING=$1
     local INPUT=
-    read -r -n 11 -t 30 -p "$PROMPT_STRING" INPUT
+    read -r -n 11 -t 30 -p "$PROMPT_STRING
+> " INPUT
 
     if [[ -n $INPUT ]]; then
         case $INPUT in
             1)
-                # TODO(perf):
-                #   - This case will call get-user-input with a new PROMPT_STRING and
-                #     will carry over to the [^0-9] case to connect to a destination in
-                #     ${DESTINATIONS[@]}
+                # TODO(refactor): Change/remove this case -- this is default now
 
                 printf "Connect to a pre-configured host:\n"
                 [[ ${#DESTINATIONS[@]} -gt 0 ]] || { err && printf "No destinations to read from!\n" && exit 1; }
@@ -126,16 +113,9 @@ get-user-input(){
                 ;;
             2)
                 read -r -p "Enter SSH destination (user@ip): " ENDPOINT
-
-                # POSIX-comliant:
-                # REMOTE_USER="$(printf "%s" "$ENDPOINT" | cut -d '@' -f 1)"
-                # DESTINATION="$(printf "%s" "$ENDPOINT" | cut -d '@' -f 2)"
-
                 REMOTE_USER="${ENDPOINT%%@*}"
                 DESTINATION="${ENDPOINT##*@}"
 
-                # TODO(perf): Check if user was specified, along with @. If not, use
-                # default user and handle @
                 [[ $REMOTE_USER == "$DESTINATION" ]] &&
                     printf "No user given. Using %s.\n" "${REMOTE_USER:=$DEFAULT_USER}"
 
@@ -165,7 +145,7 @@ get-user-input(){
                     for d in "${DESTINATIONS[@]}"; do
                         if [[ $INPUT == "${d%% *}" ]]; then 
                             DESTINATION="${d##* }"
-                            go-to-destination # "${d##* }"
+                            go-to-destination
                         fi
                     done
                 fi
@@ -197,18 +177,19 @@ while [[ -n $1 ]]; do
 done
 
 
-printf "\x1b[2J\x1b[H" # clear
+printf "\x1b[2J\x1b[H"
 
 parse-destinations || {
     err; printf >&2 "Failed to parse destinations file: %s\n" "$DESTINATION_FILE"
 }
 
 get-user-input || {
-    printf "Failed to connect!" # && continue
+    err; printf "Failed to connect!\n" # && continue
     # log-entry "Failed connection to ${REMOTE_USER}@${DESTINATION}"
 }
 
 # log-entry "Exiting bastion program."
+printf "Exiting.\n"
 
 exit 0
 
