@@ -50,19 +50,21 @@ err() {
 }
 
 log-entry() {
-    [[ $# -gt 0 ]] && printf "[%s]: %s\n" "$(date +%D-%T)" "$*" >> "$LOGFILE"
+    # TODO(logging): Sort out redirection for logging -- logger? rsyslog?
+    # [[ $# -gt 0 ]] && printf "[%s]: %s\n" "$(date +%D-%T)" "$*" >> "$LOGFILE"
+    :
 }
 
 go-to-destination() {
-    log-entry "User attempting to connect to ${REMOTE_USER:-$DEFAULT_USER}@$DESTINATION"
+#    log-entry "User attempting to connect to ${REMOTE_USER:-$DEFAULT_USER}@$DESTINATION"
     if ! ping -c 1 "$DESTINATION"; then
         err; printf "Destination host is unresponsive!\n" && return 1
-        log-entry "Server unreachable: $DESTINATION"
+        # log-entry "Server unreachable: $DESTINATION"
     fi
 
     ssh "${REMOTE_USER:-$DEFAULT_USER}@${DESTINATION}" || {
         err; printf "Failed to SSH to %s as %s!\n" "$DESTINATION" "${REMOTE_USER:-$DEFAULT_USER}"
-        log-entry "SSH command failed for ${REMOTE_USER}@${DESTINATION}"
+        # log-entry "SSH command failed for ${REMOTE_USER}@${DESTINATION}"
         return 1
     }
     return 0
@@ -124,10 +126,10 @@ get-user-input(){
                     printf "No user given. Using %s.\n" "${REMOTE_USER:=$DEFAULT_USER}"
 
                 debug "Going to '$DESTINATION' as '$REMOTE_USER'"
-                log-entry "Custom location provided: ${REMOTE_USER}@${DESTINATION}"
+                # log-entry "Custom location provided: ${REMOTE_USER}@${DESTINATION}"
                 go-to-destination || {
                     printf "Failed to connect!\n"
-                    log-entry "Call to go-to-destination failed with ${REMOTE_USER}@${DESTINATION}"
+                    # log-entry "Call to go-to-destination failed with ${REMOTE_USER}@${DESTINATION}"
                     return 1
                 }
                 return 0
@@ -185,10 +187,10 @@ done
 
 get-user-input || {
     printf "Failed to connect!" # && continue
-    log-entry "Failed connection to ${REMOTE_USER}@${DESTINATION}"
+    # log-entry "Failed connection to ${REMOTE_USER}@${DESTINATION}"
 }
 
-log-entry "Exiting bastion program."
+# log-entry "Exiting bastion program."
 
 exit 0
 
