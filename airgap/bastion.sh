@@ -30,22 +30,14 @@ Select one of the following:
  
 > "
 
-# TODO(perf): 
-#   - [x] Read from an SSH config for list of available connections
-#       - Format - `host user@hostname`
-#       - Parse with perl, awk, grep
-#   - Problem: This script does not have access to those parsing programs.  
-#       - Solution:
-#           - Parse in setup script and read from file for choices.
-# TODO(feat): 
-#   - [ ] Read from destinations.txt for choices to give to user
-
-
 debug() {
-    [[ $VERBOSE -gt 0 ]] && printf "[\x1b[33mDEBUG\x1b[0m]: %s\n" "$*"
+    [[ $VERBOSE -gt 0 ]] || return 1
+    [[ $# -gt 0 ]] && printf "[\x1b[33m DEBUG \x1b[0m]: %s\n" "$*"  && return 0
+    printf "[\x1b[33mDEBUG\x1b[0m]: " 
 }
 
 err() {
+    [[ $# -gt 0 ]] && printf "[ \033[31mERROR\033[0m ]: %s\n" "$*"  && return 0
     printf "[ \033[31mERROR\033[0m ]: " 
 }
 
