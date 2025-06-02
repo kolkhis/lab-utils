@@ -68,6 +68,7 @@ go-to-destination() {
         # log-entry "SSH command failed for ${REMOTE_USER}@${DESTINATION}"
         return 1
     }
+    
     return 0
 }
 
@@ -78,11 +79,11 @@ parse-destinations(){
         { printf "Could not gather list of destinations. Enter manually or exit.\n" && return 1; }
 
     PROMPT_STRING=$(
-        printf "Enter a destination (by name) from the list below:\n"
+        printf "\nEnter a destination (by name) from the list below:\n"
         for line in "${DESTINATIONS[@]}"; do
+            # TODO(sec): Don't display user@hostname after debugging stage
             printf "%-3s %-18s %s\n" "-" "${line%% *}" "${line##* }" 
         done
-        printf $'\n'
     )
 
     return 0
@@ -92,6 +93,7 @@ get-user-input(){
     [[ -n $1 ]] && PROMPT_STRING=$1
     local INPUT=
     read -r -n 11 -t 30 -p "$PROMPT_STRING
+
 > " INPUT
 
     if [[ -n $INPUT ]]; then
@@ -139,8 +141,6 @@ get-user-input(){
                 debug "User entered input: $INPUT"
 
                 if [[ ${DESTINATIONS[*]} =~ ${INPUT} ]]; then
-
-                    # TODO: Extract the correct destination based on input
                     debug "User input matched in destinations: $INPUT"
                     for d in "${DESTINATIONS[@]}"; do
                         if [[ $INPUT == "${d%% *}" ]]; then 
