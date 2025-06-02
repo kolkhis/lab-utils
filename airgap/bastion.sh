@@ -80,12 +80,15 @@ parse-destinations(){
     mapfile -t DESTINATIONS < "$DESTINATION_FILE" && printf "Mapped destination file.\n"
     [[ "${#DESTINATION[@]}" -gt 0 ]] && printf "Gathered list of destinations.\n" ||
         printf "Could not gather list of destinations. Enter manually or exit.\n"
-    declare destination_prompt
-    destination_prompt="Pick a destination (select by hostname, first column): $(printf "\n"; printf "%s\n" "${DESTINATIONS[@]}")"
+    # declare destination_prompt
+    # destination_prompt="Pick a destination (select by hostname, first column): $(printf "\n"; printf "%s\n" "${DESTINATIONS[@]}")"
+
+    # Output destinations
     for line in "${DESTINATIONS[@]}"; do
-        printf "Target: %s-8s-%-18s\n" "${line%% *}" "${line##* }" 
+        printf "%-8s %-18s %s\n" "Target:" "${line%% *}" "${line##* }" 
     done
-    printf "%s\n" "$destination_prompt"
+
+    # printf "%s\n" "$destination_prompt"
     return 0
 }
 
