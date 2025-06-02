@@ -175,6 +175,7 @@ parse-destinations || {
     err; printf >&2 "Failed to parse destinations file: %s\n" "$DESTINATION_FILE"
 }
 
+# TODO(perf): Break go-to-destination out of get-user-input
 get-user-input || {
     err; printf "Failed to connect!\n" # && continue
     # log-entry "Failed connection to ${REMOTE_USER}@${DESTINATION}"
