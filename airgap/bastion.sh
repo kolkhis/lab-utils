@@ -57,7 +57,7 @@ log-entry() {
 
 go-to-destination() {
 #    log-entry "User attempting to connect to ${REMOTE_USER:-$DEFAULT_USER}@$DESTINATION"
-    if ! ping -c 1 "$DESTINATION"; then
+    if ! ping -c 1 "${DESTINATION##*@}"; then
         err; printf "Destination host %s is unresponsive!\n" "${DESTINATION}" && return 1
         # log-entry "Server unreachable: $DESTINATION"
     fi
