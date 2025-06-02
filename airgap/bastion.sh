@@ -14,8 +14,8 @@ declare DESTINATION_FILE='/destinations.txt'
 #       [hostname]=192.168.4.11
 
 
-declare -a DESTINATIONS
-declare DESTINATION=192.168.4.11
+declare -a DESTINATION_LIST
+declare DESTINATION
 declare ENDPOINT
 
 declare LOGFILE='/var/log/bastion.log'
@@ -66,13 +66,13 @@ go-to-destination() {
 
 parse-destinations(){ 
     [[ -f "$DESTINATION_FILE" ]] || return 1
-    mapfile -t DESTINATIONS < "$DESTINATION_FILE" && printf "Mapped destination file.\n"
+    mapfile -t DESTINATION_LIST < "$DESTINATION_FILE" && printf "Mapped destination file.\n"
     { [[ "${#DESTINATION[@]}" -gt 0 ]] && printf "Gathered list of destinations.\n"; } ||
         { printf "Could not gather list of destinations. Enter manually or exit.\n" && return 1; }
 
     PROMPT_STRING=$(
         printf "\nEnter a destination (by name) from the list below:\n"
-        for line in "${DESTINATIONS[@]}"; do
+        for line in "${DESTINATION_LIST[@]}"; do
             # TODO(sec): Don't display user@hostname after debugging stage
             printf "%-3s %-18s %s\n" "-" "${line%% *}" "${line##* }" 
         done
@@ -94,11 +94,11 @@ get-user-input(){
                 # TODO(refactor): Change/remove this case -- this is default now
 
                 printf "Connect to a pre-configured host:\n"
-                [[ ${#DESTINATIONS[@]} -gt 0 ]] || { err && printf "No destinations to read from!\n" && exit 1; }
+                [[ ${#DESTINATION_LIST[@]} -gt 0 ]] || { err && printf "No destinations to read from!\n" && exit 1; }
                 # Output destinations
                 local new_prompt
                 new_prompt=$(
-                for line in "${DESTINATIONS[@]}"; do
+                for line in "${DESTINATION_LIST[@]}"; do
                     printf "%-8s %-18s %s\n" "Target:" "${line%% *}" "${line##* }" 
                 done
                 printf "\n"
@@ -129,15 +129,16 @@ get-user-input(){
                 ;;
 
             [[:alpha:]]*)
-                : "This should be a destination in" "${DESTINATIONS[@]}"
+                : "This should be a destination in" "${DESTINATION_LIST[@]}"
                 debug "User entered input: $INPUT"
 
-                if [[ ${DESTINATIONS[*]} =~ ${INPUT} ]]; then
+                if [[ ${DESTINATION_LIST[*]} =~ ${INPUT} ]]; then
                     debug "User input matched in destinations: $INPUT"
-                    for d in "${DESTINATIONS[@]}"; do
+                    for d in "${DESTINATION_LIST[@]}"; do
                         if [[ $INPUT == "${d%% *}" ]]; then 
                             DESTINATION="${d##* }"
                             go-to-destination
+                            return 0
                         fi
                     done
                 fi
