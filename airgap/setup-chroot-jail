@@ -220,6 +220,9 @@ configure-user-shell(){
         sudo sed -iE "/${JAILED_USER}/s,/bin/b\?a\?sh,/bin/${BASTION_SCRIPT}," /etc/passwd || {
             err;printf >&2 "Failed to replace default shell in /etc/passwd! \n" && return 1
         }
+        sudo sed -iE "/${JAILED_USER}/s,/bin/b\?a\?sh,/bin/${BASTION_SCRIPT}," "$CHROOT_DIR/etc/passwd" || {
+            err;printf >&2 "Failed to replace default shell in %s/etc/passwd! \n" "$CHROOT_DIR" && return 1
+        }
         debug "Successfully added ${BASTION_SCRIPT} as shell for ${JAILED_USER}."
     fi
     return 0
