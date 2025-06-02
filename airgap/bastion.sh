@@ -82,6 +82,9 @@ parse-destinations(){
         printf "Could not gather list of destinations. Enter manually or exit.\n"
     declare destination_prompt
     destination_prompt="Pick a destination (select by hostname, first column): $(printf "\n"; printf "%s\n" "${DESTINATIONS[@]}")"
+    for line in "${DESTINATIONS[@]}"; do
+        printf "Target: %s\t-\t%s\n" "${line%% *}" "${line##* }" 
+    done
     printf "%s\n" "$destination_prompt"
     return 0
 }
