@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/rbash
 # shellcheck disable=SC2120
 
 #export PATH=/bin:/usr/bin
