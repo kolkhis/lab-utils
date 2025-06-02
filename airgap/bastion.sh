@@ -83,7 +83,7 @@ parse-destinations(){
     declare destination_prompt
     destination_prompt="Pick a destination (select by hostname, first column): $(printf "\n"; printf "%s\n" "${DESTINATIONS[@]}")"
     for line in "${DESTINATIONS[@]}"; do
-        printf "Target: %s\t-\t%s\n" "${line%% *}" "${line##* }" 
+        printf "Target: %s-8s-%-18s\n" "${line%% *}" "${line##* }" 
     done
     printf "%s\n" "$destination_prompt"
     return 0
