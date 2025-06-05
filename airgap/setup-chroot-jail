@@ -267,6 +267,13 @@ parse-ssh-file() {
     else
         printf >&2 "No SSH file to parse for destinations!\n" && return 1
     fi
+    while read -r entry; do 
+        [[ -z $entry ]] && continue
+        debug "Attempting to add $entry to $CHROOT_DIR/ssh/ssh_known_hosts"
+        ssh-keyscan "${entry##* }" >> "$CHROOT_DIR/ssh/ssh_known_hosts" || {
+            printf >&2 "Failed to add fingerprint for %s to %s\n" "${entry##* }" "$CHROOT_DIR/ssh/ssh_known_hosts"
+        }
+    done < "$DESTINATIONS_OUTPUT_FILE"
     return 0
 }
 
