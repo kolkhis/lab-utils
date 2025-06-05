@@ -23,9 +23,8 @@ declare PROMPT_STRING="
 
 Select one of the following:
  
-1. Connect to a pre-configured destination host
-2. Enter custom destination
-3. Exit
+1. Enter custom destination
+2. Exit
  
 > "
 
@@ -45,6 +44,22 @@ err() {
 #     [[ $# -gt 0 ]] && printf "[%s]: %s\n" "$(date +%D-%T)" "$*" >> "$LOGFILE"
 # }
 
+parse-destinations(){ 
+    mapfile -t DESTINATION_LIST < "$DESTINATION_FILE" && printf "Mapped destination file.\n"
+    { [[ "${#DESTINATION_LIST[@]}" -gt 0 ]] && printf "Gathered list of destinations.\n"; } # ||
+        { printf "Could not gather list of destinations. Enter manually or exit.\n" && return 1; }
+
+    PROMPT_STRING=$(
+        printf "\nEnter a destination (by name) from the list below:\n"
+        for line in "${DESTINATION_LIST[@]}"; do
+            # TODO(sec): Don't display user@hostname after debugging stage?
+            printf "%-3s %-18s %s\n" "-" "${line%% *}" "${line##* }" 
+        done
+    )
+
+    return 0
+}
+
 go-to-destination() {
 #    log-entry "User attempting to connect to ${REMOTE_USER:-$DEFAULT_USER}@$DESTINATION"
     if ! ping -c 1 "${DESTINATION##*@}"; then
@@ -63,22 +78,6 @@ go-to-destination() {
     return 0
 }
 
-parse-destinations(){ 
-    [[ -f "$DESTINATION_FILE" ]] || return 1
-    mapfile -t DESTINATION_LIST < "$DESTINATION_FILE" && printf "Mapped destination file.\n"
-    { [[ "${#DESTINATION[@]}" -gt 0 ]] && printf "Gathered list of destinations.\n"; } ||
-        { printf "Could not gather list of destinations. Enter manually or exit.\n" && return 1; }
-
-    PROMPT_STRING=$(
-        printf "\nEnter a destination (by name) from the list below:\n"
-        for line in "${DESTINATION_LIST[@]}"; do
-            # TODO(sec): Don't display user@hostname after debugging stage?
-            printf "%-3s %-18s %s\n" "-" "${line%% *}" "${line##* }" 
-        done
-    )
-
-    return 0
-}
 
 get-user-input(){
     [[ -n $1 ]] && PROMPT_STRING=$1
