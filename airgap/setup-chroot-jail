@@ -110,8 +110,11 @@ setup-chroot-dir() {
         fi
     done
 
+    printf "Copying system files.\n"
+
     for SYSFILE in "${SYSFILES[@]}"; do
         printf "Copying system file: %s\n" "$SYSFILE"
+
         if [[ ! -d  "${CHROOT_DIR}$(dirname "$SYSFILE")" ]]; then
             printf "Creating directory for %s at %s\n" "$SYSFILE" "$CHROOT_DIR/$(basename "$SYSFILE")"
             sudo mkdir -p "$(dirname "$SYSFILE")" || {
@@ -122,6 +125,7 @@ setup-chroot-dir() {
 
         printf "Copying system file %s to %s\n" "$SYSFILE" "${CHROOT_DIR}$SYSFILE"
         sudo cp "$SYSFILE" "${CHROOT_DIR}${SYSFILE}"
+
     done
 
     # Copy over binaries and their linked libraries
@@ -217,15 +221,16 @@ configure-user-shell(){
         }
         debug "Successfully copied ${BASTION_SCRIPT} to ${CHROOT_DIR}/bin/${BASTION_SCRIPT}."
 
-        sudo sed -iE "/${JAILED_USER}/s,/bin/b\?a\?sh,/bin/${BASTION_SCRIPT}," /etc/passwd || {
+        sudo sed -i -E "/${JAILED_USER}/s,/bin/b\?a\?sh,/bin/${BASTION_SCRIPT}," /etc/passwd || {
             err;printf >&2 "Failed to replace default shell in /etc/passwd! \n" && return 1
         }
-        sudo sed -iE "/${JAILED_USER}/s,/bin/b\?a\?sh,/bin/${BASTION_SCRIPT}," "$CHROOT_DIR/etc/passwd" || {
+        sudo sed -i -E "/${JAILED_USER}/s,/bin/b\?a\?sh,/bin/${BASTION_SCRIPT}," "$CHROOT_DIR/etc/passwd" || {
             err;printf >&2 "Failed to replace default shell in %s/etc/passwd! \n" "$CHROOT_DIR" && return 1
         }
         debug "Successfully added ${BASTION_SCRIPT} as shell for ${JAILED_USER}."
     fi
     return 0
+
 }
 
 configure-ssh(){
@@ -267,6 +272,7 @@ parse-ssh-file() {
     else
         printf >&2 "No SSH file to parse for destinations!\n" && return 1
     fi
+    touch "$CHROOT_DIR/ssh/ssh_known_hosts"
     while read -r entry; do 
         [[ -z $entry ]] && continue
         debug "Attempting to add $entry to $CHROOT_DIR/ssh/ssh_known_hosts"
