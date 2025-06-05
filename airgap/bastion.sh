@@ -1,7 +1,6 @@
 #!/usr/bin/rbash
 # shellcheck disable=SC2120
 
-#export PATH=/bin:/usr/bin
 declare -i VERBOSE
 
 declare REMOTE_USER
@@ -55,11 +54,11 @@ go-to-destination() {
 
     if ! [[ $DESTINATION =~ @ ]]; then DESTINATION="${REMOTE_USER:-$DEFAULT_USER}@${DESTINATION}"; fi
 
-    ssh "$DESTINATION" || {
-        err; printf "Failed to SSH to %s as %s!\n" "$DESTINATION" "${REMOTE_USER:-$DEFAULT_USER}"
-        # log-entry "SSH command failed for ${REMOTE_USER}@${DESTINATION}"
-        return 1
-    }
+    ssh "$DESTINATION" # || {
+        # err; printf "Failed to SSH to %s as %s!\n" "$DESTINATION" "${REMOTE_USER:-$DEFAULT_USER}"
+        # # log-entry "SSH command failed for ${REMOTE_USER}@${DESTINATION}"
+        # return 1
+    # }
     
     return 0
 }
@@ -73,7 +72,7 @@ parse-destinations(){
     PROMPT_STRING=$(
         printf "\nEnter a destination (by name) from the list below:\n"
         for line in "${DESTINATION_LIST[@]}"; do
-            # TODO(sec): Don't display user@hostname after debugging stage
+            # TODO(sec): Don't display user@hostname after debugging stage?
             printf "%-3s %-18s %s\n" "-" "${line%% *}" "${line##* }" 
         done
     )
@@ -90,40 +89,27 @@ get-user-input(){
 
     if [[ -n $INPUT ]]; then
         case $INPUT in
-            1)
-                # TODO(refactor): Change/remove this case -- this is default now
 
-                printf "Connect to a pre-configured host:\n"
-                [[ ${#DESTINATION_LIST[@]} -gt 0 ]] || { err && printf "No destinations to read from!\n" && exit 1; }
-                # Output destinations
-                local new_prompt
-                new_prompt=$(
-                for line in "${DESTINATION_LIST[@]}"; do
-                    printf "%-8s %-18s %s\n" "Target:" "${line%% *}" "${line##* }" 
-                done
-                printf "\n"
-                )
-                get-user-input "$new_prompt"
-                ;;
-            2)
+            1)
                 read -r -p "Enter SSH destination (user@ip): " ENDPOINT
                 REMOTE_USER="${ENDPOINT%%@*}"
                 DESTINATION="${ENDPOINT##*@}"
 
                 [[ $REMOTE_USER == "$DESTINATION" ]] &&
-                    printf "No user given. Using %s.\n" "${REMOTE_USER:=$DEFAULT_USER}"
+                    printf "No user given. Using %s.\n" "${REMOTE_USER:=$DEFAULT_USER}" &&
+                    DESTINATION="${REMOTE_USER}@${DESTINATION}"
 
-                debug "Going to '$DESTINATION' as '$REMOTE_USER'"
+                # debug "Going to '$DESTINATION' as '$REMOTE_USER'"
                 # log-entry "Custom location provided: ${REMOTE_USER}@${DESTINATION}"
-                go-to-destination || {
-                    printf "Failed to connect!\n"
-                    # log-entry "Call to go-to-destination failed with ${REMOTE_USER}@${DESTINATION}"
-                    return 1
-                }
+                # go-to-destination || {
+                #     printf "Failed to connect!\n"
+                #     # log-entry "Call to go-to-destination failed with ${REMOTE_USER}@${DESTINATION}"
+                #     return 1
+                # }
                 return 0
                 ;;
 
-            3)
+            2)
                 printf "Leaving now.\n"
                 return 0
                 ;;
@@ -137,7 +123,7 @@ get-user-input(){
                     for d in "${DESTINATION_LIST[@]}"; do
                         if [[ $INPUT == "${d%% *}" ]]; then 
                             DESTINATION="${d##* }"
-                            go-to-destination
+                            # go-to-destination
                             return 0
                         fi
                     done
@@ -178,8 +164,12 @@ parse-destinations || {
 
 # TODO(perf): Break go-to-destination out of get-user-input
 get-user-input || {
-    err; printf "Failed to connect!\n" # && continue
+    err; printf "Bad user input!\n" # && continue
     # log-entry "Failed connection to ${REMOTE_USER}@${DESTINATION}"
+}
+
+{ [[ -n $DESTINATION ]] && go-to-destination; } || {
+    err; printf >&2 "Destination empty or unreachable!\n" && exit 1
 }
 
 # log-entry "Exiting bastion program."
