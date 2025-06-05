@@ -100,7 +100,7 @@ setup-chroot-dir() {
     #     err; printf >&2 "Failed to create directory tree for chroot jail!\n"
     # }
 
-    for dir in {bin,lib,lib64,dev,etc,home,usr/bin,lib/x86_64-linux-gnu}; do
+    for dir in {bin,lib,lib64,dev,etc,etc/ssh,home,usr/bin,lib/x86_64-linux-gnu}; do
         if ! [[ -d ${CHROOT_DIR}/$dir ]]; then
             sudo mkdir -p "${CHROOT_DIR}/$dir" || {
                 err; printf >&2 "Failed to create directory tree for chroot jail!\n" && return 1
