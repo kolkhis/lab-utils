@@ -18,7 +18,7 @@
 #       - Parsing must happen in setup.
 #       - Can not happen in bastion script due to limited binary access (no sed,awk,perl)
 #   - Set up log file (/var/log/jumpbox.log)
-#
+#   - Install `logger` to chroot env for logging
 #   - Set up fail2ban (different script?)
 #   - Set up monitoring stack (different script?)
 
@@ -35,6 +35,7 @@ declare -a BINARIES=(
     "rbash"
     "ssh"
     "ping"
+    "logger"
 )
 
 declare -a SYSFILES=(
@@ -100,7 +101,7 @@ setup-chroot-dir() {
     #     err; printf >&2 "Failed to create directory tree for chroot jail!\n"
     # }
 
-    for dir in {bin,lib,lib64,dev,etc,home,usr/bin,lib/x86_64-linux-gnu}; do
+    for dir in {bin,lib,lib64,dev,etc,etc/ssh,home,usr/bin,lib/x86_64-linux-gnu}; do
         if ! [[ -d ${CHROOT_DIR}/$dir ]]; then
             sudo mkdir -p "${CHROOT_DIR}/$dir" || {
                 err; printf >&2 "Failed to create directory tree for chroot jail!\n" && return 1
@@ -110,8 +111,11 @@ setup-chroot-dir() {
         fi
     done
 
+    printf "Copying system files.\n"
+
     for SYSFILE in "${SYSFILES[@]}"; do
         printf "Copying system file: %s\n" "$SYSFILE"
+
         if [[ ! -d  "${CHROOT_DIR}$(dirname "$SYSFILE")" ]]; then
             printf "Creating directory for %s at %s\n" "$SYSFILE" "$CHROOT_DIR/$(basename "$SYSFILE")"
             sudo mkdir -p "$(dirname "$SYSFILE")" || {
@@ -122,6 +126,7 @@ setup-chroot-dir() {
 
         printf "Copying system file %s to %s\n" "$SYSFILE" "${CHROOT_DIR}$SYSFILE"
         sudo cp "$SYSFILE" "${CHROOT_DIR}${SYSFILE}"
+
     done
 
     # Copy over binaries and their linked libraries
@@ -217,15 +222,15 @@ configure-user-shell(){
         }
         debug "Successfully copied ${BASTION_SCRIPT} to ${CHROOT_DIR}/bin/${BASTION_SCRIPT}."
 
-        sudo sed -iE "/${JAILED_USER}/s,/bin/b\?a\?sh,/bin/${BASTION_SCRIPT}," /etc/passwd || {
-            err;printf >&2 "Failed to replace default shell in /etc/passwd! \n" && return 1
+        sudo perl -pi -e "s,/bin/(?:ba)?sh,/bin/bastion.sh, if m/$JAILED_USER/" /etc/passwd || {
+            printf >&2 "Failed to replace default shell in /etc/passwd!\n"
         }
-        sudo sed -iE "/${JAILED_USER}/s,/bin/b\?a\?sh,/bin/${BASTION_SCRIPT}," "$CHROOT_DIR/etc/passwd" || {
-            err;printf >&2 "Failed to replace default shell in %s/etc/passwd! \n" "$CHROOT_DIR" && return 1
-        }
+
+        debug "Jailed user entry in /etc/passwd: $(grep $JAILED_USER /etc/passwd)"
         debug "Successfully added ${BASTION_SCRIPT} as shell for ${JAILED_USER}."
     fi
     return 0
+
 }
 
 configure-ssh(){
@@ -267,6 +272,19 @@ parse-ssh-file() {
     else
         printf >&2 "No SSH file to parse for destinations!\n" && return 1
     fi
+}
+
+# TODO(fix): Figure out why file does not exist
+add-ssh-fingerprints() {
+    touch "$CHROOT_DIR/ssh/ssh_known_hosts"
+    [[ ! -f $DESTINATIONS_OUTPUT_FILE ]] && printf "No parsed SSH file found.\n" && return 1
+    while read -r entry; do 
+        [[ -z $entry ]] && continue
+        debug "Attempting to add $entry to $CHROOT_DIR/ssh/ssh_known_hosts"
+        ssh-keyscan "${entry##* }" >> "$CHROOT_DIR/ssh/ssh_known_hosts" || {
+            printf >&2 "Failed to add fingerprint for %s to %s\n" "${entry##* }" "$CHROOT_DIR/ssh/ssh_known_hosts"
+        }
+    done < "$DESTINATIONS_OUTPUT_FILE"
     return 0
 }
 
