@@ -224,7 +224,7 @@ configure-user-shell(){
         # sudo sed -i -E "/${JAILED_USER}/s,/bin/b\?a\?sh,/bin/${BASTION_SCRIPT}," /etc/passwd || {
         #     err;printf >&2 "Failed to replace default shell in /etc/passwd! \n" && return 1
         # }
-        perl -pi -e "s,/bin/(?:ba)?sh,/bin/bastion.sh, if m/$JAILED_USER/" /etc/passwd || {
+        sudo perl -pi -e "s,/bin/(?:ba)?sh,/bin/bastion.sh, if m/$JAILED_USER/" /etc/passwd || {
             printf >&2 "Failed to replace default shell in /etc/passwd!\n"
         }
         debug "Jailed user entry in /etc/passwd: $(grep $JAILED_USER /etc/passwd)"
