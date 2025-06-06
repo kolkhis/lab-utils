@@ -18,7 +18,7 @@
 #       - Parsing must happen in setup.
 #       - Can not happen in bastion script due to limited binary access (no sed,awk,perl)
 #   - Set up log file (/var/log/jumpbox.log)
-#
+#   - Install `logger` to chroot env for logging
 #   - Set up fail2ban (different script?)
 #   - Set up monitoring stack (different script?)
 
@@ -35,6 +35,7 @@ declare -a BINARIES=(
     "rbash"
     "ssh"
     "ping"
+    "logger"
 )
 
 declare -a SYSFILES=(
@@ -221,12 +222,10 @@ configure-user-shell(){
         }
         debug "Successfully copied ${BASTION_SCRIPT} to ${CHROOT_DIR}/bin/${BASTION_SCRIPT}."
 
-        # sudo sed -i -E "/${JAILED_USER}/s,/bin/b\?a\?sh,/bin/${BASTION_SCRIPT}," /etc/passwd || {
-        #     err;printf >&2 "Failed to replace default shell in /etc/passwd! \n" && return 1
-        # }
         sudo perl -pi -e "s,/bin/(?:ba)?sh,/bin/bastion.sh, if m/$JAILED_USER/" /etc/passwd || {
             printf >&2 "Failed to replace default shell in /etc/passwd!\n"
         }
+
         debug "Jailed user entry in /etc/passwd: $(grep $JAILED_USER /etc/passwd)"
         debug "Successfully added ${BASTION_SCRIPT} as shell for ${JAILED_USER}."
     fi
