@@ -46,7 +46,7 @@ err() {
 
 parse-destinations(){ 
     mapfile -t DESTINATION_LIST < "$DESTINATION_FILE" && printf "Mapped destination file.\n"
-    { [[ "${#DESTINATION_LIST[@]}" -gt 0 ]] && printf "Gathered list of destinations.\n"; } # ||
+    { [[ "${#DESTINATION_LIST[@]}" -gt 0 ]] && printf "Gathered list of destinations.\n"; } ||
         { printf "Could not gather list of destinations. Enter manually or exit.\n" && return 1; }
 
     PROMPT_STRING=$(
