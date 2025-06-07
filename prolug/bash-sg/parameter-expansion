@@ -242,6 +242,107 @@ printf "Or we can use the <operator><argument> syntax:\n"
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Extension -- specifying a pattern
+printf "We can also specify a pattern for letters to capitalize.\n"
+
+    declare name="connor"
+    printf "%s\n" "${name^[cn]}"
+    # Output:
+    # Connor
+
+printf "Here, the ^ is non-greedy.\n"
+printf "It will only captilize the first match it finds of the pattern.\n"
+printf "We can make it greedy by using the ^^ operator.\n"
+
+    printf "%s\n" "${name^^[cn]}"
+    # Output:
+    # CoNNor
+
+printf "Notice we're using a set [...] here.\n"
+printf "Bash expects a pattern here (e.g., pattern matching), we can can use character classes too.\n"
+
+    printf "%s\n" "${name^^[[:alpha:]]}"
+    # Output:
+    # CONNOR
+
+printf "That one just matches any alphabet character, same as [a-zA-Z].\n"
+
+# POSIX character classes:
+# alnum alpha ascii blank cntrl digit graph lower print punct space  upper word xdigit
+
+printf "There's also a , operator to do something similar to the ^ operator.\n"
+printf "The only difference is that it makes the variable lowercase instead of uppercase.\n"
+
+printf "The same rules apply. You apparently can NOT use patterns for this one.\n"
+
+printf "The syntax:\n"
+
+    declare name="CONNOR"
+    printf "%s\n" "${name,}"
+    printf "%s\n" "${name,,}"           
+    printf "%s\n" "${name,,[A-Z]}"     
+    printf "%s\n" "${name,,[[:alpha:]]}"  # Works as intended
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 printf "So that's one way to use parameter expansion.\n"
 printf "We can use parameter expansions in a lot of other ways too.\n"
 
@@ -468,7 +569,7 @@ printf "This can be good for validating that a file is where it should be.\n"
 
 
 
-# default values
+# Default values
 printf "We can also use parameter expansion to set default values for variables.\n"
 printf "I personally use this one *a lot*.\n"
 
@@ -513,6 +614,58 @@ printf "We can use another operator to both use *and* assign the variable a defa
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Default values (cont)
+printf "We can also use the :+ operator if we want to use an alternate value if a variable IS set.\n"
+
+    declare my_var=
+    printf "%s\n" "${my_var}"
+    # Output: 
+
+
+    printf "%s\n" "${my_var:+Hello! }"
+    # Output:
+
+    declare my_var="Hi"
+    printf "%s\n" "${my_var}"
+    # Output: 
+    # Hi
+
+    printf "%s\n" "${my_var:+Hello! }"
+    # Output:
+    # Hello! 
+
+
+printf "So, this only uses the alternate value if the variable IS set and NOT null.\n"
 
 
 
@@ -800,7 +953,53 @@ printf '${*@A} - Return an assignment statement to recreate the variables: %s\n'
 
 
 
-# Talk about ${!arr[@]}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Talk about ${!arr[@]} (array keys)
+printf 'We can use the ${!var[@]} or ${!var[*]} syntax to get the list the keys of an array.\n'
 
 declare -a my_arr=("one" "two" "three")
 
@@ -832,6 +1031,264 @@ declare -A ass_arr=( [one]="Hello" [two]="World" [three]="Hi again" )
 
 printf "Bash doesn't maintain the order of the elements in associative arrays.\n"
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Getting Variable Names
+printf "You can also use parameter expansion to get a list of variable names that match a pattern.\n"
+
+printf "For example:\n"
+
+    declare some_var="Hello, world"
+    declare some_other_var="Goodbye, world"
+
+    printf "%s\n" "${!some@}"
+    # Output:
+    # some_other_var
+    # some_var
+
+    printf "%s\n" "${!some*}"
+    # Output:
+    # some_other_var some_var
+
+printf "The result is either an array (with @) or a single string (with *).\n"
+
+
+cat << 'EOF'
+This syntax expands to a list of variable names that begin with the 'prefix' that we specify.
+If * is used (e.g., `"${!some*}"`)
+    The result is a single string, with names joined by the first character of $IFS (often a space).
+If @ is used (e.g., `"${!some@}"`):
+    The result is each name as a separate word — meaning if quoted ("${!prefix@}"), each name is its own item.
+EOF
+
+printf "This could be useful to clean up variables.\n"
+
+    declare var_one=1; declare var_two=2; declare var_three=3
+    printf "%s\n" "${var_one}"; printf "%s\n" "${var_two}"; printf "%s\n" "${var_three}"
+    # Output:
+    # 1
+    # 2
+    # 3
+
+    unset "${!var_@}" # Unsets all 3 of those variabes
+    printf "%s\n" "${var_one}"; printf "%s\n" "${var_two}"; printf "%s\n" "${var_three}"
+    # Output:
+    #
+
+printf 'This ${!...} syntax behaves differently when used with arrays (as we just saw).\n'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Erroring 
+printf "We can also use parameter expansion to set errors in case values are missing.\n"
+
+printf "For example, say we need a 'NAMESPACE' variable to be set for a script to work.\n"
+printf "We want to exit the script with an error if that variable is *not* set.\n"
+
+    declare NAMESPACE=
+    "${NAMESPACE:?The NAMESPACE variable is either not set or null}"
+    # Will trigger error (value is null, but it is set)
+
+printf "This will check NAMESPACE, and check if it is either not *set* or it is *null*.\n"
+
+
+printf "If it's either null or unset, the error will trigger and the message will be output.\n"
+printf "Now, we can also only check if the variable is unset and allow null values.\n"
+
+    declare NAMESPACE=
+    "${NAMESPACE?The NAMESPACE variable is not set!}"
+    # Will NOT trigger error (value is null, but it is set)
+
+printf "We just removed the colon (:) from :? \n"
+printf "This will only error out if the variable doesn't exist.\n"
+
+printf "This colon rule also works with :-, :=, and :+  \n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Slicing
+
+printf "Like other programming languages, Bash supports string slicing.\n" 
+printf "We can use parameter expansion for slicing (substring expansion).\n"
+printf 'We use the ${var:offset:length} syntax.\n'
+
+    declare my_var="Hello, world!"
+    printf "%s\n" "${my_var:0:5}"
+    # Output:
+    # Hello
+
+printf "This slices the first 5 characters out of the variable.\n"
+printf "We start at offset (index) zero, and the length we want is 5.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 cat << EOF
 CHALLENGE
 
@@ -844,3 +1301,12 @@ File info should include:
 - File location  
 - Parent directory name (not full path)  
 EOF
+
+
+
+
+
+
+
+
+
