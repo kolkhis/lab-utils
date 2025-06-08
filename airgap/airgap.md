@@ -469,6 +469,14 @@ tail -n 1 /var/log/auth.log
 
 Note that this will not write to `/var/log/secure` on RedHat-based systems, it will write to `/var/log/messages` (tested on Rocky).  
 
+
+We can perform dry runs with `logger` to see how the log message will be formatted:
+```bash
+logger -t bastion -p auth.info --no-act --stderr "Test message"
+# Output:
+# <38>Jun  6 20:59:53 bastion: Test message
+```
+
 ---
 
 Ultimately, `logger` sends log entries to the system logger (`/dev/log` or
