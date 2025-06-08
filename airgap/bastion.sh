@@ -1,5 +1,5 @@
 #!/usr/bin/rbash
-# shellcheck disable=SC2120
+# shellcheck disable=SC2120,SC2317
 
 declare -i VERBOSE
 
@@ -39,10 +39,28 @@ err() {
     printf "[ \033[31mERROR\033[0m ]: " 
 }
 
-# log-entry() {
-#     # TODO(logging): Sort out redirection for logging -- logger? rsyslog?
-#     [[ $# -gt 0 ]] && printf "[%s]: %s\n" "$(date +%D-%T)" "$*" >> "$LOGFILE"
-# }
+log-entry() {
+    # TODO(logging): Sort out redirection for logging -- logger? rsyslog?
+    [[ $# -gt 0 ]] && printf "[%s]: %s\n" "$(date +%D-%T)" "$*" >> "$LOGFILE"
+    local tag='bastion'
+    local priority='auth.notice'
+    while [[ -n $1 ]]; do
+        case $1 in
+            -p|--priority)
+                [[ -n $2 ]] && shift && priority=$1
+                shift;
+                ;;
+            -t|--tag)
+                [[ -n $2 ]] && shift && tag=$1
+                shift;
+                ;;
+            *)
+                ;;
+        esac
+    done
+
+    logger -t "$tag" -p "$priority" --id=$$ "$*"
+}
 
 parse-destinations(){ 
     mapfile -t DESTINATION_LIST < "$DESTINATION_FILE" && printf "Mapped destination file.\n"
@@ -161,7 +179,6 @@ parse-destinations || {
     err; printf >&2 "Failed to parse destinations file: %s\n" "$DESTINATION_FILE"
 }
 
-# TODO(perf): Break go-to-destination out of get-user-input
 get-user-input || {
     err; printf "Bad user input!\n" # && continue
     # log-entry "Failed connection to ${REMOTE_USER}@${DESTINATION}"
