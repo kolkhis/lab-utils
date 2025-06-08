@@ -1,0 +1,13 @@
+#!/bin/bash
+
+
+
+declare ARG
+
+[[ -n $1 ]] && ARG=$1
+
+printf "File Extension: %s\n" "${ARG##*.}"
+printf "File Location: %s\n" "${ARG##*/}"
+
+
+
