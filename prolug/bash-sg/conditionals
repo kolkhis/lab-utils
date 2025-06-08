@@ -143,29 +143,6 @@ printf "Can anyone tell me what that is?\n"
 
 
 
-printf "Bueller?\n"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -231,6 +208,53 @@ printf "But why is this important?\n"
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 printf "Because conditionals in Bash operate on these exit codes.\n"
 
 printf "This is unique to bash/sh.\n" 
@@ -239,6 +263,51 @@ printf "Bash doesn't have boolean values. It has 'truthy' and 'falsey' values.\n
 printf "0 is truthy, and anything not 0 is falsey.\n"
 
 printf "But, Bash does have a 'true' and a 'false'.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -403,13 +472,20 @@ printf "The '!' operator simply reverses the condition.\n"
 
 
 
-printf "The ! operator can be used either inside or outside the brackets.\n"
+printf "The ! operator can be used either inside or outside the brackets in bash.\n"
+
 # Also valid:
 
 if ! [[ -f ./hello.c ]]; then
     printf "File doesn't exist!\n"
 fi
 printf "This is preference. I prefer to use it inside the brackets.\n"
+printf "In POSIX-compliant scripts, do it outside the brackets.\n"
+
+if ! [ -f ./hello.c ]; then
+    printf "File doesn't exist.\n"
+fi
+
 
 
 
@@ -476,7 +552,7 @@ fi
 if [ -f ./hello.c ] && [ -s ./hello.c ]; then # posix
     :
 fi
-# If using [ ... ], use &&/|| outside
+# If using single brackets [ ... ], use && and || outside
 
 
 
@@ -505,6 +581,70 @@ fi
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Short-circuit logic
 cat ./hello.c && printf "Successfully ran 'cat'\n" && printf "YEY\n"
 printf "This '&&' works here just like in the if statements.\n"
 
@@ -514,6 +654,47 @@ printf "If that condition passes (exit code 0), then the next condition is evalu
 printf "This makes error handling very easy in Bash.\n"
 
 cat ./nonexistent.file || printf "Failed to run 'cat'\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -568,7 +749,11 @@ else
     # sudo apt install -y $PKG
 fi
 
-printf "Though, 'which' is not POSIX-compliant. Use 'command -v' if you want it to be.\n"
+# 'type' also works
+if type $PKG; then printf "Package is installed\n"; fi
+
+printf "Though, 'which' and 'type' are not POSIX-compliant.\n" 
+printf "Use 'command -v' if you want it to be.\n"
 
 if command -v $PKG; then
     printf "Package is installed (cmd in PATH).\n"
@@ -576,6 +761,7 @@ else
     printf "Package is not installed (cmd not in PATH).\n"
     # sudo apt install -y $PKG
 fi
+# Note: Only check one pkg at a time
 
 
 
@@ -620,19 +806,21 @@ fi
 
 
 
+# case statements
+printf "We also have 'case' statements.\n"
+printf "These check the condition of a single value and compare it to each case.\n"
 
 declare VAR="Hello, world!"
 
-
 case $VAR in
-    [a-z]*)
-        printf "Contains letters\n"
-        ;;
     *world)
         printf "Var contains 'world'\n"
         ;;
     hello*)
         printf "Var contains 'hello'\n"
+        ;;
+    [a-z]*)
+        printf "Contains letters\n"
         ;;
     *)
         printf "Unknown!\n"
@@ -640,17 +828,115 @@ case $VAR in
 esac
 
 
-# if [[ $VAR == *world ]]; then
+# Pattern matching v. raw string v. regex operators 
 if [[ $VAR == 'world' ]]; then
-    :
+    printf "This treats it as a raw string: 'world' (since it's in quotes)\n"
+fi
+
+if [[ $VAR == *world ]]; then
+    printf "This is interpreted as a pattern (since it's NOT in quotes)\n"
 fi
 
 if [[ $VAR =~ .*world ]]; then
-    :
+    printf "This uses regex (the POSIX flavor).\n"
 fi
 
-ps aux
-ps -ef
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Questions?"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
