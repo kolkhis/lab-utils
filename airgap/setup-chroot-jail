@@ -89,6 +89,10 @@ while [[ -n $1 ]]; do
             # TODO: Add help text
             :
             ;;
+        *)
+            printf "Invalid argument: %s\n" "$1"
+            shift;
+            ;;
     esac
 done
 
