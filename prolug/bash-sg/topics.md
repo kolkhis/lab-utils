@@ -135,4 +135,6 @@
 - Cron? Less "bash" and more "linux in general"
     - Cron daily runs at 3:14 AM every morning on a linux system.  
 
+- [ ] Terminal configuration (ricing)
+
 
