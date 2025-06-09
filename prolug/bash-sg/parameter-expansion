@@ -131,6 +131,46 @@ printf "When you're using that variable, you can modify it without an extra line
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 printf "The syntax is as follows:\n"
 
 ${variable<operator><args>}
