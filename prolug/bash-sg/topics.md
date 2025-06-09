@@ -80,8 +80,9 @@
         - `s/old/new/`
         - `tr/a-z/A-Z/`
     - `tr`
+    - `cut`
 
-- [ ] Parameter expansions
+- [x] Parameter expansions
     - ```bash
       "${VAR//old/new}"
       "${VAR##prefix}"
@@ -101,8 +102,8 @@
     - `${ARR[0]}`
     - POSIX doesn't have arrays.
 
-- [ ] Associative arrays?
-    - ```bash
+    - [ ] Associative arrays?
+      ```bash
       declare -A DICT
       DICT=(
           [KeyOne]='ValueOne'
@@ -110,7 +111,7 @@
       )
       ```
 
-- [ ] Process Substitution
+- [x] Process Substitution
     - `<(cmd)`
     - Pretend to be a file
 
