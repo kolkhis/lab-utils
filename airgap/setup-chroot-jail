@@ -53,6 +53,18 @@ declare -a SPECIAL_FILES=(
     "/dev/urandom"
 )
 
+declare -a SYSTEM_DIRS=(
+    "bin"
+    "lib"
+    "lib64"
+    "dev"
+    "etc"
+    "etc/ssh"
+    "home"
+    "usr/bin"
+    "lib/x86_64-linux-gnu"
+)
+
 declare VERBOSE=0
 
 debug() {
@@ -86,7 +98,7 @@ while [[ -n $1 ]]; do
             [[ -n $2 ]] && shift && BASTION_SCRIPT=$2 || printf >&2 "No valid argument passed to -s/--script\n"
             ;;
         -h|--help)
-            # TODO: Add help text
+            # TODO(docs): Add help text
             :
             ;;
         *)
@@ -105,7 +117,7 @@ setup-chroot-dir() {
     #     err; printf >&2 "Failed to create directory tree for chroot jail!\n"
     # }
 
-    for dir in {bin,lib,lib64,dev,etc,etc/ssh,home,usr/bin,lib/x86_64-linux-gnu}; do
+    for dir in "${SYSTEM_DIRS[@]}"; do
         if ! [[ -d ${CHROOT_DIR}/$dir ]]; then
             sudo mkdir -p "${CHROOT_DIR}/$dir" || {
                 err; printf >&2 "Failed to create directory tree for chroot jail!\n" && return 1
