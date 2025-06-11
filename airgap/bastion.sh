@@ -12,6 +12,9 @@ declare DESTINATION_FILE='/destinations.txt'
 #   - Associative array?
 #       [hostname]=192.168.4.11
 
+# TODO(perf): Check connectivity of all available destinations before offering list
+
+
 
 declare -a DESTINATION_LIST
 declare DESTINATION
@@ -77,6 +80,19 @@ parse-destinations(){
 
     return 0
 }
+
+check-destinations(){
+    # Sanitize destination list of all unreachable hosts.
+    ! [[ ${#DESTINATION_LIST[@]} -gt 0 ]] && printf >&2 "Destination list empty!\n" && return 1
+    for dest in "${DESTINATION_LIST[@]}"; do
+        if ! ping -qc 1 "${dest##*@}"; then
+            log-entry "Host ${dest##*@} is unreachable. Removing from options."
+            DESTINATION_LIST=("${DESTINATION_LIST[@]/$dest/}")
+        fi
+        printf "\x1b[2J\x1b[H"
+    done
+}
+
 
 go-to-destination() {
 #    log-entry "User attempting to connect to ${REMOTE_USER:-$DEFAULT_USER}@$DESTINATION"
@@ -177,6 +193,10 @@ printf "\x1b[2J\x1b[H"
 
 parse-destinations || {
     err; printf >&2 "Failed to parse destinations file: %s\n" "$DESTINATION_FILE"
+}
+
+check-destinations || {
+    err; printf >&2 "Failed to check destinations.\n"
 }
 
 get-user-input || {
