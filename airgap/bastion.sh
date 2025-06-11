@@ -44,7 +44,8 @@ err() {
 
 log-entry() {
     # TODO(logging): Sort out redirection for logging -- logger? rsyslog?
-    [[ $# -gt 0 ]] && printf "[%s]: %s\n" "$(date +%D-%T)" "$*" >> "$LOGFILE"
+    # [[ $# -gt 0 ]] && printf "[%s]: %s\n" "$(date +%D-%T)" "$*" >> "$LOGFILE"
+    [[ $# -gt 0 ]] || return 1
     local tag='bastion'
     local priority='auth.notice'
     while [[ -n $1 ]]; do
@@ -85,7 +86,7 @@ check-destinations(){
     # Sanitize destination list of all unreachable hosts.
     ! [[ ${#DESTINATION_LIST[@]} -gt 0 ]] && printf >&2 "Destination list empty!\n" && return 1
     for dest in "${DESTINATION_LIST[@]}"; do
-        if ! ping -qc 1 "${dest##*@}"; then
+        if ! ping -qc 1 -w 1 "${dest##*@}"; then
             log-entry "Host ${dest##*@} is unreachable. Removing from options."
             DESTINATION_LIST=("${DESTINATION_LIST[@]/$dest/}")
         fi
