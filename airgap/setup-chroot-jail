@@ -24,7 +24,7 @@
 
 declare CHROOT_DIR='/var/chroot'
 declare JAILED_USER='juvie'
-declare BASTION_HOST_IP='192.168.4.74'
+declare BASTION_HOST_IP='192.168.4.95'
 declare BASTION_SCRIPT='bastion.sh'
 declare LOG_FILE='./chroot-setup.log'
 declare DESTINATIONS_OUTPUT_FILE="$CHROOT_DIR/destinations.txt"
@@ -352,5 +352,10 @@ parse-ssh-file || {
 printf "\033[32mSuccessfully generated destinations file at: %s\033[0m\n" "$DESTINATIONS_OUTPUT_FILE"
 
 
+
+printf "Attempting to add SSH fingerprints for destinations...\n"
+add-ssh-fingerprints || {
+    err; printf >&2 "Failed to add SSH fingerprints for files!\n";
+}
 
 
