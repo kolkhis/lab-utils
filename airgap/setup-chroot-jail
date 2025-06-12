@@ -314,8 +314,9 @@ add-ssh-fingerprints() {
         debug "Attempting to add ${entry##*@} to $known_hosts"
         ssh-keyscan "${entry##*@}" | sudo tee -a "$known_hosts" || {
             printf >&2 "Failed to add fingerprint for %s to %s\n" "${entry##*@}" "$known_hosts"
-            # Remove entry from file if ssh-keyscan fails
-            sudo perl -pi -e "s/^.*$// if m/${entry##*@}/" "$DESTINATIONS_OUTPUT_FILE"
+            printf "Removing entry from destination file: %s\n" "${DESTINATIONS_OUTPUT_FILE}"
+            # sudo perl -pi -e "s/^.*$// if m/${entry##*@}/" "$DESTINATIONS_OUTPUT_FILE"
+            sudo perl -ni -e "print $1 if not m/${entry##*@}/" "$DESTINATIONS_OUTPUT_FILE"
         }
     # while read -r entry; do 
     # done < "$DESTINATIONS_OUTPUT_FILE"
