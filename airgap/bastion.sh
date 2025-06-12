@@ -66,8 +66,16 @@ log-entry() {
     logger -t "$tag" -p "$priority" --id=$$ "$*"
 }
 
+destination-callback() {
+    printf "Mapping index: %s\n" "$1"
+    printf "Line: %s\n" "$2"
+    if ! ping -qc 1 -w 1 "${2##*@}"; then
+        printf "Failed to ping address at: %s\n" "${2##*@}"
+    fi
+}
+
 parse-destinations(){ 
-    mapfile -t DESTINATION_LIST < "$DESTINATION_FILE" && printf "Mapped destination file.\n"
+    mapfile -c 1 -C destination-callback -t DESTINATION_LIST < "$DESTINATION_FILE" && printf "Mapped destination file.\n"
     { [[ "${#DESTINATION_LIST[@]}" -gt 0 ]] && printf "Gathered list of destinations.\n"; } ||
         { printf "Could not gather list of destinations. Enter manually or exit.\n" && return 1; }
 
@@ -86,7 +94,7 @@ check-destinations(){
     # Sanitize destination list of all unreachable hosts.
     ! [[ ${#DESTINATION_LIST[@]} -gt 0 ]] && printf >&2 "Destination list empty!\n" && return 1
     for dest in "${DESTINATION_LIST[@]}"; do
-        if ! ping -qc 1 -w 1 "${dest##*@}"; then
+        if ! ping -q -c 1 -w 1 "${dest##*@}"; then
             log-entry "Host ${dest##*@} is unreachable. Removing from options."
             DESTINATION_LIST=("${DESTINATION_LIST[@]/$dest/}")
         fi
@@ -196,9 +204,9 @@ parse-destinations || {
     err; printf >&2 "Failed to parse destinations file: %s\n" "$DESTINATION_FILE"
 }
 
-check-destinations || {
-    err; printf >&2 "Failed to check destinations.\n"
-}
+# check-destinations || {
+#     err; printf >&2 "Failed to check destinations.\n"
+# }
 
 get-user-input || {
     err; printf "Bad user input!\n" # && continue
