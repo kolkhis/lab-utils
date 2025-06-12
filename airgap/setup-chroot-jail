@@ -303,6 +303,7 @@ parse-ssh-file() {
 
 # TODO(fix): Figure out why file does not exist
 add-ssh-fingerprints() {
+    set -o pipefail
     local known_hosts="$CHROOT_DIR/etc/ssh/ssh_known_hosts"
     sudo touch "$known_hosts"
     [[ ! -f $DESTINATIONS_OUTPUT_FILE ]] && printf "No parsed SSH file found.\n" && return 1
@@ -319,6 +320,7 @@ add-ssh-fingerprints() {
     # while read -r entry; do 
     # done < "$DESTINATIONS_OUTPUT_FILE"
     done
+    set +o pipefail
     return 0
 }
 
