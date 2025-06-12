@@ -306,13 +306,19 @@ add-ssh-fingerprints() {
     local known_hosts="$CHROOT_DIR/etc/ssh/ssh_known_hosts"
     sudo touch "$known_hosts"
     [[ ! -f $DESTINATIONS_OUTPUT_FILE ]] && printf "No parsed SSH file found.\n" && return 1
-    while read -r entry; do 
+    local -a destination_entries
+    mapfile -t destination_entries < "$DESTINATIONS_OUTPUT_FILE"
+    for entry in "${destination_entries[@]}"; do
         [[ -z $entry ]] && continue
         debug "Attempting to add ${entry##*@} to $known_hosts"
         ssh-keyscan "${entry##*@}" | sudo tee -a "$known_hosts" || {
-            printf >&2 "Failed to add fingerprint for %s to %s\n" "${entry##*@}" "$CHROOT_DIR/etc/ssh/ssh_known_hosts"
+            printf >&2 "Failed to add fingerprint for %s to %s\n" "${entry##*@}" "$known_hosts"
+            # Remove entry from file if ssh-keyscan fails
+            perl -pe "s/^.*$// if m/${entry##*@}/" "$DESTINATIONS_OUTPUT_FILE"
         }
-    done < "$DESTINATIONS_OUTPUT_FILE"
+    # while read -r entry; do 
+    # done < "$DESTINATIONS_OUTPUT_FILE"
+    done
     return 0
 }
 
