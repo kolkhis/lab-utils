@@ -66,16 +66,8 @@ log-entry() {
     logger -t "$tag" -p "$priority" --id=$$ "$*"
 }
 
-destination-callback() {
-    printf "Mapping index: %s\n" "$1"
-    printf "Line: %s\n" "$2"
-    if ! ping -qc 1 -w 1 "${2##*@}"; then
-        printf "Failed to ping address at: %s\n" "${2##*@}"
-    fi
-}
-
 parse-destinations(){ 
-    mapfile -c 1 -C destination-callback -t DESTINATION_LIST < "$DESTINATION_FILE" && printf "Mapped destination file.\n"
+    mapfile -c 1 -t DESTINATION_LIST < "$DESTINATION_FILE" && printf "Mapped destination file.\n"
     { [[ "${#DESTINATION_LIST[@]}" -gt 0 ]] && printf "Gathered list of destinations.\n"; } ||
         { printf "Could not gather list of destinations. Enter manually or exit.\n" && return 1; }
 
