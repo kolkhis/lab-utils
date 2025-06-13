@@ -99,10 +99,12 @@ while [[ -n $1 ]]; do
             printf "Jailed user set to: %s\n" "$JAILED_USER"
             shift
             ;;
+
         -v|--verbose)
             VERBOSE=1
             shift;
             ;;
+
         -s|--bastion-script)
             { [[ -n $2 && ! $2 =~ ^-  ]] && shift && BASTION_SCRIPT=$1; } || {
                 err; printf >&2 "No valid argument passed to -s/--script\n"; }
@@ -117,8 +119,27 @@ while [[ -n $1 ]]; do
             ;;
 
         -h|--help)
-            # TODO(docs): Add help text
-            :
+            cat <<EOF
+Usage: ${BASH_SOURCE[0]} [OPTIONS]
+
+Automates the creation of a chroot jail and SSH-based bastion host.
+
+Options:
+  -c, --chroot-dir <DIR>         Specify the chroot jail directory (default: /var/chroot)
+  -u, --jailed-user <USER>       Username to create inside the chroot jail (default: juvie)
+  -v, --verbose                  Enable verbose debug output
+  -s, --bastion-script <SCRIPT>  Path to the custom bastion shell script to install (default: ./bastion.sh)
+  -S, --ssh-config-file <FILE>   Path to SSH config file to parse for destination targets (default: ~/.ssh/config)
+  -h, --help                     Show this help message and exit
+
+This script sets up:
+  - A jailed user account with chroot restrictions
+  - A restricted environment at /var/chroot
+  - A custom shell for SSH forwarding
+  - A parsed list of destinations
+  - SSH key fingerprints for those destinations
+EOF
+            exit 0
             ;;
 
         *)
