@@ -3,22 +3,12 @@
 
 # TODO(improvements): 
 #    - Use 'install' instead of 'cp' for copying binaries
-#    - Implement logging
-#       - Use industry standard logging format
-#       - Integrate with logging tool
-#           - Mount /dev/log and use logger + rsyslog? 
-#           - Promtail? 
 #   - Add more defense (maybe)?
 #       - SELinux/AppArmor/Seccomp
 #       - iptables/nftables rule to restrict jailed user to SSH only to certain hosts
 #   - Use readonly bind mount?
 
 # TODO(feat): 
-#   - Parse SSH config script and somehow present those choices to user in bastion.sh
-#       - Parsing must happen in setup.
-#       - Can not happen in bastion script due to limited binary access (no sed,awk,perl)
-#   - Set up log file (/var/log/jumpbox.log)
-#   - Install `logger` to chroot env for logging
 #   - Set up fail2ban (different script?)
 #   - Set up monitoring stack (different script?)
 
@@ -26,11 +16,8 @@ declare CHROOT_DIR='/var/chroot'
 declare JAILED_USER='juvie'
 declare BASTION_HOST_IP='192.168.4.95'
 declare BASTION_SCRIPT='bastion.sh'
-declare LOG_FILE='./chroot-setup.log'
 declare DESTINATIONS_OUTPUT_FILE="$CHROOT_DIR/destinations.txt"
 declare SSH_CONFIG_FILE="$HOME/.ssh/config"
-
-# exec > "$LOG_FILE"
 
 declare -a BINARIES=(
     "rbash"
@@ -99,18 +86,15 @@ while [[ -n $1 ]]; do
             printf "Jailed user set to: %s\n" "$JAILED_USER"
             shift
             ;;
-
         -v|--verbose)
             VERBOSE=1
             shift;
             ;;
-
         -s|--bastion-script)
             { [[ -n $2 && ! $2 =~ ^-  ]] && shift && BASTION_SCRIPT=$1; } || {
                 err; printf >&2 "No valid argument passed to -s/--script\n"; }
             shift;
             ;;
-
         -S|--ssh-config-file)
             { [[ -n $2 && ! $2 =~ ^- ]] && shift && SSH_CONFIG_FILE=$1; } || {
                 err; printf >&2 "The --ssh-config-file option was given but no argument was specified.\n"
@@ -283,7 +267,7 @@ configure-user-shell(){
             printf >&2 "Failed to replace default shell in /etc/passwd!\n"
         }
 
-        debug "Jailed user entry in /etc/passwd: $(grep $JAILED_USER /etc/passwd)"
+        debug "Jailed user entry in /etc/passwd: $(grep "$JAILED_USER" /etc/passwd)"
         debug "Successfully added ${BASTION_SCRIPT} as shell for ${JAILED_USER}."
     fi
     return 0
