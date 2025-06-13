@@ -1,18 +1,50 @@
 #!/bin/bash
 
+declare CHROOT_DIR='/var/chroot'
+declare JAILED_USER='juvie'
+
+while [[ -n $1 ]]; do
+    case $1 in
+        -c|--chroot-dir)
+            [[ -n $2 && ! $2 =~ ^- ]] && shift && CHROOT_DIR=$1
+            shift;
+            ;;
+        -u|--jailed-user)
+            [[ -n $2 && ! $2 =~ ^- ]] && shift && JAILED_USER=$1
+            shift;
+            ;;
+        -s|--remove-ssh-rule)
+            # TODO
+            shift;
+            ;;
+        -h|--help)
+            printf "TODO: Add help text\n"
+            shift;
+            ;;
+        *)
+            printf "Unknown argument: %s\n" "$1"
+            shift;
+            ;;
+    esac
+done
+
 remove-chroot-dir(){
-    if [[ -d /var/chroot ]]; then
-        sudo rm -rf /var/chroot || {
+    if [[ -d "$CHROOT_DIR" ]]; then
+        sudo rm -rf "$CHROOT_DIR" || {
             printf >&2 "Failed to remove /var/chroot!\n" && exit 1
         }
+    else
+        printf "Directory does not exist: %s\n" "$CHROOT_DIR"
     fi
 }
 
 remove-jailed-user(){
-    if grep -i 'juvie' /etc/passwd; then
-        sudo userdel -r juvie || {
-            printf >&2 "Failed to remove the user 'juvie'!\n" && return 1
+    if grep -i "$JAILED_USER" /etc/passwd; then
+        sudo userdel -r "$JAILED_USER" || {
+            printf >&2 "Failed to remove the user: %s\n" "$JAILED_USER" && return 1
         }
+    else
+        printf "User not found: %s\n" "$JAILED_USER"
     fi
 }
 
