@@ -46,7 +46,7 @@ declare -a SYSTEM_FILES=(
     "/etc/hosts"
 )
 
-declare -a SPECIAL_FILES=(
+declare -a CHAR_SPECIAL_FILES=(
     "/dev/null"
     "/dev/tty" 
     "/dev/zero"
@@ -88,7 +88,15 @@ while [[ -n $1 ]]; do
                 err; printf >&2 "The -c/--chroot-dir option was given with no valid argument.\n"
                 exit 1
             }
-            printf "Chroot directory set to %s\n" "$CHROOT_DIR"
+            printf "Chroot directory set to: %s\n" "$CHROOT_DIR"
+            shift
+            ;;
+        -u|--jailed-user)
+            { [[ -n $2 && ! $2 =~ ^- ]] && shift && JAILED_USER=$1; } || {
+                err; printf >&2 "The -u/--jailed-user option was given with no valid argument.\n"
+                exit 1
+            }
+            printf "Jailed user set to: %s\n" "$JAILED_USER"
             shift
             ;;
         -v|--verbose)
@@ -188,13 +196,13 @@ setup-chroot-dir() {
 
     # Create special files
     printf "Making character special files.\n"
-    for special_file in "${SPECIAL_FILES[@]}"; do
+    for special_file in "${CHAR_SPECIAL_FILES[@]}"; do
         if [[ ! -c "${CHROOT_DIR}${special_file}" ]]; then
             local -a MAJOR_MINOR=()
 
             read -r -d '' -a MAJOR_MINOR < <(
-                awk '/Device type/ {print $(NF)"\n"}' < <(stat "$special_file") | tr ',' ' '
-            ) 
+                awk '/Device type/ {printf "%s\n", $(NF)}' < <(stat "$special_file") | tr ',' ' '
+            )
 
             debug "$special_file - Major: ${MAJOR_MINOR[0]}, Minor: ${MAJOR_MINOR[1]}"
 
@@ -301,14 +309,13 @@ parse-ssh-file() {
     fi
 }
 
-# TODO(fix): Figure out why file does not exist
 add-ssh-fingerprints() {
+    [[ ! -f $DESTINATIONS_OUTPUT_FILE ]] && printf "No parsed SSH file found.\n" && return 1
     set -o pipefail
     local known_hosts="$CHROOT_DIR/etc/ssh/ssh_known_hosts"
-    sudo touch "$known_hosts"
-    [[ ! -f $DESTINATIONS_OUTPUT_FILE ]] && printf "No parsed SSH file found.\n" && return 1
     local -a destination_entries
     mapfile -t destination_entries < "$DESTINATIONS_OUTPUT_FILE"
+    sudo touch "$known_hosts"
     for entry in "${destination_entries[@]}"; do
         [[ -z $entry ]] && continue
         debug "Attempting to add ${entry##*@} to $known_hosts"
@@ -318,8 +325,6 @@ add-ssh-fingerprints() {
             # sudo perl -pi -e "s/^.*$// if m/${entry##*@}/" "$DESTINATIONS_OUTPUT_FILE"
             sudo perl -ni -e "print $1 if not m/${entry##*@}/" "$DESTINATIONS_OUTPUT_FILE"
         }
-    # while read -r entry; do 
-    # done < "$DESTINATIONS_OUTPUT_FILE"
     done
     set +o pipefail
     return 0
@@ -362,10 +367,9 @@ parse-ssh-file || {
 printf "\033[32mSuccessfully generated destinations file at: %s\033[0m\n" "$DESTINATIONS_OUTPUT_FILE"
 
 
-
 printf "Attempting to add SSH fingerprints for destinations...\n"
 add-ssh-fingerprints || {
-    err; printf >&2 "Failed to add SSH fingerprints for files!\n";
+    err; printf >&2 "Failed to add SSH fingerprints for destinations!\n";
 }
 
 
