@@ -13,10 +13,10 @@ declare -a EXCLUDE_KEYWORDS=(
     '/dev/urandom'
     'virsh'
     ':(){:|:&}'
-    '\x1b'
-    '\033'
-    '\e'
-    '\u001b'
+    '\x1b['
+    '\033['
+    '\e['
+    '\u001b['
 )
 
 declare -A COLORS=(
