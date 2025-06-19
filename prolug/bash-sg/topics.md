@@ -53,11 +53,14 @@
 
 - [ ] Regex / Pattern Matching (Partially done)
     - `=~`
-        - Sets
+        - Sets `[...]`
+            - Negated sets `[^...]`
         - Character classes
+            - Perl/Vim classes
+            - POSIX classes
         - Capture groups
         - Quantifiers
-    - `==`
+    - Pattern Matching (`==`)
         - Sets
         - Character classes
     - `"${BASH_REMATCH[0]}"`: Whole match
