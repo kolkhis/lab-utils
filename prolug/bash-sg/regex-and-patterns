@@ -567,9 +567,8 @@ printf "In most regex engines, the syntax for this is '\w' where 'w' is the char
 
 printf "Let's look at an example:\n"
 
-printf "Match this string 123" |
-    perl -pe 's/\w+/1111/'  
-  
+    echo "Match this string 123" | perl -pe 's/\w+/1111/'  
+
 printf "\w says to match any word character.\n"
 printf "This is functionally equivalent to using a set: [a-zA-Z0-9_] \n"
 
@@ -577,14 +576,13 @@ printf "There are a lot of these character classes.\n"
 
 printf "Usually the uppercase variant of the class is the opposite.\n"
 
-printf "Match this string 123" |
-    perl -pe 's/\W+/1111/'  
+    echo "Match this string 123" | perl -pe 's/\W+/1111/'  
 
 printf "\W says to match any non-word character (the opposite of \w).\n"
 printf "Functionally equivalent to using a negated set: [^a-zA-Z0-9_] \n"
 
 cat << EOF
-Useful character classes:
+Useful character classes (vim/perl):
 \s - Any whitespace 
     - same as [ \t\r\n\f] -- Space, tab, Carriage Return, LineFeed, FormFeed
     - \S matches everything else -- [^ \t\r\n\f]
@@ -594,7 +592,6 @@ Useful character classes:
 \d - Any digit
     - [0-9]
     - \D matches everything else -- [^0-9]
-
 EOF
 
 
@@ -665,20 +662,20 @@ printf "Bash (and sh), and many coreutils (including sed) have special syntax fo
 
 printf "For instance, in the Bash regex engine, you can only use POSIX-style character classes.\n"
 
-printf "POSIX character classes look like this:\n"
 cat << EOF
-[:alnum:]
-[:alpha:]
-[:blank:]
-[:cntrl:]
-[:digit:]
-[:graph:]
-[:lower:]
-[:print:]
-[:punct:]
-[:space:]
-[:upper:]
-[:xdigit:]
+POSIX character classes look like this:
+    [:alnum:]
+    [:alpha:]
+    [:blank:]
+    [:cntrl:]
+    [:digit:]
+    [:graph:]
+    [:lower:]
+    [:print:]
+    [:punct:]
+    [:space:]
+    [:upper:]
+    [:xdigit:]
 EOF
 
 printf "These are used in both bash regex and in sed.\n"
@@ -686,9 +683,10 @@ printf "To use them, you need to wrap them in two sets of brackets: [[:space:]] 
 
 printf "Let's look at an example:\n"
 
-declare mystring="Hi, I'm new to regex."
-[[ $mystring =~ [[:space:]]([[:alnum:]]+[[:space:]]+[[:alnum:]]+) ]] &&
-    printf "Match: %s\n" "${BASH_REMATCH[1]}"
+    declare mystring="Hi, I'm new to regex."
+
+    [[ $mystring =~ [[:space:]]([[:alnum:]]+[[:space:]]+[[:alnum:]]+) ]] &&
+        printf "Match: %s\n" "${BASH_REMATCH[1]}"
 
 printf "Matches 1 or more whitespace chars [ \t\n\r\f] (does not capture) \n"
 printf "Then matches one or more alphanumeric chars as in [a-zA-Z0-9_] \n"
@@ -696,7 +694,7 @@ printf "Then matches 1 or more whitespace chars [ \t\n\r\f] \n"
 printf "Then matches alphanumeric characters again.\n"
 
 printf "It captures the first two words that only contain alphanumeric chars, separated by space.\n"
-# 'new to'
+    # 'new to'
 
 
 
@@ -1011,14 +1009,27 @@ printf "There's also a thing called anchors in regex.\n"
 printf "The anchor '^' matches the start of the line.\n"
 printf "The anchor '$' matches the end of the line.\n"
 
-[[ "abcdefg" =~ ^a(.*)$ ]]  # Will match because the line starts with 'a'
-[[ "abcdefg" =~ ^d(.*)$ ]]  # Won't match because the line doesn't start with 'd'
+    [[ "abcdefg" =~ ^a(.*)$ ]]  # Will match because the line starts with 'a'
+    [[ "abcdefg" =~ ^d(.*)$ ]]  # Won't match because the line doesn't start with 'd'
 
 printf "You can use these anchors separately.\n"
 
-[[ "abcdefg" =~ d.*$ ]]  # Will match 'defg'
-[[ "abcdefg" =~ ^ab ]]   # Will match 'ab' because the line starts with 'a'
+    [[ "abcdefg" =~ d.*$ ]]  # Will match 'defg'
+    [[ "abcdefg" =~ ^ab ]]   # Will match 'ab' because the line starts with 'a'
 
+printf "We can also use 'word boundaries' to anchor to the start or finish of words.\n"
+printf 'The word boundary operator in many regex engines is "\b".\n'
+
+    echo "abcdefg" | perl -pe "s/\bab/ze/"
+
+printf "Word boundaries in grep or sed can be done with \< and \> (GNU extensions)\n"
+
+    echo "abcdefg" | sed -E "s/\<ab/ze/"
+
+printf "The \< is the opening word bounary, and \> the closing word boundary.\n"
+printf "These word boundaries also work with vim regex.\n"
+
+printf "Note that bash regex does NOT support word boundaries.\n"
 
 
 
@@ -1125,11 +1136,82 @@ printf "For instance, in sed, vim, and some others, use \1 to reference the firs
 
 echo "abcdefg" | sed -E 's/(abc)defg/\1/' # output: abc
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Capture Groups (cont.)
 printf "We can use sets and quantifiers inside capture groups too.\n"
 
-echo "abcdefg" | sed -E 's/([abc]*)defg/\1/'   # output: abc
+    echo "abcdefg" | sed -E 's/([abc]*)defg/\1/'   # output: abc
 
-echo "abcdefghjkl" | sed -E 's/([a-z]+)fg/\1/' # output: abcdefghjkl
+    echo "abcdefghjkl" | sed -E 's/([a-z]+)fg/\1/' # output: abcdefghjkl (not what we want)
+
 
 printf "This is a fallback of 'sed'. All quantifiers are 'greedy' by default.\n"
 printf "There is no way in sed or bash to make quantifiers non-greedy.\n"
