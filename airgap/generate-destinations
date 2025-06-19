@@ -5,6 +5,7 @@
 # Destination list based on a SSH config file (to be provided separately)
 
 # TODO(feat): Allow use of an ansible inventory file (.ini, .yaml)
+# TODO(feat): Allow use of /etc/hosts (use as default?)
 
 
 declare SSH_CONFIG_FILE
