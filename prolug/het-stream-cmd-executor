@@ -82,7 +82,8 @@ main() {
     while read -r _; do
         local -a LINE=()
 
-        mapfile -d : -t LINE < <(tail -n 1 "${WATCH_FILE}")
+        # mapfile -d ':' -t LINE < <(tail -n 1 "${WATCH_FILE}")
+        IFS=':' read -r -a LINE <<< "$(tail -n 1 "${WATCH_FILE}")"
         user="${LINE[0]}"
         source="${LINE[1]}"
         command="${LINE[2]//$'\n'/}"
