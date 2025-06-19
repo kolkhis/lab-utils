@@ -13,12 +13,16 @@ This script sets up:
 - A parsed list of destinations from an SSH config file
 - SSH key fingerprints for those destinations
 
+The setup script is self-documenting. Run `./setup-chroot-jail --help` for usage.  
+
 
 ## Basic Usage
 
 To set up the chroot jail, use the `setup-chroot-jail` script:
 ```bash
 ./setup-chroot-jail
+# or, for verbose output
+./setup-chroot-jail -v
 ```
 This can be run without any arguments to use all default values. E.g., the chroot
 directory will be `/var/chroot` and the jailed user will be named `juvie`.  
