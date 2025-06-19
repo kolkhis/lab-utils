@@ -17,6 +17,8 @@ declare -a EXCLUDE_KEYWORDS=(
     '\033['
     '\e['
     '\u001b['
+    'reboot'
+    'shutdown'
 )
 
 declare -A COLORS=(
