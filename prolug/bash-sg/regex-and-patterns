@@ -229,6 +229,10 @@ printf "Let's start with regex.\n"
 printf "With regex, the goal is to match a specific pattern.\n"
 printf "We have a number of tools at our disposal to achieve this goal.\n"
 
+printf "We can match a literal string with regex to see if the string contains a substring.\n"
+
+[[ "abcdefg" =~ abc ]]  # Will match the substring 'abc' 
+
 printf "The '.' (dot) character will match any single character.\n"
 
 [[ "abcdefg" =~ . ]]  # Will match any one character (the first, a)
@@ -312,10 +316,92 @@ printf "If we're using Bash regex, we can't use \s or \w, but we can use pattern
 printf "But if we're using sed or perl, we can use \s and \w character classes.\n"
 echo "abc 123" | perl -pe 's/\s(.*)/\1/' # Output: abc123
 
+printf "This is the same with vim regex.\n"
+printf "If you use vim, the character classes used are mostly the same as Perl.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Negated Sets
 printf "We can also use sets to NEGATE character classes.\n"
 
-[[ "abcdefg" =~ [^xyz] ]] # Will match anything EXCEPT x, y, or z
+    [[ "abcdefg" =~ [^xyz] ]] # Will match anything EXCEPT x, y, or z (one character)
+    echo "abcdefg" | perl -pe 's/[^xyz]/z/'  # output: zbcdefg
+
+printf "Remember, a set only matches one character without a quantifier.\n"
+printf "Let's use a quantifier.\n"
+
+    echo "abcdefg" | perl -pe 's/[^xyz]+/z/' # output: zzzzzzz
+
+printf "This matches as many characters as it can that are NOT x, y, or z.\n"
+
+
 
 
 
@@ -394,7 +480,8 @@ printf "We can use a quantifier to specify how many of the preceding pattern we 
 cat << EOF
 The quantifiers you'll use the most:
 
-*       Match zero or more (an optional match)
+?       Match zero or one (an optional match)
+*       Match zero or more (an optional match, but greedy)
 +       Match one or more (mandatory match)
 {2}     Match exactly 2 (or any other number)  
 {0,2}   Match any number between 0 and 2 (these can be any numbers)  
@@ -411,8 +498,10 @@ printf "Quantifiers can be greedy or non-greedy (with some exceptions).\n"
 printf "A greedy quantifier will match as many characters as the pattern allows for.\n"
 printf "A non-greedy quantifier is the opposite. It will match as few as possible.\n"
 
-printf "However, certain tools (sed, bash) do not support non-greedy quantifiers.\n" &&
-    printf "In these tools, all quantifiers are greedy by default.\n"
+printf "However, certain tools (sed, bash, grep) do not support non-greedy quantifiers.\n" 
+
+printf "In these tools, all quantifiers are greedy by default.\n"
+printf "This is true in basically all POSIX-style regex tools (though grep does have -P).\n"
 
 printf "To use non-greedy quantifiers, use a regex engine that supports them (perl, vim).\n"
 
@@ -469,7 +558,9 @@ printf "To use non-greedy quantifiers, use a regex engine that supports them (pe
 
 
 
-# Character classes
+
+
+# Character Classes
 printf "Character classes are a way to match a set of characters of a specific type.\n"
 
 printf "In most regex engines, the syntax for this is '\w' where 'w' is the character class\n"
