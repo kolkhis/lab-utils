@@ -231,11 +231,11 @@ printf "We have a number of tools at our disposal to achieve this goal.\n"
 
 printf "We can match a literal string with regex to see if the string contains a substring.\n"
 
-[[ "abcdefg" =~ abc ]]  # Will match the substring 'abc' 
+    [[ "abcdefg" =~ abc ]]  # Will match the substring 'abc' 
 
 printf "The '.' (dot) character will match any single character.\n"
 
-[[ "abcdefg" =~ . ]]  # Will match any one character (the first, a)
+    [[ "abcdefg" =~ . ]]  # Will match any one character (the first, a)
 
 printf "We can also add a quantifier, which will say 'match more of this'.\n"
 
@@ -244,8 +244,8 @@ printf "'*': Matches ZERO or more of whatever comes before it (optional matching
 printf "'+': Matches ONE or more of whatever comes before it (non-optional matching).\n"
 
 
-[[ "abcdefg" =~ .* ]]  # Will match zero or more any one character (will match anything)
-[[ "abcdefg" =~ .+ ]]  # Will match one or more any one character (will also match anything, as long as there's something)
+    [[ "abcdefg" =~ .* ]]  # Will match zero or more any one character (will match anything)
+    [[ "abcdefg" =~ .+ ]]  # Will match one or more any one character (will also match anything, as long as there's something)
 
 printf "But we usually want to be more specific than '.*' \n"
 
@@ -301,20 +301,19 @@ printf "But we usually want to be more specific than '.*' \n"
 # Sets
 printf "We can be more specific with sets, which will matche a single character: [abc] \n" # Will match a, b, or c 
 
-[[ "abcdefg" =~ [abc] ]]  # Will only match one character
-
-
+    [[ "abcdefg" =~ [abc] ]]  # Will only match one character
 
 printf "We can also use sets to specify character classes.\n"
 
-[[ "abc123" =~ [A-Za-z0-9] ]] # Will match one or more of lowercase letters and numbers
+    [[ "abc123" =~ [A-Za-z0-9] ]] # Will match one or more of lowercase and uppercase letters, and numbers
 
 printf "If we're using Bash regex, we can't use \s or \w, but we can use pattern matching classes.\n"
 
-[[ "abc 123" =~ [[:space:]] ]] # Will match one or more of whitespace characters
+    [[ "abc 123" =~ [[:space:]] ]] # Will match one or more of whitespace characters
 
-printf "But if we're using sed or perl, we can use \s and \w character classes.\n"
-echo "abc 123" | perl -pe 's/\s(.*)/\1/' # Output: abc123
+printf "But if we're using perl or vim, etc., we can use \s and \w character classes.\n"
+
+    echo "abc 123" | perl -pe 's/\s(.*)/\1/' # Output: abc123
 
 printf "This is the same with vim regex.\n"
 printf "If you use vim, the character classes used are mostly the same as Perl.\n"
@@ -397,7 +396,7 @@ printf "We can also use sets to NEGATE character classes.\n"
 printf "Remember, a set only matches one character without a quantifier.\n"
 printf "Let's use a quantifier.\n"
 
-    echo "abcdefg" | perl -pe 's/[^xyz]+/z/' # output: zzzzzzz
+    echo "abcdefg" | perl -pe 's/[^xyz]+/z/' # output: z
 
 printf "This matches as many characters as it can that are NOT x, y, or z.\n"
 
@@ -488,11 +487,16 @@ The quantifiers you'll use the most:
 {2,}    Match at least 2 (or more)
 EOF
 
-[[ "abcdefg" =~ [abc]+ ]]  # Will match one or more characters, 'abc'
-[[ "abcdefg" =~ [abc]* ]]  # Will match zero or more characters, 'abc'
-[[ "abcdefg" =~ [abc]{2} ]]  # Will match exactly 2 characters, 'ab'
-[[ "abcdefg" =~ [abc]{2,} ]]  # Will match at least 2 characters, 'abc'
-[[ "abcdefg" =~ [abc]{2,3} ]]  # Will match between 2 and 3 characters, 'abc'
+    [[ "abcdefg" =~ [abc]+ ]]  # Will match one or more characters, 'abc'
+    [[ "abcdefg" =~ [abc]* ]]  # Will match zero or more characters, 'abc'
+    [[ "abcdefg" =~ [abc]{2} ]]  # Will match exactly 2 characters, 'ab'
+    [[ "abcdefg" =~ [abc]{2,} ]]  # Will match at least 2 characters, 'abc'
+    [[ "abcdefg" =~ [abc]{2,3} ]]  # Will match between 2 and 3 characters, 'abc'
+
+    # [pattern]{0,}
+    # [pattern]*
+    # [pattern]{1,}
+    # [pattern]+
 
 printf "Quantifiers can be greedy or non-greedy (with some exceptions).\n"
 printf "A greedy quantifier will match as many characters as the pattern allows for.\n"
@@ -685,8 +689,7 @@ printf "Let's look at an example:\n"
 
     declare mystring="Hi, I'm new to regex."
 
-    [[ $mystring =~ [[:space:]]([[:alnum:]]+[[:space:]]+[[:alnum:]]+) ]] &&
-        printf "Match: %s\n" "${BASH_REMATCH[1]}"
+    [[ $mystring =~ [[:space:]]([[:alnum:]]+[[:space:]]+[[:alnum:]]+) ]] && printf "Match: %s\n" "${BASH_REMATCH[1]}"
 
 printf "Matches 1 or more whitespace chars [ \t\n\r\f] (does not capture) \n"
 printf "Then matches one or more alphanumeric chars as in [a-zA-Z0-9_] \n"
@@ -1027,7 +1030,7 @@ printf "Word boundaries in grep or sed can be done with \< and \> (GNU extension
     echo "abcdefg" | sed -E "s/\<ab/ze/"
 
 printf "The \< is the opening word bounary, and \> the closing word boundary.\n"
-printf "These word boundaries also work with vim regex.\n"
+printf "These word boundaries also work with vim regex.\n" # neovim
 
 printf "Note that bash regex does NOT support word boundaries.\n"
 
@@ -1125,16 +1128,16 @@ printf "Note that bash regex does NOT support word boundaries.\n"
 printf "We can also use capture groups.\n"
 printf "Capture groups are patterns that are matched and then saved into a variable to use later.\n"
 
-[[ "abcdefg" =~ (abc) ]] # will match 'abc' literally and save into ${BASH_REMATCH[1]}
+    [[ "abcdefg" =~ (abc) ]] # will match 'abc' literally and save into ${BASH_REMATCH[1]}
 
-printf "Match: %s\n" "${BASH_REMATCH[1]}" 
-# Output:
-# Match: abc
+    printf "Match: %s\n" "${BASH_REMATCH[1]}" 
+    # Output:
+    # Match: abc
 
 printf "Different programs handle referencing capture groups differently.\n"
 printf "For instance, in sed, vim, and some others, use \1 to reference the first capture group.\n"
 
-echo "abcdefg" | sed -E 's/(abc)defg/\1/' # output: abc
+    echo "abcdefg" | sed -E 's/(abc)defg/\1/' # output: abc
 
 
 
@@ -1212,21 +1215,24 @@ printf "We can use sets and quantifiers inside capture groups too.\n"
 
     echo "abcdefghjkl" | sed -E 's/([a-z]+)fg/\1/' # output: abcdefghjkl (not what we want)
 
-
 printf "This is a fallback of 'sed'. All quantifiers are 'greedy' by default.\n"
 printf "There is no way in sed or bash to make quantifiers non-greedy.\n"
+
 printf "Enter perl.\n"
 
 printf "Making a quantifier non-greedy in perl is easy. Just add a '?' after the quantifier (e.g., '*?')\n"
-echo "abcdefghjkl" | perl -pe 's/([a-z]+?)hjkl/\1/' # output: abcde
 
-declare MY_VAR="Going to hang with the wife."
-[[ $MY_VAR =~ ^Going(.*)wife\. ]] && printf "Match: %s\n" "${BASH_REMATCH[1]}" 
-[[ $MY_VAR =~ ^Going(.*)(wife)\. ]] && printf "Match: %s\n" "${BASH_REMATCH[1]}" && printf "%s\n" "${BASH_REMATCH[2]}" 
-# perl / sed
+    echo "abcdefghjkl" | perl -pe 's/([a-z]+?)hjkl/\1/' # output: abcde
 
+    declare MY_VAR="Going to hang with the wife."
+    [[ $MY_VAR =~ ^Going(.*)wife\. ]] && printf "Match: %s\n" "${BASH_REMATCH[1]}" 
 
+    [[ $MY_VAR =~ ^Going(.*)(wife)\. ]] && printf "Match 1: %s\n" "${BASH_REMATCH[1]}" && printf "Match 2: %s\n" "${BASH_REMATCH[2]}" 
+    # perl / sed
 
+    
+    declare somestring="hi hi hi hi hi"
+    printf "%s\n" "$somestring" | perl -pe 's/hi /hello /g'
 
 
 
@@ -1294,11 +1300,7 @@ declare MY_VAR="Going to hang with the wife."
 
 
 
-printf "Let's try to match this string:\n"
 
-declare MATCH_ME='set of text'
-printf "%s" "$MATCH_ME" | sed -E 's/[a-zA-Z]*\s(\w*)\s(\w+)/-\n\1-\n\2\n-\n/'
-# [a-zA-Z_]
 
 
 
@@ -1333,41 +1335,6 @@ printf "%s" "$MATCH_ME" | sed -E 's/[a-zA-Z]*\s(\w*)\s(\w+)/-\n\1-\n\2\n-\n/'
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-declare VAR="string"
-grep -i -E "^$VAR$" /your/file
-
-perl -pe 'm/^string$/' /your/file
-
-
-# ?: Match zero or one of whatever is before it
-grep -i -E "[a-z]?"
-
- 
-declare FILE='something.md'
-if [[ $FILE == something.?? ]]; then :; fi  # a 2 letter file extension
-if [[ 'str' =~ .* ]]; then :; fi            # Match any character any number of times
-
-# \< \>
-# Quantifier {1,}
-#  {1,}
 
 
 
