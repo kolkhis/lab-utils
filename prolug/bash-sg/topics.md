@@ -51,7 +51,7 @@
           logfile.  
 
 
-- [ ] Regex / Pattern Matching (Partially done)
+- [x] Regex / Pattern Matching (Partially done)
     - `=~`
         - Sets `[...]`
             - Negated sets `[^...]`
