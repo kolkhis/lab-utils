@@ -1231,8 +1231,6 @@ printf "Making a quantifier non-greedy in perl is easy. Just add a '?' after the
     # perl / sed
 
     
-    declare somestring="hi hi hi hi hi"
-    printf "%s\n" "$somestring" | perl -pe 's/hi /hello /g'
 
 
 
@@ -1282,6 +1280,8 @@ printf "Making a quantifier non-greedy in perl is easy. Just add a '?' after the
 
 
 
+
+printf "Questions?"
 
 
 
