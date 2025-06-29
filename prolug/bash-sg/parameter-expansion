@@ -23,7 +23,6 @@
 
 
 
-
 printf "Parameter Expansion.\n"
 
 
@@ -331,6 +330,7 @@ printf "Notice we're using a set [...] here.\n"
 printf "Bash expects a pattern here (e.g., pattern matching), we can can use character classes too.\n"
 
     printf "%s\n" "${name^^[[:alpha:]]}"
+    printf "%s\n" "${name^^[a-zA-Z_]}"
     # Output:
     # CONNOR
 
@@ -606,9 +606,6 @@ printf "This can be good for validating that a file is where it should be.\n"
 
 
 
-
-
-
 # Default values
 printf "We can also use parameter expansion to set default values for variables.\n"
 printf "I personally use this one *a lot*.\n"
@@ -691,7 +688,6 @@ printf "We can also use the :+ operator if we want to use an alternate value if 
     printf "%s\n" "${my_var}"
     # Output: 
 
-
     printf "%s\n" "${my_var:+Hello! }"
     # Output:
 
@@ -751,10 +747,17 @@ printf "You may have seen this one before.\n"
 
 printf "This can also be used to get the number of elements in an array.\n"
 
-    declare -a my_arr=("one" "two" "three")
+    declare -a my_arr=( "one" "two" "three" )
     printf "Number of elements: %s\n" "${#my_arr[@]}"
     # Output: Number of elements: 3
 
+
+printf "A common use case:\n"
+
+    declare -a my_arr=( "one" "two" "three" )
+    for i in ${#my_arr[@]}; do
+        printf "Index: %s\nElement: %s\n" "${i}" "${my_arr["$i"]}"
+    done
 
 
 
