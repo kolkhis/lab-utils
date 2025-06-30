@@ -953,3 +953,150 @@ printf "Questions?"
 
 
 
+
+
+
+
+
+# Arithmetic Condidiontals
+printf "You can do numeric/arithmetic conditionals either in brackets or double parentheses.\n"
+printf "The operators will change depending on which notation you use.\n"
+
+    declare -i MYINT=3
+
+printf "The double parentheses will use the standard comparison operators you'll see in most languages.\n"
+
+    if (( MYINT > 3 )); then :; fi
+    if (( MYINT >= 3 )); then :; fi
+    if (( MYINT != 3 )); then :; fi
+    # Increment in the same way
+    (( MYINT++ ));
+
+
+printf "Single or double bracket notation requires different comparison operators.\n"
+
+    if [[ $MYINT -eq 3 ]]; then printf "Equal to 3.\n"; fi
+    if [[ $MYINT -ne 3 ]]; then printf "Not equal to 3.\n"; fi
+    if [[ $MYINT -gt 3 ]]; then printf "Greater than 3.\n"; fi
+    if [[ $MYINT -ge 3 ]]; then printf "Greater than or equal to 3.\n"; fi
+    if [[ $MYINT -lt 3 ]]; then printf "Less than 3.\n"; fi
+    if [[ $MYINT -le 3 ]]; then printf "Less than or equal to 3.\n"; fi
+
+printf "These are the arithmetic operators you'll use in bracket notation.\n"
+printf "If used on strings, these operators will compare the strings lexographically.\n"
+# man bash /^\s*ARITHMETIC EVALUATION
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Questions?\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
