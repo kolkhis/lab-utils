@@ -399,7 +399,7 @@ printf "Side note: The -E is now POSIX-compliant.\n"
 
 
 
-# Modifiers
+# Modifiers: s/old/new/X
 printf "After the last '/' in a substitution command, we can add modifiers to change behavior.\n"
 printf "A common one is 'g' (global), which performs the substitution on ALL matches.\n"
 
@@ -491,7 +491,18 @@ printf "Now, if we're not using a pipe and we want to perform operations on file
 
 printf "Both perl and sed have a '-i' option to enable in-place editing of files.\n"
 
-    perl -pi -e 's/hello/hi/g' 
+    cat ./hello.c
+    perl -pi -e 's/world/friend/g' ./hello.c
+    cat ./hello.c
+
+printf "So we replaced 'Hello, world.' with 'Hello, friend.'\n"
+printf "If we didn't specify '-i', it would only output the change to stdout.\n"
+
+printf "Now let's change it back with sed.\n"
+
+    cat ./hello.c
+    sed -i -E 's/friend/world/g'
+    cat ./hello.c
 
 
 
