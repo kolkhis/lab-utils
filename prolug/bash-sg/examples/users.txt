@@ -1,0 +1,5 @@
+user: alice, role: admin
+user: bob, role: user
+user: carol, role: admin
+user: dave, role: user
+user: eve, role: guest
