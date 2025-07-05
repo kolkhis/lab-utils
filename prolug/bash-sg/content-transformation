@@ -674,7 +674,7 @@ printf "The 'm/pattern/' in Perl is just a way to match a pattern, and will retu
 
 
 
-
+# Inserting and deleting
 printf "So, we know how to do substitutions. That's fine. But there's more.\n"
 
 printf "With sed, we can also insert lines and delete lines.\n"
@@ -711,6 +711,183 @@ printf "We can also add lines AFTER a specific line using the 'a' command.\n"
     # user: dave, role: user
     # user: eve, role: guest
     # user: fred, role: admin
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Inserting and deleting (cont)
+printf "Now let's delete those entries we made.\n"
+
+    sed -i.bak '/fred/d' ./examples/users.txt
+
+printf "This just deletes any lines that match the pattern.\n"
+printf "But we added multiple lines. Let's specify multiple patterns.\n"
+
+    sed -i.bak -E '/(fred|aaron)/d' ./examples/users.txt
+    cat ./examples/users.txt
+    # user: alice, role: admin
+    # user: bob, role: user
+    # user: carol, role: admin
+    # user: dave, role: user
+    # user: eve, role: guest
+
+printf "Here we use a capture group to specify two patterns. Match either 'fred' or 'aaron', and delete.\n"
+printf "We used -E so that we did not have to escape the parentheses.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## TO BE CONTINUED
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
