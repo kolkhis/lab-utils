@@ -1,0 +1,615 @@
+#!/bin/bash
+# shellcheck disable=SC2034,SC2016
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Large-scale content transformations with Bash.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "This is a tricky topic to approach.\n"
+printf "First, I'll lay out some groundwork.\n"
+
+printf "This talk assumes some knowledge (I have talked about all of these things).\n"
+
+declare -a PREREQUISITES=(
+    "pipelines and redirection"
+    "regex"
+    "parameter expansion"
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Let's talk about the tools first.\n"
+printf "We will be primarily be using perl and sed (maybe a little bit of awk).\n"
+
+printf "Sed and perl have some overlapping functionality.\n"
+printf "But, there are things perl can do that sed cannot, and visa versa.\n"
+
+printf "One of the most common use cases is performing substitutions.\n"
+printf "I've shown these types of substitutions before but I've never really went indepth into how it works.\n"
+
+    sed 's/old/new/'
+
+printf "It's simple on the face of it: Match a pattern, replace it with something else.\n"
+printf "There are modifiers you can add at the end (like 'g' for global).\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Let's look at this substitution.\n"
+
+    printf "Match the word hello.\n" | perl -pe 's/hello//'
+    # Output: Match the word .
+
+printf "This simply matches the word 'hello' and replaces it with nothing.\n"
+printf "But what's happening here?\n"
+
+printf "Doing a substutition or other one-liner with perl, you'll usually want to use the -pe options.\n"
+
+printf "The '-p' wraps the input in a printing loop.\n"
+printf "The '-e' specifies the expression.\n"
+printf "Each line will be printed after being run through whatever code we put in the -e (expression).\n"
+
+printf "This is the default behavior in 'sed'.\n"
+
+    printf "Match the word hello.\n" | sed 's/hello//'
+    # Output: Match the word .
+
+printf "So basically, use 'perl -pe' to make it behave like sed.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "By default, 'sed' uses basic regular expressions (BREs).\n"
+printf "I went over this in the regex talk.\n"
+printf "Basically, BREs require you to escape certin regex operators (e.g., capture groups).\n"
+
+    printf "Capture hello and greet the user.\n" | sed "s/.*\(hello\).*/\1, $USER./"
+    # output: hello, kolkhis. 
+
+    printf 'Note the double quotes, needed for $USER to expand.\n'
+
+printf "To enable Extended regular expresssions (EREs), use the -E option.\n"
+
+    printf "Capture hello and greet the user.\n" | sed -E "s/.*(hello).*/\1, $USER./"
+    # output: hello, kolkhis.
+
+printf "Now sed is acting a lot more like perl.\n"
+
+printf "Side note: The -E is now POSIX-compliant.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Modifiers
+printf "After the last '/' in a substitution command, we can add modifiers to change behavior.\n"
+printf "A common one is 'g' (global), which performs the substitution on ALL matches.\n"
+
+    printf "hello, replace hello with hi\n" | perl -pe 's/hello/hi/g'
+    printf "hello, replace hello with hi\n" | sed 's/hello/hi/g'
+    # output: hi, replace hi with hi
+
+printf "Cool. But this is case sensitive.\n"
+
+    printf "Hello, replace hello with hi\n" | perl -pe 's/hello/hi/g'
+    printf "Hello, replace hello with hi\n" | sed 's/hello/hi/g'
+    # output: Hello, replace hi with hi
+
+printf "We can use the 'i' modifier to make it case-insensitive.\n"
+
+    printf "Hello, replace hello with hi\n" | perl -pe 's/hello/hi/gi'
+    printf "Hello, replace hello with hi\n" | sed 's/hello/hi/gi'
+    # output: hi, replace hi with hi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# in-place editing
+printf "Now, if we're not using a pipe and we want to perform operations on files, we can.\n"
+
+printf "Both perl and sed have a '-i' option to enable in-place editing of files.\n"
+
+    perl -pi -e 's/hello/hi/g' 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "So, we know how to do substitutions. That's fine. But there's more.\n"
+
+printf "With sed, we can also insert lines, delete lines, "
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+declare -a IDEAS=(
+    "book project changes"
+    "log filtering"
+    "translating github flavored markdown to mkdocs flavored markdown"
+)
+
+
