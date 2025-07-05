@@ -504,11 +504,118 @@ printf "Now let's change it back with sed.\n"
     sed -i -E 's/friend/world/g'
     cat ./hello.c
 
+printf "Cool. But, what if we wanted to make a backup before we make any changes?\n"
+
+printf "That's built in to '-i'. Just add a suffix directly after the '-i' and it'll make a backup.\n"
+
+    perl -pi.bak -e 's/world/friend/g' ./hello.c
+    sed -i.bak 's/world/friend/g' ./hello.c
+
+printf "This will create a 'hello.c.bak' file, which is a backup of the original.\n"
+printf "This is very useful if you're working with files that are not under version control.\n"
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Substituting only on matching lines
+
+printf "Sometimes we only want to perform substitutions on lines that match a certain pattern.\n"
+
+printf "Take this 'users.txt' for example:\n"
+
+    cat ./examples/users.txt
+cat << EOF
+user: alice, role: admin
+user: bob, role: user
+user: carol, role: admin
+user: dave, role: user
+user: eve, role: guest
+EOF
+
+printf "Say we want to change the role for 'eve' from 'guest' to 'admin'.\n"
+
+    sed -i.bak '/eve/ s/guest/admin/' ./examples/users.txt
+
+printf "Using sed, we specify a pattern (/eve/) BEFORE we put in the command (s///)\n"
+printf "This will perform the command _only_ on the lines matching the pattern.\n"
+
+printf "We can achieve this using perl too, in a bit of a different way.\n"
+
+    perl -p -e 's/guest/admin/ if m/eve/' ./examples/users.txt
+
+printf "We have a simple 'command if condition' here.\n"
+printf "This leverages the fact that Perl is an actual entire programming language.\n"
+printf "The 'm/pattern/' in Perl is just a way to match a pattern, and will return true if it matches.\n"
 
 
 
@@ -570,8 +677,40 @@ printf "Now let's change it back with sed.\n"
 
 printf "So, we know how to do substitutions. That's fine. But there's more.\n"
 
-printf "With sed, we can also insert lines, delete lines, "
+printf "With sed, we can also insert lines and delete lines.\n"
+printf "Let's add a new user to the 'users.txt' file above 'alice'.\n"
 
+    cat ./examples/users.txt
+    # user: alice, role: admin
+    # user: bob, role: user
+    # user: carol, role: admin
+    # user: dave, role: user
+    # user: eve, role: guest
+
+    sed -i.bak '/alice/i user: aaron, role: user' ./examples/users.txt
+    cat ./examples/users.txt
+
+    # user: aaron, role: user
+    # user: alice, role: admin
+    # user: bob, role: user
+    # user: carol, role: admin
+    # user: dave, role: user
+    # user: eve, role: guest
+
+printf "This uses sed's 'i' command. It inserts a line above the lines matching a pattern.\n"
+
+printf "We can also add lines AFTER a specific line using the 'a' command.\n"
+
+    sed -i.bak '/eve/a user: fred, role: admin' ./examples/users.txt
+    cat ./examples/users.txt
+
+    # user: aaron, role: user
+    # user: alice, role: admin
+    # user: bob, role: user
+    # user: carol, role: admin
+    # user: dave, role: user
+    # user: eve, role: guest
+    # user: fred, role: admin
 
 
 
