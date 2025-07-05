@@ -26,7 +26,7 @@
 
 
 
-printf "Large-scale content transformations with Bash.\n"
+printf "Content transformations with Bash (and adjacent tools).\n"
 
 
 
@@ -170,7 +170,7 @@ printf "But, there are things perl can do that sed cannot, and visa versa.\n"
 printf "One of the most common use cases is performing substitutions.\n"
 printf "I've shown these types of substitutions before but I've never really went indepth into how it works.\n"
 
-    sed 's/old/new/'
+    sed 's/old/new/' 
 
 printf "It's simple on the face of it: Match a pattern, replace it with something else.\n"
 printf "There are modifiers you can add at the end (like 'g' for global).\n"
@@ -501,7 +501,7 @@ printf "If we didn't specify '-i', it would only output the change to stdout.\n"
 printf "Now let's change it back with sed.\n"
 
     cat ./hello.c
-    sed -i -E 's/friend/world/g'
+    sed -i -E 's/friend/world/g' ./hello.c
     cat ./hello.c
 
 printf "Cool. But, what if we wanted to make a backup before we make any changes?\n"
@@ -600,18 +600,23 @@ user: bob, role: user
 user: carol, role: admin
 user: dave, role: user
 user: eve, role: guest
+user: elon, role: guest
+user: steve, role: guest
 EOF
 
 printf "Say we want to change the role for 'eve' from 'guest' to 'admin'.\n"
 
-    sed -i.bak '/eve/ s/guest/admin/' ./examples/users.txt
+    sed -i.bak '/\beve\b/ s/guest/admin/' ./examples/users.txt
+    sed -i.bak '/\beve\b/ s/admin/guest/' ./examples/users.txt
+    # \< \> \b (word bounaries)
 
 printf "Using sed, we specify a pattern (/eve/) BEFORE we put in the command (s///)\n"
 printf "This will perform the command _only_ on the lines matching the pattern.\n"
 
 printf "We can achieve this using perl too, in a bit of a different way.\n"
 
-    perl -p -e 's/guest/admin/ if m/eve/' ./examples/users.txt
+    perl -pe 's/guest/admin/ if m/\beve\b/' ./examples/users.txt
+    perl -pe 's/admin/guest/ if m/\beve\b/' ./examples/users.txt
 
 printf "We have a simple 'command if condition' here.\n"
 printf "This leverages the fact that Perl is an actual entire programming language.\n"
@@ -701,7 +706,7 @@ printf "This uses sed's 'i' command. It inserts a line above the lines matching 
 
 printf "We can also add lines AFTER a specific line using the 'a' command.\n"
 
-    sed -i.bak '/eve/a user: fred, role: admin' ./examples/users.txt
+    sed -i.bak '/\beve\b/a user: fred, role: admin' ./examples/users.txt
     cat ./examples/users.txt
 
     # user: aaron, role: user
@@ -774,7 +779,8 @@ printf "We can also add lines AFTER a specific line using the 'a' command.\n"
 # Inserting and deleting (cont)
 printf "Now let's delete those entries we made.\n"
 
-    sed -i.bak '/fred/d' ./examples/users.txt
+    sed 's/.*fred.*//' ./examples/users.txt
+    sed '/fred/d' ./examples/users.txt
 
 printf "This just deletes any lines that match the pattern.\n"
 printf "But we added multiple lines. Let's specify multiple patterns.\n"
@@ -789,6 +795,82 @@ printf "But we added multiple lines. Let's specify multiple patterns.\n"
 
 printf "Here we use a capture group to specify two patterns. Match either 'fred' or 'aaron', and delete.\n"
 printf "We used -E so that we did not have to escape the parentheses.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Delete lines with perl
+
+printf "We can achieve a similar result using perl with the '-ne' options.\n"
+
+    perl -ne 'print $_ if not m/(fred|aaron)/' ./examples/users.txt
+
+printf "The '-n' wraps the input in a non-printing loop.\n"
+
+    # Same as:
+    perl -e 'while(<>) { print $_ if not m/(fred|aaron)/ }' ./examples/users.txt
+
+printf "Basically that means it will loop over the input but it will not print it by defult.\n"
 
 
 
@@ -877,6 +959,36 @@ printf "We used -E so that we did not have to escape the parentheses.\n"
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Questions?\n"
 
 
 
