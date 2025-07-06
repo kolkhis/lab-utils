@@ -972,6 +972,7 @@ printf "The double parentheses will use the standard comparison operators you'll
     # Increment in the same way
     (( MYINT++ ));
 
+printf "Side note: This notation allows for ternary operators.\n"
 
 printf "Single or double bracket notation requires different comparison operators.\n"
 
