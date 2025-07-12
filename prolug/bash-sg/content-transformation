@@ -987,6 +987,10 @@ printf "Basically that means it will loop over the input but it will not print i
 
 
 
+# Resources
+man perlretut
+man perlre
+man sed
 
 printf "Questions?\n"
 
