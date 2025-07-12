@@ -461,15 +461,38 @@ fi
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 printf "Well what if we want to check if a condition is NOT met?\n"
 printf "For that, we use the '!' (NOT) operator.\n" 
 
-if [[ ! -f ./hello.c ]]; then
-    printf "File does not exist!\n"
-fi
+if [[ ! -f ./goodbye.c ]]; then printf "File does not exist\n"; fi
 
 printf "The '!' operator simply reverses the condition.\n"
-
 
 
 printf "The ! operator can be used either inside or outside the brackets in bash.\n"
@@ -547,8 +570,9 @@ printf "The '&&' (AND) and '||' (OR) operators work with these truthy and falsy 
 printf "Let's look at '&&'\n"
 
 if [[ -f ./hello.c && -s ./hello.c ]]; then
-    printf "File exists and is not empty.\n"
+    printf "File exists and is not empty.\n";
 fi
+
 if [ -f ./hello.c ] && [ -s ./hello.c ]; then # posix
     :
 fi
@@ -732,36 +756,40 @@ cat ./nonexistent.file || printf "Failed to run 'cat'\n"
 
 
 printf "Let's check if a package is installed.\n"
-declare PKG="jq"
 
-if dpkg -l | grep -i "$PKG"; then
-    printf "Package is installed.\n"
-else
-    printf "Packge is not installed.\n"
-fi
+    declare PKG="jq"
+
+    if dpkg -l | grep -i "$PKG"; then
+        printf "Package is installed.\n";
+    else
+        printf "Packge is not installed.\n";
+    fi
+
+    dpkg -l | grep -i "$PKG" || printf "Command not found.\n"
 
 printf "This will work on my Ubuntu Server system. But what about a cross-platform solution?\n"
 
-if which $PKG; then
-    printf "Package is installed (cmd in PATH).\n"
-else
-    printf "Package is not installed (cmd not in PATH).\n"
-    # sudo apt install -y $PKG
-fi
+    if which $PKG; then
+        printf "Package is installed (cmd in PATH).\n"
+    else
+        printf "Package is not installed (cmd not in PATH).\n"
+        # sudo apt install -y $PKG
+    fi
 
-# 'type' also works
-if type $PKG; then printf "Package is installed\n"; fi
+    # 'type' also works
+    if type $PKG; then printf "Package is installed\n"; fi
 
 printf "Though, 'which' and 'type' are not POSIX-compliant.\n" 
 printf "Use 'command -v' if you want it to be.\n"
 
-if command -v $PKG; then
-    printf "Package is installed (cmd in PATH).\n"
-else
-    printf "Package is not installed (cmd not in PATH).\n"
-    # sudo apt install -y $PKG
-fi
-# Note: Only check one pkg at a time
+    if command -v $PKG; then
+        printf "Package is installed (cmd in PATH).\n"
+    else
+        printf "Package is not installed (cmd not in PATH).\n"
+        # sudo apt install -y $PKG
+    fi
+    # Note: Only check one pkg at a time
+
 
 
 
@@ -810,22 +838,28 @@ fi
 printf "We also have 'case' statements.\n"
 printf "These check the condition of a single value and compare it to each case.\n"
 
-declare VAR="Hello, world!"
+    declare VAR="Hello, world!"
+    
+    case $VAR in
+        *world)
+            printf "Var contains 'world'\n"
+            ;;
+        hello*)
+            printf "Var contains 'hello'\n"
+            ;;
+        [a-z]*)
+            printf "Contains letters\n"
+            ;;
+        *)
+            printf "Unknown!\n"
+            ;;
+    esac
 
-case $VAR in
-    *world)
+    if [[ $VAR == *world ]]; then
         printf "Var contains 'world'\n"
-        ;;
-    hello*)
+    elif [[ $VAR == hello* ]]; then
         printf "Var contains 'hello'\n"
-        ;;
-    [a-z]*)
-        printf "Contains letters\n"
-        ;;
-    *)
-        printf "Unknown!\n"
-        ;;
-esac
+    fi
 
 
 # Pattern matching v. raw string v. regex operators 
@@ -910,10 +944,6 @@ fi
 
 
 
-printf "Questions?"
-
-
-
 
 
 
@@ -966,10 +996,14 @@ printf "The operators will change depending on which notation you use.\n"
 
 printf "The double parentheses will use the standard comparison operators you'll see in most languages.\n"
 
+    if (( MYINT == 3 )); then :; fi
+    if (( MYINT != 3 )); then :; fi
+    if (( MYINT < 3 )); then :; fi
+    if (( MYINT <= 3 )); then :; fi
     if (( MYINT > 3 )); then :; fi
     if (( MYINT >= 3 )); then :; fi
-    if (( MYINT != 3 )); then :; fi
     # Increment in the same way
+    (( MYINT+=1 ));
     (( MYINT++ ));
 
 printf "Side note: This notation allows for ternary operators.\n"
@@ -1057,6 +1091,7 @@ printf "If used on strings, these operators will compare the strings lexographic
 
 
 printf "Questions?\n"
+
 
 
 
