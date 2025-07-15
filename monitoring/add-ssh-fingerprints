@@ -54,9 +54,13 @@ while [[ -n $1 && $1 =~ ^- && $1 != '--' ]]; do
             shift;
             ;;
         *)
+            printf "Unrecognized argument: %s\n" "$1"
+            shift;
             ;;
     esac
 done
+
+[[ $1 == '--' ]] && shift;
 
 INVENTORY_FILE="${INVENTORY_FILE:?No inventory file was provided! Run again with --help for usage.}"
 
