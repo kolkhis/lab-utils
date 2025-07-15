@@ -8,11 +8,42 @@ minimal user input.
 
 This was my final project for the ProLUG Sysadmin course.  
 
+---
+
+
 ## Table of Contents
 * [Monitoring Stack](#monitoring-stack) 
 * [How to Use These Playbooks](#how-to-use-these-playbooks) 
     * [First Time Setup](#first-time-setup) 
     * [Adding New Nodes](#adding-new-nodes) 
+
+## Overview
+
+Throughout this document, I will be referring to your central monitoring hub as
+"control node."  
+
+This will be the server that hosts Grafana and the TSDBs (Prometheus, Loki).  
+
+The playbook(s) should **only** be run from this control node.  
+
+The playbooks can be run independently (in the `independent_playbooks` directory),
+which also contains a `deploy_all.yml` playbook. This playbook will do just that,
+deploy all services and agents across your inventory.  
+
+There are playbooks for each one of the services.  
+
+- `deploy_all.yml`: Deploys the whole stack at once. Same as running all the
+  playbooks listed below sequentially.  
+
+If you are using each playbook separately, they should be run in this order:
+
+- `prometheus_setup_playbook.yml`
+- `loki_setup_playbook.yml`
+- `grafana_setup_playbook.yml`
+- `node_exporter_setup_playbook.yml`
+- `promtail_setup_playbook.yml`
+
+
 
 ## Monitoring Stack
 
@@ -66,7 +97,7 @@ ansible-playbook -i hosts.ini -K deploy_all.yml --tags=collector
 ```
 
 
-## Skipping Annoying SSH Fingerprint Errors
+## Skipping SSH Fingerprint Prompts
 
 If you've never used your control node to SSH into a new node yet, you can use
 `ssh-keyscan` to grab the host's fingerprint and append it to the
