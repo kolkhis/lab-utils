@@ -3,7 +3,8 @@
   hosts: localhost
   vars:
     comment: |
-      This is so that we can use the control node's IP in configuration files, mainly Promtail, which needs an IP for the Loki API endpoint.
+      This task is intended to capture the control node's IP so that we can use the
+      IP in configuration files, mainly Promtail, which needs the IP for the Loki API endpoint.
   tasks:
     - name: Add control node IP as a global host variable
       ansible.builtin.add_host:
