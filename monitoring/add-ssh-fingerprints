@@ -64,6 +64,24 @@ while [[ -n $1 && $1 =~ ^- && $1 != '--' ]]; do
             ;;
         -h|--help)
             : "TODO"
+            cat <<- EOF
+		Usage: ${BASH_SOURCE[0]} [OPTIONS]
+		
+		Add SSH host key fingerprints from an Ansible inventory or SSH config file to the known_hosts file of your choice.
+
+		Options:
+		  -i, --inventory FILE        Path to Ansible inventory file (INI format).
+		  -s, --ssh-config FILE       Path to SSH config file (only placeholder implemented).
+		  -k, --known-hosts FILE      Path to known_hosts file (default: \$HOME/.ssh/known_hosts).
+		  -h, --help                  Show this help message and exit.
+
+		Examples:
+		  ${BASH_SOURCE[0]} --inventory ./inventory.ini
+		  ${BASH_SOURCE[0]} -i inventory.ini -k /tmp/known_hosts
+		  ${BASH_SOURCE[0]} -s ~/.ssh/config
+		
+		EOF
+    exit 0
             ;;
         *)
             printf "Unrecognized argument: %s\n" "$1"
