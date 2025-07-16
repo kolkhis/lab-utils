@@ -64,7 +64,41 @@ parse-args(){
                     err && printf >&2 "Bad argument to -i/--inventory. Provide a valid .ini format ansible inventory.\n" && return 1; }
                 ;;
             -h|--help)
-                printf "Usage: ./generate-destinations [-c SSH_CONFIG_FILE] [-o|--output-file FILE] [--verbose] [--quiet] \n"
+                    cat <<- 'EOF'
+			generate-destinations - Generate a destination list file for bastion.sh from various input sources.
+
+			Usage:
+			  ./generate-destinations [OPTIONS]
+
+			Options:
+			  -c, --config-file FILE      Path to SSH config file (default: $HOME/.ssh/config)
+			  -f, --input-file FILE       Custom input file (not implemented yet)
+			  -i, --inventory FILE        Ansible inventory file (.ini format only, for now)
+			  -o, --output-file FILE      Output file path (default: ./destinations.txt)
+			  -v, --verbose               Enable debug logging 
+			  -q, --quiet                 Suppress debug output (default)
+			  -h, --help                  Show this help message and exit
+
+			Behavior:
+			  - If no arguments are given, the script will default to parsing $HOME/.ssh/config.
+			  - If --inventory is given, it takes precedence over SSH config parsing.
+			  - Destination output format is:
+			        <alias> <user@ip>
+
+			Examples:
+			  # Use default SSH config and write to destinations.txt
+			  ./generate-destinations
+
+			  # Parse a custom SSH config file
+			  ./generate-destinations -c ./my_ssh_config
+
+			  # Use an ansible inventory and write to a different file
+			  ./generate-destinations -i ./hosts.ini -o ./my-dest.txt
+
+			  # Quiet mode
+			  ./generate-destinations --quiet
+
+			EOF
                 exit 0;
                 ;;
             *)
