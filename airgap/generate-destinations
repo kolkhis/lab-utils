@@ -4,7 +4,6 @@
 # Generate a list of destinations for bastion.sh
 # Destination list based on a SSH config file (to be provided separately)
 
-# TODO(feat): Allow use of an ansible inventory file (.ini, .yaml)
 # TODO(feat): Allow use of /etc/hosts (use as default?)
 
 
@@ -13,6 +12,7 @@ declare INPUT_FILE
 declare OUTPUT_FILE='./destinations.txt'
 declare VERBOSE=1
 declare -a DESTINATIONS
+declare ANSIBLE_INVENTORY=
 
 
 debug() {
@@ -59,6 +59,10 @@ parse-args(){
                 ;;
             -v|--verbose) VERBOSE=1; shift;
                 ;;
+            -i|--inventory)
+                { [[ -n $2 ]] && shift && ANSIBLE_INVENTORY=$1; } || {
+                    err && printf >&2 "Bad argument to -i/--inventory. Provide a valid .ini format ansible inventory.\n" && return 1; }
+                ;;
             -h|--help)
                 printf "Usage: ./generate-destinations [-c SSH_CONFIG_FILE] [-o|--output-file FILE] [--verbose] [--quiet] \n"
                 exit 0;
@@ -74,7 +78,25 @@ parse-args(){
 }
 
 parse-ansible-inventory(){
-    : "Reserved for future functionality."
+    : "Parse a valid .ini format ansible inventory file to generate destinations.txt"
+    [[ -n $ANSIBLE_INVENTORY ]] || return 1
+    local -a ENTRIES=()
+    IFS=$'\n' read -r -d '' -a ENTRIES < "$ANSIBLE_INVENTORY"
+    local entry
+    for entry in "${ENTRIES[@]}"; do
+        local parsed_ip=
+        local parsed_hostname=
+        local destination=
+        parsed_ip="$(perl -ne 'print $1 if m/\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b/' <<< "$entry")"
+        parsed_hostname="$(perl -ne 'print $1 if m/^([^\d][^\s]*)/' <<< "$entry")"
+        { 
+            [[ -n $parsed_ip && -n $parsed_hostname ]] && destination="$parsed_hostname $parsed_ip"
+            [[ -n $destination ]] && DESTINATIONS=("${DESTINATIONS[@]}" "$destination"); 
+        } || continue
+    done
+
+    debug "Destinations parsed from ansible inventory: $1"
+    debug && printf "Destination: %s\n" "${DESTINATIONS[@]}"
 }
 
 parse-input-file() {
@@ -120,9 +142,15 @@ main() {
         exit 1
     fi
 
-    parse-ssh-config || {
-        err "Failed to parse SSH config file!" && exit 1
-    }
+    if [[ -n $ANSIBLE_INVENTORY ]]; then
+        parse-ansible-inventory || {
+            err "Failed to parse Ansible inventory file: $ANSIBLE_INVENTORY" && exit 1
+        }
+    else
+        parse-ssh-config || {
+            err "Failed to parse SSH config file!" && exit 1
+        }
+    fi
 
     output-destinations | sudo tee "$OUTPUT_FILE"
 }
