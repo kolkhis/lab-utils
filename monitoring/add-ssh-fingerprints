@@ -1,20 +1,17 @@
 #!/bin/bash
 
 
-declare INVENTORY_FILE
-declare SSH_CONFIG_FILE
+declare INVENTORY_FILE=
+declare SSH_CONFIG_FILE=
 declare KNOWN_HOSTS="$HOME/.ssh/known_hosts"
 declare -a IPS
 
 parse-ansible-inventory(){
     local -a ENTRIES=()
-    # mapfile -t ENTRIES < "$INVENTORY_FILE"
-    IFS=$'\n' read -r -d $'\0' -a ENTRIES < "$INVENTORY_FILE"
-    for entry in "${ENTRIES[@]}"; do
-        local parsed_ip=
-        parsed_ip="$(perl -ne 'print $1 if m/\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b/' <<< "$entry")"
-        { [[ -n $parsed_ip ]] && IPS=("${IPS[@]}" "$parsed_ip"); } || continue
-    done
+    IFS=$'\n' read -r -d $'\0' -a ENTRIES < <(
+        perl -ne 'print "$1\n" if m/ansible_host=(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/' "$INVENTORY_FILE"
+    )
+    IPS=("${IPS[@]}" "${ENTRIES}")
 }
 
 parse-ssh-config(){
@@ -87,8 +84,8 @@ while [[ -n $1 && $1 =~ ^- && $1 != '--' ]]; do
 		Add SSH host key fingerprints from an Ansible inventory or SSH config file to the known_hosts file of your choice.
 
 		Options:
-		  -i, --inventory FILE        Path to Ansible inventory file (INI format).
-		  -s, --ssh-config FILE       Path to SSH config file (only placeholder implemented).
+		  -i, --inventory FILE        Path to Ansible inventory file (INI format only).
+		  -s, --ssh-config FILE       Path to SSH config file.
 		  -k, --known-hosts FILE      Path to known_hosts file (default: \$HOME/.ssh/known_hosts).
 		  -h, --help                  Show this help message and exit.
 
@@ -96,6 +93,7 @@ while [[ -n $1 && $1 =~ ^- && $1 != '--' ]]; do
 		  ${BASH_SOURCE[0]} --inventory ./inventory.ini
 		  ${BASH_SOURCE[0]} -i inventory.ini -k /tmp/known_hosts
 		  ${BASH_SOURCE[0]} -s ~/.ssh/config
+		  ${BASH_SOURCE[0]} -i inventory.ini -s ~/.ssh/config
 		
 		EOF
     exit 0
