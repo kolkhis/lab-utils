@@ -7,6 +7,9 @@ declare KNOWN_HOSTS="$HOME/.ssh/known_hosts"
 declare -a IPS
 
 parse-ansible-inventory(){
+    local -a ENTRIES=()
+    # mapfile -t ENTRIES < "$INVENTORY_FILE"
+    IFS=$'\n' read -r -d $'\0' -a ENTRIES < "$INVENTORY_FILE"
     for entry in "${ENTRIES[@]}"; do
         local parsed_ip=
         parsed_ip="$(perl -ne 'print $1 if m/\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b/' <<< "$entry")"
@@ -15,7 +18,11 @@ parse-ansible-inventory(){
 }
 
 parse-ssh-config(){
-    : "TODO"
+    local -a ENTRIES=()
+    IFS=$'\n' read -r -d $'\0' -a ENTRIES < <(
+        perl -ne 'print "$1\n" if m/^\s*Hostname\s*(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/' "$SSH_CONFIG_FILE"
+    )
+    IPS=("${IPS[@]}" "${ENTRIES[@]}")
 }
 
 add-fingerprints(){
@@ -108,10 +115,6 @@ if [[ -z $INVENTORY_FILE && -z $SSH_CONFIG_FILE ]]; then
     exit 1
 fi
 
-
-
-declare -a ENTRIES
-mapfile -t ENTRIES < "$INVENTORY_FILE"
 
 
 { [[ -n $INVENTORY_FILE ]] && parse-ansible-inventory; } || {
