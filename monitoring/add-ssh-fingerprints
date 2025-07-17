@@ -45,13 +45,13 @@ add-fingerprints(){
 while [[ -n $1 && $1 =~ ^- && $1 != '--' ]]; do
     case $1 in
         -i|--inventory)
-            { [[ -n $2 && ! $2 =~ ^- ]] && shift && INVENTORY_FILE=$1; } || {
+            { [[ -n $2 && ! $2 =~ ^- && -f $2 ]] && shift && INVENTORY_FILE=$1; } || {
                 printf >&2 "Bad argument to -i/--inventory: %s\n" "$2"
             }
             shift;
             ;;
         -s|--ssh-config)
-            { [[ -n $2 && ! $2 =~ ^- ]] && shift && SSH_CONFIG_FILE=$1; } || {
+            { [[ -n $2 && ! $2 =~ ^- && -f $2 ]] && shift && SSH_CONFIG_FILE=$1; } || {
                 printf >&2 "Bad argument to -s/--ssh-config: %s\n" "$2" && exit 1
             }
             ;;
