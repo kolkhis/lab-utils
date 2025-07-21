@@ -1,0 +1,27 @@
+#!/bin/bash
+
+declare -a VMID_LIST
+declare -i FAILURE=0
+declare -i SUCCESS=0
+
+IFS=$'\n' read -r -d '' -a VMID_LIST < <(
+    sudo qm list | perl -ne 'print "$1\n" if m/^\s*(\d{1,})\s/'
+)
+
+for id in "${VMID_LIST[@]}"; do
+    printf "Attempting to enable QEMU guest agent for VM: %s\n" "$id"
+    { sudo qm set "$id" --agent enabled=1,fstrim_cloned_disks=1 && (( SUCCESS++ )); } || {
+        printf >&2 "ERROR: Failed to enable QEMU guest agent for VM with ID %s\n" "$id"
+        (( FAILURE++ ))
+        continue
+    }
+done
+
+printf "Finished.\nSuccesful: %s\nFailed: %s\n" "$SUCCESS" "$FAILURE"
+
+if [[ "${#VMID_LIST[@]}" -eq $FAILURE ]]; then
+    printf >&2 "All units failed. Please make sure the 'qemu-guest-agent' package is installed on all guest hosts and try again.\n"
+fi
+
+exit 0
+
