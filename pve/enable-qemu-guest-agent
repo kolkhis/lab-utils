@@ -21,6 +21,7 @@ printf "Finished.\nSuccesful: %s\nFailed: %s\n" "$SUCCESS" "$FAILURE"
 
 if [[ "${#VMID_LIST[@]}" -eq $FAILURE ]]; then
     printf >&2 "All units failed. Please make sure the 'qemu-guest-agent' package is installed on all guest hosts and try again.\n"
+    exit 1
 fi
 
 exit 0
