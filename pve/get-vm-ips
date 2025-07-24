@@ -9,7 +9,8 @@ while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
     case $1 in
         -f|--format)
             { [[ -n $2 && ! $2 =~ ^- ]] && shift && OUTPUT_FORMAT=$1; } || {
-                printf >&2 "Bad or missing arguement to: -o | --output-format\n"
+                printf >&2 "Bad or missing arguement to: -o | --output-format\n";
+                exit 1;
             }
             if [[ ! $OUTPUT_FORMAT =~ (ansible|txt) ]]; then
                 printf >&2 "Output format should be one of: ansible | txt\n"
@@ -22,6 +23,36 @@ while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
                 printf >&2 "Bad or missing argument to: -f | --file\n" && exit 1
             }
             shift;
+            ;;
+                    -h|--help)
+            cat <<-EOF
+Usage: ${BASH_SOURCE[0]##*/} [OPTIONS] [--]
+
+Collects IP addresses of running Proxmox VMs (via QEMU Guest Agent) and writes them to a file.
+
+Options:
+  -f, --format <fmt>     Output format for the file. Valid options:
+                           - ansible : (default) Format as .ini Ansible inventory lines
+                           - txt     : Plain text <hostname> <IP> lines
+
+  -o, --outfile <file>   Destination file for output. Default is:
+                           ./ip-list.txt
+
+  -h, --help             Display this help and exit.
+
+Notes:
+  - Requires root privileges to run.
+  - Requires QEMU Guest Agent to be installed and running on all VMs.
+  - Output will only include VMs that respond via \`qm guest cmd\`.
+  - The \`hostname\` and first IPv4 address will be extracted per VM.
+
+Examples:
+  ${BASH_SOURCE[0]##*/} --format ansible --outfile myhosts.txt
+  ${BASH_SOURCE[0]##*/} -f txt -o /tmp/hosts.txt
+  ${BASH_SOURCE[0]##*/} --  # Use defaults
+
+EOF
+            exit 0
             ;;
         *)
             printf "Unknown argument: %s\n" "$1"
