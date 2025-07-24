@@ -5,6 +5,34 @@ declare -A IP_LIST
 declare OUTPUT_FORMAT='ansible'
 declare OUTPUT_FILE="./ip-list.txt"
 
+setup-cron() {
+    local cmd
+    printf "Setting up script as a cron job.\n"
+    if [[ $# -gt 0 ]]; then
+        cmd="${BASH_SOURCE[0]} $*"
+    else
+        cmd="${BASH_SOURCE[0]} -f ansible -o $HOME/generated-hosts.ini"
+    fi
+
+    if crontab -l 2>/dev/null | grep -qi "${BASH_SOURCE[0]}"; then
+        printf >&2 "Cron job already specified! Use 'crontab -l' and delete the entry before adding a new one.\n"
+        return 1
+    fi
+
+    { 
+        crontab -l 2>/dev/null;
+        printf "* * */1 * * %s\n" "$cmd"; 
+    } | crontab -
+}
+
+if [[ $1 =~ ^(-c|--cron) ]]; then
+    shift
+    setup-cron "$@" || {
+        printf >&2 "Failed to set up cron job.\n" && exit 1
+    }
+    exit 0
+fi
+
 while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
     case $1 in
         -f|--format)
@@ -18,42 +46,53 @@ while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
             fi
             shift;
             ;;
+
         -o|--outfile)
             { [[ -n $2 && ! $2 =~ ^- ]] && shift && OUTPUT_FILE="$1"; } || {
                 printf >&2 "Bad or missing argument to: -f | --file\n" && exit 1
             }
             shift;
             ;;
-                    -h|--help)
+
+        -h|--help)
             cat <<-EOF
 Usage: ${BASH_SOURCE[0]##*/} [OPTIONS] [--]
 
-Collects IP addresses of running Proxmox VMs (via QEMU Guest Agent) and writes them to a file.
+Collect IP addresses of running Proxmox VMs using the QEMU Guest Agent,
+and write them to a file in a structured format.
 
-Options:
-  -f, --format <fmt>     Output format for the file. Valid options:
-                           - ansible : (default) Format as .ini Ansible inventory lines
-                           - txt     : Plain text <hostname> <IP> lines
+OPTIONS:
+  -f, --format <fmt>       Output format for the file.
+                             Valid values:
+                               - ansible : INI-style lines (default)
+                               - txt     : Plain "<hostname> <ip>" format
 
-  -o, --outfile <file>   Destination file for output. Default is:
-                           ./ip-list.txt
+  -o, --outfile <file>     Destination file path to write output to.
+                             Default: ./ip-list.txt
 
-  -h, --help             Display this help and exit.
+  -c, --cron               Install a daily cron job to run this script.
+                             The cron job will write to:
+                               \$HOME/generated-hosts.ini
+                             with 'ansible' format by default.
 
-Notes:
-  - Requires root privileges to run.
-  - Requires QEMU Guest Agent to be installed and running on all VMs.
-  - Output will only include VMs that respond via \`qm guest cmd\`.
-  - The \`hostname\` and first IPv4 address will be extracted per VM.
+  -h, --help               Display this help message and exit.
 
-Examples:
-  ${BASH_SOURCE[0]##*/} --format ansible --outfile myhosts.txt
-  ${BASH_SOURCE[0]##*/} -f txt -o /tmp/hosts.txt
-  ${BASH_SOURCE[0]##*/} --  # Use defaults
+NOTES:
+  - Script must be run as root.
+  - Requires QEMU Guest Agent installed and running in each VM.
+  - VMs must be online and accessible via \`qm guest cmd\`.
+  - Only the first reported IP per VM is captured.
+
+EXAMPLES:
+  ${BASH_SOURCE[0]##*/} -f ansible -o ./myhosts.ini
+  ${BASH_SOURCE[0]##*/} --format txt --outfile /tmp/vm-ip-list.txt
+  ${BASH_SOURCE[0]##*/} --cron
+  ${BASH_SOURCE[0]##*/} --   # use defaults (-f ansible -o ./ip-list.txt)
 
 EOF
             exit 0
             ;;
+
         *)
             printf "Unknown argument: %s\n" "$1"
             shift;
