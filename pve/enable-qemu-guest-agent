@@ -3,6 +3,22 @@
 declare -a VMID_LIST
 declare -i FAILURE=0
 declare -i SUCCESS=0
+declare REBOOT=0
+
+while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
+    case $1 in
+        -r|--reboot)
+            REBOOT=1
+            shift;
+            ;;
+        -h|--help)
+            printf "Usage: %s [-r|--reboot y|n]" "${BASH_SOURCE[0]}"
+            ;;
+        *)
+            shift;
+            ;;
+    esac
+done
 
 IFS=$'\n' read -r -d '' -a VMID_LIST < <(
     sudo qm list | perl -ne 'print "$1\n" if m/^\s*(\d{1,})\s/'
@@ -17,12 +33,27 @@ for id in "${VMID_LIST[@]}"; do
     }
 done
 
-printf "Finished.\nSuccesful: %s\nFailed: %s\n" "$SUCCESS" "$FAILURE"
+printf "Finished.\n" 
+printf "Succesful: %d\nFailed: %d\n" "$SUCCESS" "$FAILURE"
 
 if [[ "${#VMID_LIST[@]}" -eq $FAILURE ]]; then
     printf >&2 "All units failed. Please make sure the 'qemu-guest-agent' package is installed on all guest hosts and try again.\n"
     exit 1
 fi
 
-exit 0
+(( FAILURE=0 )); (( SUCCESS=0 ));
 
+if [[ $REBOOT -gt 0 ]]; then
+    printf "Attempting to reboot all VMs...\n"
+    for vmid in "${VMID_LIST[@]}"; do
+        sudo qm reboot "$vmid" || {
+            printf >&2 "Failed to reboot VM with ID: %s\n" "$vmid" &&
+            (( FAILURE++ )) && continue
+        }
+        (( SUCCESS++ ))
+    done
+    printf "Finished reboot process.\n"
+    printf "Successful: %d\nFailed: %d\n" "$SUCCESS" "$FAILURE"
+fi
+
+exit 0
