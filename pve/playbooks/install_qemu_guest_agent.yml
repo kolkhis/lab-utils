@@ -1,0 +1,9 @@
+---
+- name: Install the qemu-guest-agent package on all PVE Guest Hosts
+  become: true
+  hosts: all
+  tasks:
+    - name: Install qemu-guest-agent via the package manager
+      ansible.builtin.package:
+        name: qemu-guest-agent
+        state: present
