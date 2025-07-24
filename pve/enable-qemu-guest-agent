@@ -12,7 +12,29 @@ while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
             shift;
             ;;
         -h|--help)
-            printf "Usage: %s [-r|--reboot y|n]" "${BASH_SOURCE[0]}"
+            cat <<-EOF
+Usage: ${BASH_SOURCE[0]##*/} [OPTIONS] [--]
+
+Enable the QEMU Guest Agent setting for all VMs on a Proxmox node using the \`qm\` CLI tool.
+
+Options:
+  -r, --reboot         Reboot each VM after enabling the guest agent.
+                       Without this flag, only the agent setting is applied.
+
+  -h, --help           Show this help message and exit.
+
+Notes:
+  - Requires root privileges (sudo) to run \`qm\` commands.
+  - VMs that fail to update will be reported.
+  - If all VMs fail, the script exits with code 1.
+
+Examples:
+  ${BASH_SOURCE[0]##*/}            # Enable agent on all VMs, no reboots
+  ${BASH_SOURCE[0]##*/} --reboot   # Enable agent and reboot each VM
+  ${BASH_SOURCE[0]##*/} -r         # Short form of --reboot
+
+EOF
+            exit 0
             ;;
         *)
             shift;
