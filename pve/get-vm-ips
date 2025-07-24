@@ -1,0 +1,23 @@
+#!/bin/bash
+
+declare -a VMID_LIST
+
+if [[ $EUID -ne 0 ]]; then
+    printf >&2 "Script must be run as root.\n"
+    exit 1
+fi
+
+IFS=$'\n' read -r -d '' -a VMID_LIST < <(
+    qm list | perl -ne 'print "$1\n" if m/^\s*(\d{1,})\s/'
+)
+
+for vmid in "${VMID_LIST[@]}"; do
+    printf "Attempting to extract IP from vmid: %d\n" "$vmid"
+    qm guest cmd "$vmid" network-get-interfaces |
+        jq '.[1]."ip-addresses"[0]."ip-address"' |
+        tr -d '"' || {
+        printf >&2 "Failed to extract IP from VMID: %d\n" "$vmid"
+    }
+done
+
+
