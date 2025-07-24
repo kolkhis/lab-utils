@@ -1,6 +1,25 @@
 #!/bin/bash
 
 declare -a VMID_LIST
+declare -a IP_LIST
+declare IP_FILE="./ip-list.txt"
+
+while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
+    case $1 in
+        -f|--file)
+            [[ -n $2 && ! $2 =~ ^- ]] && shift && IP_FILE="$1" || {
+                printf >&2 "Bad or missing argument to: -f | --file\n" && exit 1
+            }
+            shift;
+            ;;
+        *)
+            printf "Unknown argument: %s\n" "$1"
+            shift;
+            ;;
+    esac
+done
+
+[[ $1 == '--' ]] && shift;
 
 if [[ $EUID -ne 0 ]]; then
     printf >&2 "Script must be run as root.\n"
@@ -11,13 +30,25 @@ IFS=$'\n' read -r -d '' -a VMID_LIST < <(
     qm list | perl -ne 'print "$1\n" if m/^\s*(\d{1,})\s/'
 )
 
-for vmid in "${VMID_LIST[@]}"; do
-    printf "Attempting to extract IP from vmid: %d\n" "$vmid"
-    qm guest cmd "$vmid" network-get-interfaces |
-        jq '.[1]."ip-addresses"[0]."ip-address"' |
-        tr -d '"' || {
-        printf >&2 "Failed to extract IP from VMID: %d\n" "$vmid"
-    }
-done
+get-ips(){
+    : > "$IP_FILE"  # Truncate ip file
+    local ip
+    local interface_info
+    local host_name
+    for vmid in "${VMID_LIST[@]}"; do
+        printf "Attempting to extract IP from vmid: %d\n" "$vmid"
+        ip=
+        host_name=
+        qm guest cmd "$vmid" ping || 
+            printf >&2 "Can't connect to VMID: %d\n" "$vmid" && continue
+        interface_info=$(qm guest cmd "$vmid" network-get-interfaces)
+        host_name=$(jq '."host-name"' < <(qm guest cmd "$vmid" get-host-name) | tr -d '"')
+        ip=$(jq '.[1]."ip-addresses"[0]."ip-address"' < <(qm guest cmd "$vmid" network-get-interfaces) | tr -d '"') 
+        printf "Extracted: %s - %s\n" "$host_name" "$ip"
+        printf "%s %s\n" "$host_name" "$ip" >> "$IP_FILE"
+    done
 
+}
+
+get-ips "$@"
 
