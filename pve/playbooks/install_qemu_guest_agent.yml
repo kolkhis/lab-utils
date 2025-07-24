@@ -7,3 +7,10 @@
       ansible.builtin.package:
         name: qemu-guest-agent
         state: present
+
+    - name: Enable the qemu-guest-agent service
+      ansible.builtin.systemd:
+        daemon_reload: true
+        enabled: true
+        state: started
+        name: qemu-guest-agent
