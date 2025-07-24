@@ -1,13 +1,24 @@
 #!/bin/bash
 
 declare -a VMID_LIST
-declare -a IP_LIST
-declare IP_FILE="./ip-list.txt"
+declare -A IP_LIST
+declare OUTPUT_FORMAT='ansible'
+declare OUTPUT_FILE="./ip-list.txt"
 
 while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
     case $1 in
-        -f|--file)
-            [[ -n $2 && ! $2 =~ ^- ]] && shift && IP_FILE="$1" || {
+        -f|--format)
+            { [[ -n $2 && ! $2 =~ ^- ]] && shift && OUTPUT_FORMAT=$1; } || {
+                printf >&2 "Bad or missing arguement to: -o | --output-format\n"
+            }
+            if [[ ! $OUTPUT_FORMAT =~ (ansible|txt) ]]; then
+                printf >&2 "Output format should be one of: ansible | txt\n"
+                exit 1
+            fi
+            shift;
+            ;;
+        -o|--outfile)
+            { [[ -n $2 && ! $2 =~ ^- ]] && shift && OUTPUT_FILE="$1"; } || {
                 printf >&2 "Bad or missing argument to: -f | --file\n" && exit 1
             }
             shift;
@@ -31,9 +42,7 @@ IFS=$'\n' read -r -d '' -a VMID_LIST < <(
 )
 
 get-ips(){
-    : > "$IP_FILE"  # Truncate ip file
     local ip
-    local interface_info
     local host_name
     for vmid in "${VMID_LIST[@]}"; do
         printf "Attempting to extract IP from vmid: %d\n" "$vmid"
@@ -46,10 +55,24 @@ get-ips(){
         host_name=$(jq '."host-name"' < <(qm guest cmd "$vmid" get-host-name) | tr -d '"')
         ip=$(jq '.[1]."ip-addresses"[0]."ip-address"' < <(qm guest cmd "$vmid" network-get-interfaces) | tr -d '"') 
         printf "Extracted: %s - %s\n" "$host_name" "$ip"
-        printf "%s %s\n" "$host_name" "$ip" >> "$IP_FILE"
+        IP_LIST[$host_name]="$ip"
     done
+}
 
+output-to-file() {
+    : > "$OUTPUT_FILE"  # Truncate ip file
+    [[ -z "${IP_LIST[*]}" ]] && printf >&2 "IP list is empty!\n" && exit 1
+    if [[ ${OUTPUT_FORMAT,,} == 'ansible' ]]; then
+        for key in "${!IP_LIST[@]}"; do
+            printf "%s ansible_host=%s\n" "$key" "${IP_LIST[$key]}" >> "$OUTPUT_FILE"
+        done
+    else
+        for key in "${!IP_LIST[@]}"; do
+            printf "%s %s\n" "$key" "${IP_LIST[$key]}" >> "$OUTPUT_FILE"
+        done
+    fi
 }
 
 get-ips "$@"
+output-to-file "$@"
 
