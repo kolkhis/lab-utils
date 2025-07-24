@@ -39,9 +39,10 @@ get-ips(){
         printf "Attempting to extract IP from vmid: %d\n" "$vmid"
         ip=
         host_name=
-        qm guest cmd "$vmid" ping || 
+        qm guest cmd "$vmid" ping || {
             printf >&2 "Can't connect to VMID: %d\n" "$vmid" && continue
-        interface_info=$(qm guest cmd "$vmid" network-get-interfaces)
+        }
+
         host_name=$(jq '."host-name"' < <(qm guest cmd "$vmid" get-host-name) | tr -d '"')
         ip=$(jq '.[1]."ip-addresses"[0]."ip-address"' < <(qm guest cmd "$vmid" network-get-interfaces) | tr -d '"') 
         printf "Extracted: %s - %s\n" "$host_name" "$ip"
