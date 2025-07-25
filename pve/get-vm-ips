@@ -4,6 +4,11 @@ declare -a VMID_LIST
 declare -A IP_LIST
 declare OUTPUT_FORMAT='txt'
 declare OUTPUT_FILE
+declare VERBOSE=0
+
+debug() {
+    [[ $VERBOSE -gt 0 ]] && printf "%s\n" "$*"
+}
 
 setup-cron() {
     local cmd
@@ -15,7 +20,7 @@ setup-cron() {
     fi
 
     if crontab -l 2>/dev/null | grep -qi "${BASH_SOURCE[0]}"; then
-        printf >&2 "Cron job already specified! Use 'crontab -l' and delete the entry before adding a new one.\n"
+        printf >&2 "Cron job already specified! Use 'crontab -e' and delete the entry before adding a new one.\n"
         return 1
     fi
 
@@ -30,6 +35,7 @@ if [[ $1 =~ ^(-c|--cron) ]]; then
     setup-cron "$@" || {
         printf >&2 "Failed to set up cron job.\n" && exit 1
     }
+    printf "Successfully set up cron job.\n"
     exit 0
 fi
 
@@ -51,6 +57,11 @@ while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
             { [[ -n $2 && ! $2 =~ ^- ]] && shift && OUTPUT_FILE="$1"; } || {
                 printf >&2 "Bad or missing argument to: -f | --file\n" && exit 1
             }
+            shift;
+            ;;
+
+        -v|--verbose)
+            VERBOSE=1;
             shift;
             ;;
 
@@ -77,6 +88,8 @@ OPTIONS:
 
   -h, --help               Display this help message and exit.
 
+  -v, --verbose            Enable verbose output. Useful for debugging.
+
 NOTES:
   - Script must be run as root.
   - Requires QEMU Guest Agent installed and running in each VM.
@@ -95,7 +108,7 @@ EOF
 
         *)
             printf "Unknown argument: %s\n" "$1"
-            shift;
+            exit 1;
             ;;
     esac
 done
@@ -115,16 +128,16 @@ get-ips(){
     local ip
     local host_name
     for vmid in "${VMID_LIST[@]}"; do
-        printf "Attempting to extract IP from vmid: %d\n" "$vmid"
+        debug "Attempting to extract IP from vmid: $vmid"
         ip=
         host_name=
-        qm guest cmd "$vmid" ping || {
+        qm guest cmd "$vmid" ping > /dev/null 2>&1 || {
             printf >&2 "Can't connect to VMID: %d\n" "$vmid" && continue
         }
 
         host_name=$(jq '."host-name"' < <(qm guest cmd "$vmid" get-host-name) | tr -d '"')
         ip=$(jq '.[1]."ip-addresses"[0]."ip-address"' < <(qm guest cmd "$vmid" network-get-interfaces) | tr -d '"') 
-        printf "Extracted: %s - %s\n" "$host_name" "$ip"
+        debug "Extracted: $host_name - $ip"
         IP_LIST[$host_name]="$ip"
     done
 }
