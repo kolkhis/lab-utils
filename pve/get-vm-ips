@@ -46,7 +46,7 @@ while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
                 printf >&2 "Bad or missing arguement to: -o | --output-format\n";
                 exit 1;
             }
-            if [[ ! $OUTPUT_FORMAT =~ (ansible|txt) ]]; then
+            if [[ ! $OUTPUT_FORMAT =~ (ansible|txt|ip) ]]; then
                 printf >&2 "Output format should be one of: ansible | txt | ip\n"
                 exit 1
             fi
