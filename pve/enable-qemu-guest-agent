@@ -46,6 +46,11 @@ IFS=$'\n' read -r -d '' -a VMID_LIST < <(
     sudo qm list | perl -ne 'print "$1\n" if m/^\s*(\d{1,})\s/'
 )
 
+if [[ -z "${VMID_LIST[*]}" ]]; then
+    printf >&2 "Error: VMID list is empty. Make sure you're running with root permissions.\n"
+    exit 1
+fi
+
 for id in "${VMID_LIST[@]}"; do
     printf "Attempting to enable QEMU guest agent for VM: %s\n" "$id"
     { sudo qm set "$id" --agent enabled=1,fstrim_cloned_disks=1 && (( SUCCESS++ )); } || {
