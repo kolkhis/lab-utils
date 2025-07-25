@@ -9,7 +9,7 @@ This is a collection of scripts and playbooks I've written for Proxmox-specific 
 
 ## Scripts
 
-### `enable-qemu-guest-agent`
+### `./enable-qemu-guest-agent`
 This script is used to enable the QEMU guest agent in the **VM settings**.  
 
 This script does **not** install the `qemu-guest-agent` package that is necessary in
@@ -22,7 +22,7 @@ against that list to enable the QEMU guest agent setting.
 
 > **Note:** This script *must* be run from the PVE host itself, not a VM.  
 
-### `get-vm-ips`
+### `./get-vm-ips`
 
 This script is used to gather the IPs of all the VMs in the Proxmox environment.  
 
@@ -31,6 +31,8 @@ relevant information.
 
 It gathers network interface information from all guest machines, as well as their
 host names as they're configured locally.  
+
+- This script is self documenting. Run `./get-vm-ips --help` for usage.  
 
 ---
 
@@ -55,6 +57,7 @@ host-name ansible_host=192.168.1.12
 ```
 
 
+
 > **Note:** This script *must* be run from the PVE host itself, not a VM.
 > Additionally, the `qemu-guest-agent` **must** be enabled for this script to work
 > properly.    
@@ -62,7 +65,7 @@ host-name ansible_host=192.168.1.12
 
 ## Playbooks
 
-### ./playbooks/install_qemu_guest_agent.yml
+### `./playbooks/install_qemu_guest_agent.yml`
 
 This playbook is intended to be used against virtual machines hosted by Proxmox.  
 
