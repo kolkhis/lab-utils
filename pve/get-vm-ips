@@ -47,7 +47,7 @@ while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
                 exit 1;
             }
             if [[ ! $OUTPUT_FORMAT =~ (ansible|txt) ]]; then
-                printf >&2 "Output format should be one of: ansible | txt\n"
+                printf >&2 "Output format should be one of: ansible | txt | ip\n"
                 exit 1
             fi
             shift;
@@ -77,6 +77,7 @@ OPTIONS:
                              Valid values:
                                - ansible : INI-style lines (default)
                                - txt     : Plain "<hostname> <ip>" format
+                               - ip      : Output only "<ip>" format
 
   -o, --outfile <file>     Destination file path to write output to.
                            Writes to stdout by default.  
@@ -142,26 +143,40 @@ get-ips(){
     done
 }
 
+format-output() {
+    case "${OUTPUT_FORMAT,,}" in
+        ip)
+            for key in "${!IP_LIST[@]}"; do
+                printf "%s\n" "${IP_LIST[$key]}"
+            done
+            ;;
+        txt)
+            for key in "${!IP_LIST[@]}"; do
+                printf "%s %s\n" "$key" "${IP_LIST[$key]}"
+            done
+            ;;
+        ansible)
+            for key in "${!IP_LIST[@]}"; do
+                printf "%s ansible_host=%s\n" "$key" "${IP_LIST[$key]}" >> "$OUTPUT_FILE"
+            done
+            ;;
+        *)
+            printf >&2 "Unknown format detected: %s\nExiting." "$OUTPUT_FORMAT"
+            exit 1
+            ;;
+    esac
+}
+
 output-to-file() {
     : > "$OUTPUT_FILE"
-    [[ -z "${IP_LIST[*]}" ]] && printf >&2 "IP list is empty!\n" && exit 1
-    if [[ ${OUTPUT_FORMAT,,} == 'ansible' ]]; then
-        for key in "${!IP_LIST[@]}"; do
-            printf "%s ansible_host=%s\n" "$key" "${IP_LIST[$key]}" >> "$OUTPUT_FILE"
-        done
-    else
-        for key in "${!IP_LIST[@]}"; do
-            printf "%s %s\n" "$key" "${IP_LIST[$key]}" >> "$OUTPUT_FILE"
-        done
-    fi
+    format-output > "$OUTPUT_FILE"
 }
 
 get-ips "$@"
+[[ -z "${IP_LIST[*]}" ]] && printf >&2 "IP list is empty!\n" && exit 1
 
 if [[ -z "$OUTPUT_FILE" ]]; then
-    for key in "${!IP_LIST[@]}"; do
-        printf "%s %s\n" "$key" "${IP_LIST[$key]}"
-    done
+    format-output
 else
     output-to-file "$@"
 fi
