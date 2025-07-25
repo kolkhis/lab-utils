@@ -2,8 +2,8 @@
 
 declare -a VMID_LIST
 declare -A IP_LIST
-declare OUTPUT_FORMAT='ansible'
-declare OUTPUT_FILE="./ip-list.txt"
+declare OUTPUT_FORMAT='txt'
+declare OUTPUT_FILE
 
 setup-cron() {
     local cmd
@@ -68,7 +68,7 @@ OPTIONS:
                                - txt     : Plain "<hostname> <ip>" format
 
   -o, --outfile <file>     Destination file path to write output to.
-                             Default: ./ip-list.txt
+                           Writes to stdout by default.  
 
   -c, --cron               Install a daily cron job to run this script.
                              The cron job will write to:
@@ -130,7 +130,7 @@ get-ips(){
 }
 
 output-to-file() {
-    : > "$OUTPUT_FILE"  # Truncate ip file
+    : > "$OUTPUT_FILE"
     [[ -z "${IP_LIST[*]}" ]] && printf >&2 "IP list is empty!\n" && exit 1
     if [[ ${OUTPUT_FORMAT,,} == 'ansible' ]]; then
         for key in "${!IP_LIST[@]}"; do
@@ -144,5 +144,13 @@ output-to-file() {
 }
 
 get-ips "$@"
-output-to-file "$@"
+
+if [[ -z "$OUTPUT_FILE" ]]; then
+    for key in "${!IP_LIST[@]}"; do
+        printf "%s %s\n" "$key" "${IP_LIST[$key]}"
+    done
+else
+    output-to-file "$@"
+fi
+
 
