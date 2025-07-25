@@ -35,11 +35,23 @@ host names as they're configured locally.
 ---
 
 The output can be plain `.txt`, or it can be in Ansible `.ini` format.  
-By default, it uses Ansible for its output format.  
+
+By default, it outputs the resulting IP list in the `<hostname> <ip>` (`.txt`) format
+to `stdout`. It will output any errors to `stderr` (e.g., if a host cannot be reached
+via `qm`).  
+
+Example output (default): 
+```bash
+host-name 192.168.1.11
+host-name 192.168.1.12
+# ...etc
+```
 
 Example output (ansible):
 ```bash
 host-name ansible_host=192.168.1.11
+host-name ansible_host=192.168.1.12
+# ...etc
 ```
 
 
