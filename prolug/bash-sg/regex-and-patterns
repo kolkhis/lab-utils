@@ -1141,6 +1141,15 @@ printf "For instance, in sed, vim, and some others, use \1 to reference the firs
 
     echo "abcdefg" | sed -E 's/(abc)defg/\1/' # output: abc
 
+printf "Additionally, quantifiers can be used on capture groups themselves.\n"
+
+    echo "abcde_fghjkl_fghjkl_" | perl -pe 's/^(fghjkl_)+/\1\2/'
+
+printf "When doing this, only ONE occurrence of the capture group is saved.\n"
+printf "This is because the quantifier happens outside of the capture group.\n"
+printf "This can be useful if you want to get rid of a duplicate entry.\n"
+    # vim:
+    # :s/\v(fghjkl_)+/\1/
 
 
 
