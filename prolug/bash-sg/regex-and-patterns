@@ -1209,27 +1209,21 @@ printf "For instance, in sed, vim, and some others, use \1 to reference the firs
 
 
 
-# TODO(fix): Get working example for greedy/non-greedy quantifiers
-# Capture Groups (cont.)
-printf "We can use sets and quantifiers inside capture groups too.\n"
+# Quantifiers (greedy vs. non-greedy)
+printf "Try to match everything up to the first 'hjkl'\n"
 
-    echo "abcdefghjkl" | sed -E 's/^([a-z]+)fghjkl/\1/'
-    echo "abcdefghjkl" | perl -pe 's/^([a-z]+?)fghjkl/$1/'
+    echo "abcde_fghjkl_fghjkl" | sed -E 's/^([a-z_]+)hjkl/\1/'
 
 printf "This is a fallback of 'sed'. All quantifiers are 'greedy' by default.\n"
 printf "There is no way in sed or bash to make quantifiers non-greedy.\n"
 
 printf "Enter perl.\n"
 
+    echo "abcde_fghjkl_fghjkl" | perl -pe 's/^([a-z_]+?)hjkl/\1/'
+
 printf "Making a quantifier non-greedy in perl is easy. Just add a '?' after the quantifier (e.g., '*?')\n"
 
-    echo "abcdefghjkl" | perl -pe 's/([a-z]+?)hjkl/\1/' # output: abcde
 
-    declare MY_VAR="Going to hang with the wife."
-    [[ $MY_VAR =~ ^Going(.*)wife\. ]] && printf "Match: %s\n" "${BASH_REMATCH[1]}" 
-
-    [[ $MY_VAR =~ ^Going(.*)(wife)\. ]] && printf "Match 1: %s\n" "${BASH_REMATCH[1]}" && printf "Match 2: %s\n" "${BASH_REMATCH[2]}" 
-    # perl / sed
 
     
 
