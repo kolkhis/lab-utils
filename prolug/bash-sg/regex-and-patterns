@@ -231,7 +231,7 @@ printf "We have a number of tools at our disposal to achieve this goal.\n"
 
 printf "We can match a literal string with regex to see if the string contains a substring.\n"
 
-    [[ "abcdefg" =~ abc ]]  # Will match the substring 'abc' 
+    if [[ "abcdefg" =~ abc ]]; then :; fi  # Will match the substring 'abc' 
 
 printf "The '.' (dot) character will match any single character.\n"
 
@@ -240,6 +240,7 @@ printf "The '.' (dot) character will match any single character.\n"
 printf "We can also add a quantifier, which will say 'match more of this'.\n"
 
 printf "The two most common quantifiers are '*' and '+'.\n"
+
 printf "'*': Matches ZERO or more of whatever comes before it (optional matching).\n"
 printf "'+': Matches ONE or more of whatever comes before it (non-optional matching).\n"
 
@@ -314,7 +315,7 @@ printf "If we're using Bash regex, we can't use \s or \w, but we can use pattern
 printf "But if we're using perl or vim, etc., we can use \s and \w character classes.\n"
 
     echo "abc 123" | perl -pe 's/\s(.*)/\1/' # Output: abc123
-
+    
 printf "This is the same with vim regex.\n"
 printf "If you use vim, the character classes used are mostly the same as Perl.\n"
 
@@ -491,7 +492,7 @@ EOF
     [[ "abcdefg" =~ [abc]* ]]  # Will match zero or more characters, 'abc'
     [[ "abcdefg" =~ [abc]{2} ]]  # Will match exactly 2 characters, 'ab'
     [[ "abcdefg" =~ [abc]{2,} ]]  # Will match at least 2 characters, 'abc'
-    [[ "abcdefg" =~ [abc]{2,3} ]]  # Will match between 2 and 3 characters, 'abc'
+    [[ "abccccdefg" =~ [abc]{2,3} ]]  # Will match between 2 and 3 characters, 'abc'
 
     # [pattern]{0,}
     # [pattern]*
@@ -572,9 +573,10 @@ printf "In most regex engines, the syntax for this is '\w' where 'w' is the char
 printf "Let's look at an example:\n"
 
     echo "Match this string 123" | perl -pe 's/\w+/1111/'  
+    echo "Match this string 123" | perl -pe 's/[a-zA-Z0-9_]+/1111/'  
 
 printf "\w says to match any word character.\n"
-printf "This is functionally equivalent to using a set: [a-zA-Z0-9_] \n"
+printf "This is functionally equivalent to using a set: [a-zA-Z0-9_]+ \n"
 
 printf "There are a lot of these character classes.\n"
 
@@ -583,7 +585,7 @@ printf "Usually the uppercase variant of the class is the opposite.\n"
     echo "Match this string 123" | perl -pe 's/\W+/1111/'  
 
 printf "\W says to match any non-word character (the opposite of \w).\n"
-printf "Functionally equivalent to using a negated set: [^a-zA-Z0-9_] \n"
+printf "Functionally equivalent to using a negated set: [^a-zA-Z0-9_]+ \n"
 
 cat << EOF
 Useful character classes (vim/perl):
@@ -1030,7 +1032,7 @@ printf "Word boundaries in grep or sed can be done with \< and \> (GNU extension
     echo "abcdefg" | sed -E "s/\<ab/ze/"
 
 printf "The \< is the opening word bounary, and \> the closing word boundary.\n"
-printf "These word boundaries also work with vim regex.\n" # neovim
+printf "These word boundaries also work with vim regex.\n" 
 
 printf "Note that bash regex does NOT support word boundaries.\n"
 
@@ -1207,13 +1209,12 @@ printf "For instance, in sed, vim, and some others, use \1 to reference the firs
 
 
 
-
+# TODO(fix): Get working example for greedy/non-greedy quantifiers
 # Capture Groups (cont.)
 printf "We can use sets and quantifiers inside capture groups too.\n"
 
-    echo "abcdefg" | sed -E 's/([abc]*)defg/\1/'   # output: abc
-
-    echo "abcdefghjkl" | sed -E 's/([a-z]+)fg/\1/' # output: abcdefghjkl (not what we want)
+    echo "abcdefghjkl" | sed -E 's/^([a-z]+)fghjkl/\1/'
+    echo "abcdefghjkl" | perl -pe 's/^([a-z]+?)fghjkl/$1/'
 
 printf "This is a fallback of 'sed'. All quantifiers are 'greedy' by default.\n"
 printf "There is no way in sed or bash to make quantifiers non-greedy.\n"
