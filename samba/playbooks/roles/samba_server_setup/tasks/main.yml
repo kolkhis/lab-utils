@@ -1,0 +1,40 @@
+---
+# tasks file for samba_server_setup
+- name: Install the Samba package on Debian-based systems
+  ansible.builtin.apt:
+    name: samba
+    state: present
+    update_cache: true
+  register: apt_output
+  when: ansible_os_family == 'Debian'
+
+- name: Install the Samba package on RedHat-based systems
+  ansible.builtin.dnf:
+    name: samba
+    state: present
+    update_cache: true
+  register: dnf_output
+  when: ansible_os_family == 'RedHat'
+
+- name: Install the Samba package on other systems
+  ansible.builtin.package:
+    name: samba
+    state: present
+  when: apt_output.skipped and dnf_output.skipped
+
+- name: Create the Samba directory to serve
+  ansible.builtin.file:
+    path: {{ samba_dir }}
+    state: directory
+    mode: '0755'
+  when: create_samba_dir is defined and create_samba_dir
+
+- name: Create the Samba user account
+  ansible.builtin.user:
+    name: {{ samba_user }}
+    password: {{ samba_password }}
+    state: present
+    update_password: always
+  when: create_samba_user is defined and create_samba_user
+
+

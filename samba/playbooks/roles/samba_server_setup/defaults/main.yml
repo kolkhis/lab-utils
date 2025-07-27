@@ -1,0 +1,7 @@
+---
+# defaults file for samba_server_setup
+samba_user: sambauser
+samba_password: smbpass
+create_samba_user: true
+samba_dir: /srv/samba/secure-share
+create_samba_dir: true
