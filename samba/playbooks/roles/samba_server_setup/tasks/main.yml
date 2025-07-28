@@ -20,21 +20,27 @@
   ansible.builtin.package:
     name: samba
     state: present
-  when: apt_output.skipped and dnf_output.skipped
+  when: apt_output.skipped | default(false) and dnf_output.skipped | default(false)
 
 - name: Create the Samba directory to serve
   ansible.builtin.file:
-    path: {{ samba_dir }}
+    path: "{{ samba_dir }}"
     state: directory
     mode: '0755'
-  when: create_samba_dir is defined and create_samba_dir
+  when: create_samba_dir | default(false)
 
 - name: Create the Samba user account
   ansible.builtin.user:
-    name: {{ samba_user }}
-    password: {{ samba_password }}
+    name: "{{ samba_user }}"
+    password: "{{ samba_password }}"
     state: present
     update_password: always
-  when: create_samba_user is defined and create_samba_user
+  when: create_samba_user | default(false)
 
-
+- name: Add entry to /etc/samba/smb.conf
+  ansible.builtin.blockinfile:
+    path: /etc/samba/smb.conf
+    marker_begin: "# {mark} START OF ANSIBLE-MANAGED BLOCK - {{ samba_share_name }}"
+    marker_end: "# {mark} END OF ANSIBLE-MANAGED BLOCK - {{ samba_share_name }}"
+    block: "{{ lookup('template', 'smb.conf_entry.j2') }}"
+  when: configure_smb_conf | default(false)

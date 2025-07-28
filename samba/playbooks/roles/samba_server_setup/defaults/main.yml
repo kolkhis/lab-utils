@@ -3,5 +3,13 @@
 samba_user: sambauser
 samba_password: smbpass
 create_samba_user: true
-samba_dir: /srv/samba/secure-share
+samba_dir: /srv/samba/my-share
 create_samba_dir: true
+
+configure_smb_conf: true
+samba_share_name: MyShare
+browsable: true
+readonly: false
+guest_ok: true
+valid_users: []
+samba_conf_extra_opts: |

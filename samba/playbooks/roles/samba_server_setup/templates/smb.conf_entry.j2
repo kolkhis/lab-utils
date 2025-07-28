@@ -1,0 +1,23 @@
+# Template for the smb.conf entry itself, not the whole file
+
+[{{ samba_share_name }}]
+    path = {{ samba_dir }}
+{% if browsable %}
+    browsable = yes
+{% else %}
+    browsable = no
+{% endif %}
+{% if readonly %}
+    read only = yes
+{% else %}
+    read only = no
+{% endif %}
+{% if guest_ok %}
+    guest ok = yes
+{% else %}
+    guest ok = no
+{% endif %}
+{% if valid_users | length > 0 %}
+    valid users = {{ valid_users | join(' ') }}
+{% endif %}
+
