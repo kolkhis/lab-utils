@@ -1,11 +1,20 @@
-# Project - K8s Cluster using HAProxy Load Balancer and Keepalived
+# HA K8s Cluster 
+This is my documentation of setting up a high availability kubernetes cluster using 
+HAProxy Load Balancer and Keepalived.  
+
 
 ## Table of Contents
-* [Set up the Environment](#set-up-the-environment) 
+* [Overview](#overview) 
+* [Set up the k8s Environment](#set-up-the-k8s-environment) 
     * [Spin up VMs](#spin-up-vms) 
     * [Install K8s](#install-k8s) 
+    * [K8s install with package managers](#k8s-install-with-package-managers) 
+        * [Install k8s on Rocky/RedHat-based](#install-k8s-on-rockyredhat-based) 
+        * [Install k8s on Ubuntu/Debian-based](#install-k8s-on-ubuntudebian-based) 
+        * [Next Steps for both RedHat and Debian](#next-steps-for-both-redhat-and-debian) 
     * [Initialize k8s Cluster](#initialize-k8s-cluster) 
-    * [Install a CNI plugin (flannel)](#install-a-cni-plugin-flannel) 
+    * [Set up `kubeconfig`](#set-up-kubeconfig) 
+    * [Install a CNI plugin (Flannel/Cilium/Calico)](#install-a-cni-plugin-flannelciliumcalico) 
     * [Join the Worker Nodes](#join-the-worker-nodes) 
     * [Deploy a Test App](#deploy-a-test-app) 
     * [Check which NodePort was Assigned](#check-which-nodeport-was-assigned) 
@@ -20,9 +29,20 @@
 * [Test the Virtual IP and Failover](#test-the-virtual-ip-and-failover) 
 * [tl;dr](#tldr) 
 * [Misc Notes](#misc-notes) 
+* [Porting to Cilium](#porting-to-cilium) 
+    * [Cilium Ports / Firewalld rules](#cilium-ports--firewalld-rules) 
+    * [Install Cilium](#install-cilium) 
+    * [Deploy Cilium in k8s](#deploy-cilium-in-k8s) 
+    * [Enable Hubble for Monitoring](#enable-hubble-for-monitoring) 
+    * [Restart Worker Nodes (if already joined)](#restart-worker-nodes-if-already-joined) 
+    * [Verify Cilium is running](#verify-cilium-is-running) 
+    * [Test network connectivity](#test-network-connectivity) 
+* [Generating a New Join Token](#generating-a-new-join-token) 
+* [Resources](#resources) 
 
 
 Feats:
+
 - Multi-node k8s cluster (1+ control, 2+ workers)
 - HAProxy load balancer to distribute traffic to the k8s nodes
 - Keepalived will run on both HAProxy VMs to manage a shared Virtual IP (VIP)
@@ -31,6 +51,7 @@ Feats:
 ---
 
 TODO:
+
 - Add more Control Plane nodes (2 more?) for real HA
 - Ingress controller 
     - `Traefix`, `Nginx`, `HAProxy Ingress`
@@ -44,6 +65,7 @@ TODO:
     - NFS storage (CSI driver for Synology)
 
 Consider:
+
 - Kube-VIP v. Keepalived?
     - metallb/kube-vip
 - Cloudflare / Zero Trust
@@ -57,6 +79,7 @@ Consider:
 ```
 
 Deps:
+
 - A container runtime interface (CRI)
     - Containerd
     - CRI-O
@@ -64,12 +87,14 @@ Deps:
 
 ## Overview
 Minimum of 5 VMs
+
 - 1 k8s control node
 - 2 k8s worker nodes
 - 2 haproxy load balancer nodes (running a VIP with keepalived)
 
 
 We'll need to install these tools on all of the nodes:
+
 * `kubeadm`: the command to bootstrap the cluster.
 * `kubelet`: the component that runs on all of the machines in your cluster and does 
   things like starting pods and containers.
@@ -80,6 +105,7 @@ We'll need to install these tools on all of the nodes:
 ## Set up the k8s Environment
 ### Spin up VMs
 Three to start:
+
 * `control-node1`
 * `worker-node1`
 * `worker-node2`
@@ -87,6 +113,7 @@ Three to start:
 To scale, you'd just create more worker nodes.  
 
 The HAProxy nodes are separate.  
+
 * `haproxy-lb1`
 * `haproxy-lb2`
 
@@ -191,8 +218,8 @@ fi
 printf "Adding the Docker-ce repository for containerd.\n"
 sudo dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
 sudo dnf install -y containerd.io
-
 ```
+
 ##### Firewalld Rules
 * Calico: Uses `BGP` (Port `179/tcp`)
 * Flannel: Uses VXLAN (Port `4789/udp`)
@@ -203,7 +230,7 @@ The ports being opened:
 - Control Node Only
     - `6443/tcp`: Kubernetes API server (control plane)
     - `2379-2380/tcp`: `etcd` database communication
-    - `10251/tcp`: KLube-scheduler
+    - `10251/tcp`: Kube-scheduler
     - `10257/tcp`: `kube-apiserver` authentication webhook
     - `10259/tcp`: `kube-controller` authentication webhook
 - Control+Worker
