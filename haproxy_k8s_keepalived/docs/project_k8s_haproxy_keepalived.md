@@ -254,6 +254,7 @@ The ports being opened:
 ```
 
 Masquerading:
+
 * `firewall-cmd --add-masquerade --permanent`
     * Adds a `MASQUERADE` rule to `iptables` (used by firewalld)
     * Ensures that packets exiting the node can use the node's external IP.  
@@ -318,22 +319,23 @@ Verify the installtion
 kubeadm version
 kubelet --version
 kubectl version --client
+```
 
+After those 3 tools are verified to be on the system, you can (optionally) add some
+bash completion for the `kubectl` tool.  
+
+```bash
 # Generate bash completion script for kubectl 
 kubectl completion bash
 # enable kubectl autocompletion in .bashrc (requires `bash-completion`)
 echo 'source <(kubectl completion bash)' >> ~/.bashrc
 
 # if you have an alias for kubectl, you can extend the compltion to work with the alias
-echo 'alias k=kubectl' >> ~/.bashrc
-echo 'complete -o default -F __start_kubectl k' >> ~/.bashrc
+printf 'alias k=kubectl\n' >> ~/.bashrc
+printf 'complete -o default -F __start_kubectl k\n' >> ~/.bashrc
 ```
 
-
-
-* Initialize the cluster (done later).  
-
-
+Now we can initialize the cluster.  
 
 
 ### Initialize k8s Cluster
@@ -353,6 +355,7 @@ sudo kubeadm init \
 More info:  
 When you run `kubeadm init`, you use the `--pod-network-cidr` flag to specify the IP
 address range for pods in the cluster.  
+
 * `10.244.0.0/16` defines a network range from `10.244.0.0` up to `10.244.255.255`
 * Typically choose a private, non-routable IP range to avoid conflicts with external
   networks.  
@@ -368,10 +371,14 @@ mkdir -p "$HOME/.kube"
 sudo cp /etc/kubernetes/admin.conf "$HOME/.kube/config"
 sudo chown $(id -u):$(id -g) "$HOME/.kube/config"
 ```
+
 ---
 
 ### Install a CNI plugin (Flannel/Cilium/Calico)
-* This is no longer relevant -- I've switched to [Cilium](#install-cilium).  
+
+* This section is about installing Flannel and is no longer relevant -- I've switched 
+  to [Cilium](#install-cilium).  
+
 The CNI needs to be installed on all of the nodes that are running kubernetes.  
 
 ```bash
@@ -408,6 +415,7 @@ Use `kubeadm join` to join the worker nodes.
 ```bash
 kubeadm join ...
 ```
+
 * [next](#deploy-a-test-app)
 
 ---
@@ -477,7 +485,7 @@ Then reach the app at `<node-ip>:30080`
 
 ---
 
-In k8s, a NodePort is one of the ways to expose a service externally.  
+In k8s, a `NodePort` is one of the ways to expose a service externally.  
 This means that you can access the service from any node's IP, on that port, and k8s
 will route the traffic to the correct Pod/Pods.
 
@@ -523,20 +531,22 @@ backend k8s_backend
     server worker1 192.168.4.67:30080 check
     server worker2 192.168.4.68:30080 check
 ```
+
 * `frontend`: Receives incoming requests on port 80.  
 * `backend`: Sends the requests to the kubernetes nodes on the NodePort.  
-(change IP addresses accordingly)  
+  (change IP addresses accordingly)  
 
 Then restart HAProxy
 ```bash
 sudo systemctl restart haproxy
-sudo systemctl enable haproxy --now
+sudo systemctl enable --now haproxy
 ```
+
 * `--now` also tells it to `start` in addition to `enable`.  
 
 ---
 
-On Rocky, make sure to open ports 443, 80, and whatever the NodePort is.  
+On Rocky, make sure to open ports `443`, `80`, and whatever the `NodePort` is.  
 Also, make sure SELinux is set to permissive.  
 
 ---
