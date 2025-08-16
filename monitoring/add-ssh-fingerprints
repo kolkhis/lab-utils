@@ -1,10 +1,18 @@
 #!/bin/bash
 
-
 declare INVENTORY_FILE=
 declare SSH_CONFIG_FILE=
 declare KNOWN_HOSTS="$HOME/.ssh/known_hosts"
 declare -a IPS
+declare VERBOSE=0
+
+verbose() {
+    [[ $VERBOSE -gt 0 ]] && printf "%s\n" "$*"
+}
+
+# err() {
+#     :
+# }
 
 parse-ansible-inventory(){
     local -a ENTRIES=()
@@ -26,7 +34,7 @@ add-fingerprints(){
     local fingerprint_file
     fingerprint_file="$(mktemp)"
     for ip in "${IPS[@]}"; do
-        printf "Checking for fingerprint for %s...\n" "$ip"
+        verbose "Checking for fingerprint for $ip"
         : > "$fingerprint_file"
 
         ssh-keyscan -H "$ip" 2>/dev/null | grep -o '^|.*$' > "$fingerprint_file" || {
@@ -43,7 +51,6 @@ add-fingerprints(){
         fi
 
     done
-
 }
 
 
@@ -59,6 +66,7 @@ while [[ -n $1 && $1 =~ ^- && $1 != '--' ]]; do
             }
             shift;
             ;;
+
         -s|--ssh-config)
             { [[ -n $2 && ! $2 =~ ^- ]] && shift && SSH_CONFIG_FILE=$1; } || {
                 printf >&2 "Bad argument to -s/--ssh-config: %s\n" "$2" && exit 1
@@ -76,6 +84,12 @@ while [[ -n $1 && $1 =~ ^- && $1 != '--' ]]; do
             }
             shift;
             ;;
+
+        -v|--verbose)
+            VERBOSE=1
+            shift;
+            ;;
+
         -h|--help)
             : "TODO"
             cat <<- EOF
@@ -94,10 +108,12 @@ while [[ -n $1 && $1 =~ ^- && $1 != '--' ]]; do
 		  ${BASH_SOURCE[0]} -i inventory.ini -k /tmp/known_hosts
 		  ${BASH_SOURCE[0]} -s ~/.ssh/config
 		  ${BASH_SOURCE[0]} -i inventory.ini -s ~/.ssh/config
-		
+		  ${BASH_SOURCE[0]} -n -s ~/.ssh/config
+
 		EOF
-    exit 0
+        exit 0
             ;;
+
         *)
             printf "Unrecognized argument: %s\n" "$1"
             shift;
@@ -113,8 +129,6 @@ if [[ -z $INVENTORY_FILE && -z $SSH_CONFIG_FILE ]]; then
     exit 1
 fi
 
-
-
 { [[ -n $INVENTORY_FILE ]] && parse-ansible-inventory; } || {
     printf >&2 "Failed to process inventory! \n" && exit 1
 }
@@ -123,13 +137,13 @@ fi
     printf >&2 "Failed to process SSH config file!\n" && exit 1
 }
 
-printf "File processed.\n"
-printf "IP Address list obtained:\n"
-printf -- "- %s\n" "${IPS[@]}"
+verbose "File processed."
+verbose "IP Address list obtained:"
+printf -- "%s\n" "${IPS[@]}"
 
 add-fingerprints || {
     printf >&2 "Failed to add fingerprints to known hosts file! (%s)\n" "$KNOWN_HOSTS" && exit 1
 }
-printf "Fingerprints successfully added!\n" && exit 0
-
+verbose "Fingerprints successfully added!" 
+exit 0
 
