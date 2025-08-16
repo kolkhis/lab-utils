@@ -7,7 +7,7 @@
         - exit codes
         - `true`/`false`
         - C
-        - `./hello.c`
+        - `./examples/hello.c`
     - `if`/`elif`/`else`
     - `case`
     - Side rant (POSIX)?

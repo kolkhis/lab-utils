@@ -85,7 +85,7 @@ printf "Almost every tool you use on Linux was written in C.\n"
 printf "All these common tools are written in C: grep, cat, sed, ls, find, cp, mv, rm, mkdir, etc.\n"
 
 printf "Let's look at a very simple C program.\n"
-cat ./hello.c
+cat ./examples/hello.c
 
 printf "As you may notice, there's a line that comes at the end of every C program.\n"
 printf "Can anyone tell me what that is?\n"
@@ -402,16 +402,16 @@ printf "Also not a boolean. This program returns an 'unsuccessful result' (1)\n"
 
 
 printf "Take this example:\n"
-if [[ -f ./hello.c ]]; then
+if [[ -f ./examples/hello.c ]]; then
     printf "The file exists.\n"
 fi
 
 printf "This uses the '[[' bash builtin command.\n"
-printf "'[[' starts the command, '-f ./hello.c' is an argument to that command.\n"  
+printf "'[[' starts the command, '-f ./examples/hello.c' is an argument to that command.\n"  
 printf "']]' ends the command.\n"
 
 
-printf "If the condition is true, (./hello.c exists and is a regular file), the exit code of the '[[' command will be 0.\n"
+printf "If the condition is true, (./examples/hello.c exists and is a regular file), the exit code of the '[[' command will be 0.\n"
 printf "But, if the condition turns out to be false, the exit code will be non-zero.\n"
 
 
@@ -499,13 +499,13 @@ printf "The ! operator can be used either inside or outside the brackets in bash
 
 # Also valid:
 
-if ! [[ -f ./hello.c ]]; then
+if ! [[ -f ./examples/hello.c ]]; then
     printf "File doesn't exist!\n"
 fi
 printf "This is preference. I prefer to use it inside the brackets.\n"
 printf "In POSIX-compliant scripts, do it outside the brackets.\n"
 
-if ! [ -f ./hello.c ]; then
+if ! [ -f ./examples/hello.c ]; then
     printf "File doesn't exist.\n"
 fi
 
@@ -569,11 +569,11 @@ printf "Now that we know what's true and what's false, we can combine some condi
 printf "The '&&' (AND) and '||' (OR) operators work with these truthy and falsy values.\n"
 printf "Let's look at '&&'\n"
 
-if [[ -f ./hello.c && -s ./hello.c ]]; then
+if [[ -f ./examples/hello.c && -s ./examples/hello.c ]]; then
     printf "File exists and is not empty.\n";
 fi
 
-if [ -f ./hello.c ] && [ -s ./hello.c ]; then # posix
+if [ -f ./examples/hello.c ] && [ -s ./examples/hello.c ]; then # posix
     :
 fi
 # If using single brackets [ ... ], use && and || outside
@@ -669,10 +669,10 @@ fi
 
 
 # Short-circuit logic
-cat ./hello.c && printf "Successfully ran 'cat'\n" && printf "YEY\n"
+cat ./examples/hello.c && printf "Successfully ran 'cat'\n" && printf "YEY\n"
 printf "This '&&' works here just like in the if statements.\n"
 
-printf "The first condition is the exit code of 'cat ./hello.c'\n"
+printf "The first condition is the exit code of 'cat ./examples/hello.c'\n"
 printf "If that condition passes (exit code 0), then the next condition is evaluated.\n"
 
 printf "This makes error handling very easy in Bash.\n"

@@ -491,27 +491,27 @@ printf "Now, if we're not using a pipe and we want to perform operations on file
 
 printf "Both perl and sed have a '-i' option to enable in-place editing of files.\n"
 
-    cat ./hello.c
-    perl -pi -e 's/world/friend/g' ./hello.c
-    cat ./hello.c
+    cat ./examples/hello.c
+    perl -pi -e 's/world/friend/g' ./examples/hello.c
+    cat ./examples/hello.c
 
 printf "So we replaced 'Hello, world.' with 'Hello, friend.'\n"
 printf "If we didn't specify '-i', it would only output the change to stdout.\n"
 
 printf "Now let's change it back with sed.\n"
 
-    cat ./hello.c
-    sed -i -E 's/friend/world/g' ./hello.c
-    cat ./hello.c
+    cat ./examples/hello.c
+    sed -i -E 's/friend/world/g' ./examples/hello.c
+    cat ./examples/hello.c
 
 printf "Cool. But, what if we wanted to make a backup before we make any changes?\n"
 
 printf "That's built in to '-i'. Just add a suffix directly after the '-i' and it'll make a backup.\n"
 
-    perl -pi.bak -e 's/world/friend/g' ./hello.c
-    sed -i.bak 's/world/friend/g' ./hello.c
+    perl -pi.bak -e 's/world/friend/g' ./examples/hello.c
+    sed -i.bak 's/world/friend/g' ./examples/hello.c
 
-printf "This will create a 'hello.c.bak' file, which is a backup of the original.\n"
+printf "This will create a 'examples/hello.c.bak' file, which is a backup of the original.\n"
 printf "This is very useful if you're working with files that are not under version control.\n"
 
 

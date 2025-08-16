@@ -14,7 +14,7 @@ printf "You typed: %s\n" "$INPUT"
 true    # returns 0 (which is true in bash)
 false   # returns 1 (false in bash)
 
-if [[ -f ./hello.c ]]; then         # file exists and is a regular file
+if [[ -f ./examples/hello.c ]]; then         # file exists and is a regular file
     return
 fi
 
