@@ -1,0 +1,48 @@
+#!/bin/bash
+
+: "
+Verification script for Admin course unit 16 scenario 1
+
+Verifies that the 3 extra disks are available with 3GB each for the user to 
+turn into a logical volume.  
+"
+
+declare SCENARIO='
+    A ticket has come in that a mount point, /space, is not working correctly. 
+    The team expected a 9GB partition to be built there on the 3 attached disks, but found
+    that it was not a separate partition.
+
+    Verify that /space is not set up correctly.
+'
+
+declare -a EXTRA_DISKS
+
+# grab and format extra disks as "DISKNAME SIZE"
+IFS=$'\n' read -r -d '' -a EXTRA_DISKS < <(
+    lsblk | grep -i 'xvd[b-z]' | awk '{ printf "%s ", $1; printf "%s\n", $4}'
+)
+
+check-disks() {
+    # verify that there are at least 3 extra disks
+    [[ "${#EXTRA_DISKS[@]}" -ge 3 ]] || return 1
+
+    # verify size
+    for disk in "${EXTRA_DISKS[@]}"; do
+        if [[ "${disk##* }" != '3G' ]]; then
+            printf >&2 -- "ERROR: Disk: %s -- Does not have 3GB available.\n" "${disk%% *}"
+            return 1
+        fi
+    done
+}
+
+check-disks || {
+    printf >&2 "ERROR: Lab verification failed. There was a problem with the disks!\n\n"
+    printf >&2 "\tPlease report this problem to an administrator.\n\n"
+    exit 1
+}
+
+printf -- "\n-- Lab successfully setup: Linux Admin Course - Unit 16, Scenario 2 --\n\n"
+printf "Scenario: %s\n" "$SCENARIO"
+
+exit 0
+
