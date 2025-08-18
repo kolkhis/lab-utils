@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Verification script for Admin course unit 16 scenario 1
+# Verification script for Admin course unit 16 scenario 2
 # 
 # Verifies that the 3 extra disks are available with 3GB each for the user to 
 # turn into a logical volume.  
