@@ -50,6 +50,6 @@ if grep -Pqi '^Listen 80$' "${HTTPD_CONFIG}"; then
     }
 fi
 
-printf "-- Lab successfully setup: Linux Admin Course - Unit 16, Scenario 1 --\n"
+printf -- "-- Lab successfully setup: Linux Admin Course - Unit 16, Scenario 1 --\n"
 exit 0
 
