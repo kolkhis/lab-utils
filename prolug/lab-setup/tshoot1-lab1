@@ -1,13 +1,13 @@
 #!/bin/bash
 
-declare HTTPD_CONFIG="/etc/httpd/conf/httpd.conf"
+declare -r HTTPD_CONFIG="/etc/httpd/conf/httpd.conf"
 
 : "
 This script sets up the first scenario:
 https://professionallinuxusersgroup.github.io/lac/u16lab.html#scenario-1
 "
 
-# Ensure httpd is isntalled and active
+# Ensure httpd is installed and active
 if ! rpm -qa | grep -qi "httpd"; then
     dnf install -y "httpd" || {
         printf >&2 "ERROR: Could not install the httpd package! \n"
@@ -15,7 +15,7 @@ if ! rpm -qa | grep -qi "httpd"; then
     }
 fi
 
-if ! systemctl is-active httpd; then 
+if ! systemctl is-active httpd > /dev/null 2>&1; then 
     systemctl enable --now httpd || {
         printf >&2 "ERROR: Could not enable the httpd service!\n"
         exit 1
@@ -30,7 +30,7 @@ if ! rpm -qa | grep -qi 'firewalld'; then
     }
 fi
 
-if ! systemctl is-active 'firewalld'; then
+if ! systemctl is-active 'firewalld' > /dev/null 2>&1; then
     systemctl enable --now 'firewalld' || {
         printf >&2 "ERROR: Could not enable/start the firewalld service!\n"
         exit 1
@@ -39,8 +39,8 @@ fi
 
 
 # change the port for httpd server
-if grep -Pi '^Listen 80$' "${HTTPD_CONFIG}"; then 
-    perl -pi -e 's/^(Listen) 80$/\1 8087/' "$HTTPD_CONFIG" || {
+if grep -Pqi '^Listen 80$' "${HTTPD_CONFIG}"; then 
+    perl -pi -e 's/^(Listen) 80$/$1 8087/' "$HTTPD_CONFIG" || {
         printf >&2 "ERROR: Failed to change port to 8087 in %s\n" "$HTTPD_CONFIG"
         exit 1
     }
@@ -50,7 +50,6 @@ if grep -Pi '^Listen 80$' "${HTTPD_CONFIG}"; then
     }
 fi
 
-printf ">> Lab setup for scenario 1 of Linux Admin Course unit 16\n"
-
+printf "-- Lab successfully setup: Linux Admin Course - Unit 16, Scenario 1 --\n"
 exit 0
 
