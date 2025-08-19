@@ -1,0 +1,32 @@
+#!/bin/bash
+
+exec >> "$LOGFILE" 2>&1
+
+declare BACKUP_DIR='/backup'
+declare -a DIRS=(
+    "/lab_work"
+    "/labs"
+    "/opt"
+)
+
+declare RSYNC_BINARY
+declare LOGFILE='/var/log/backup.log'
+RSYNC_BINARY="$(command -v rsync)"
+
+[[ -n "$RSYNC_BINARY" ]] || {
+    printf >&2 "%s [ERROR]: Rsync binary not found! \n" "$(date '+%F %T')" "$dir"
+    exit 1
+}
+
+backup-dirs() {
+    for dir in "${DIRS[@]}"; do
+        printf "%s [INFO]: Backing up directory: %s\n" "$(date '+%F %T')" "$dir"
+        "$RSYNC_BINARY" -a "$dir" "$BACKUP_DIR" || {
+            printf >&2 "%s [ERROR]: Failed to back up directory: %s\n" "$(date '+%F %T')" "$dir"
+            continue
+        }
+        printf "%s [INFO]: Successfully backed up directory: %s\n" "$(date '+%F %T')" "$dir"
+    done
+}
+
+backup-dirs
