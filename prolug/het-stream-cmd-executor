@@ -6,6 +6,11 @@ declare WATCH_FILE="/data/stream_write/stream_answers"
 
 declare -a EXCLUDE_KEYWORDS=(
     'rm -rf /'
+    '-Rf'
+    'rm --recursive'
+    'rm -R'
+    'rm -f'
+    'rm --force'
     '--no-preserve-root'
     'cat /dev/urandom'
     'cat /dev/random'
