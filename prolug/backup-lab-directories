@@ -12,11 +12,13 @@
 #                 default.
 #
 #       OPTIONS:  There are currently no options for this script.
-#  REQUIREMENTS:  rsync, bash >= 4.2
+#  REQUIREMENTS:  rsync, bash >= 4.4
 #        AUTHOR:  Connor W. (https://github.com/kolkhis)
 #       CREATED:  2025-08-19
 #
 #===============================================================================
+
+declare LOGFILE='/var/log/backup.log'
 
 exec >> "$LOGFILE" 2>&1
 
@@ -26,9 +28,8 @@ declare -a DIRS=(
     "/labs"
     "/opt"
 )
-
 declare RSYNC_BINARY
-declare LOGFILE='/var/log/backup.log'
+
 RSYNC_BINARY="$(command -v rsync)"
 
 [[ -n "$RSYNC_BINARY" ]] || {
