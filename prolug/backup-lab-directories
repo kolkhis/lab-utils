@@ -32,7 +32,7 @@ declare LOGFILE='/var/log/backup.log'
 RSYNC_BINARY="$(command -v rsync)"
 
 [[ -n "$RSYNC_BINARY" ]] || {
-    printf >&2 "%s [ERROR]: Rsync binary not found! \n" "$(date '+%F %T')" "$dir"
+    printf >&2 "%s [ERROR]: Rsync binary not found! \n" "$(date '+%F %T')"
     exit 1
 }
 
