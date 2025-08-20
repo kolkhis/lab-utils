@@ -1,5 +1,23 @@
 #!/bin/bash
 
+#===============================================================================
+#
+#          FILE:  backup-lab-directories
+#
+#         USAGE:  ./backup-lab-directories
+#                 Designed to be used in a cron job. Can also be run manually.
+#
+#   DESCRIPTION:  This script backs up selected directories in the DIRS array to
+#                 the directory specified in the BACKUP_DIR variable, /backup by
+#                 default.
+#
+#       OPTIONS:  See function `usage` or run with --help
+#  REQUIREMENTS:  rsync, bash >= 4.2
+#        AUTHOR:  Connor W. (https://github.com/kolkhis)
+#       CREATED:  2025-08-19
+#
+#===============================================================================
+
 exec >> "$LOGFILE" 2>&1
 
 declare BACKUP_DIR='/backup'
