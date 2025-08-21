@@ -1,0 +1,2 @@
+user:platform:whole command here
+user:platform:echo 'test'
