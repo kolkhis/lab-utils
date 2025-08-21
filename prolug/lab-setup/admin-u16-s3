@@ -1,0 +1,47 @@
+#!/bin/bash
+#===============================================================================
+#
+#          FILE:  admin-u16-s3
+#
+#         USAGE:  ./admin-u16-s3
+#
+#   DESCRIPTION:  This script sets up the third scenario for the unit 16 lab of the
+#                 ProLUG Linux admin course:
+#                 https://professionallinuxusersgroup.github.io/lac/u16lab.html#scenario-3
+#                 It disables the repositories needed to update the system.  
+#
+#
+#       OPTIONS:  There are currently no options for this script.
+#  REQUIREMENTS:  Rocky Linux 9.x (dnf, rpm), bash >= 4.4
+#        AUTHOR:  Connor W. (https://github.com/kolkhis)
+#       CREATED:  2025-08-17
+#
+#===============================================================================
+
+declare SCENARIO='
+    Your team is trying to update your servers during a maintenance window.
+    Your junior administrator kicks you over a server that they cannot get to update.
+    To complete this event the following two must be correct.
+'
+
+declare -a REPO_FILES=(
+    "/etc/yum.repos.d/rocky.repo"
+    "/etc/yum.repos.d/epel.repo"
+)
+
+perl -pi.orig -e 's/(enabled)=1/$1=0/' "${REPO_FILES[@]}" || {
+    printf >&2 "%s [ERROR]: Failed to configure repositories! \n"  "$(date '+%F %T')"
+    exit 1
+}
+
+if ! grep -qiP '^exclude=kernel\*$' /etc/yum.conf; then
+    printf "exclude=kernel*\n" | tee -a /etc/yum.conf || {
+        printf >&2 "%s [ERROR]: Failed to configure repositories! \n"  "$(date '+%F %T')"
+        exit 1
+    }
+fi
+
+printf -- "-- Lab successfully setup: Linux Admin Course - Unit 16, Scenario 3 --\n"
+printf "Scenario: %s\n" "$SCENARIO"
+exit 0
+
