@@ -18,6 +18,11 @@
 #
 #===============================================================================
 
+[[ $EUID -ne 0 ]] && {
+    printf >&2 "ERROR: Script must be run with elevated privileges (root).\n"
+    exit 1
+}
+
 declare SCENARIO='
     Your team is trying to update your servers during a maintenance window.
     Your junior administrator kicks you over a server that they cannot get to update.
@@ -29,19 +34,28 @@ declare -a REPO_FILES=(
     "/etc/yum.repos.d/epel.repo"
 )
 
-perl -pi.orig -e 's/(enabled)=1/$1=0/' "${REPO_FILES[@]}" || {
-    printf >&2 "%s [ERROR]: Failed to configure repositories! \n"  "$(date '+%F %T')"
+configure-repos(){
+    if grep -qi 'enabled=1' "${REPO_FILES[@]}"; then
+        perl -pi.orig -e 's/(enabled)=1/$1=0/' "${REPO_FILES[@]}" || {
+            printf >&2 "%s [ERROR]: Failed to configure repositories! \n"  "$(date '+%F %T')"
+            return 1
+        }
+    fi
+
+    if ! grep -qiP '^exclude=kernel\*$' /etc/yum.conf; then
+        printf "exclude=kernel*\n" | tee -a /etc/yum.conf > /dev/null 2>&1 || {
+            printf >&2 "%s [ERROR]: Failed to configure kernel exclusion! \n"  "$(date '+%F %T')"
+            return 1
+        }
+    fi
+}
+
+configure-repos || {
+    printf >&2 "\nERROR:  Lab setup failed. Encountered a problem with the repositories.\n"
+    printf >&2 "\tPlease report this problem to an administrator.\n\n"
     exit 1
 }
 
-if ! grep -qiP '^exclude=kernel\*$' /etc/yum.conf; then
-    printf "exclude=kernel*\n" | tee -a /etc/yum.conf || {
-        printf >&2 "%s [ERROR]: Failed to configure repositories! \n"  "$(date '+%F %T')"
-        exit 1
-    }
-fi
-
-printf -- "-- Lab successfully setup: Linux Admin Course - Unit 16, Scenario 3 --\n"
+printf -- "\n-- Lab successfully setup: Linux Admin Course - Unit 16, Scenario 3 --\n"
 printf "Scenario: %s\n" "$SCENARIO"
 exit 0
-
