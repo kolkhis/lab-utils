@@ -17,6 +17,11 @@
 #
 #===============================================================================
 
+[[ $EUID -ne 0 ]] && {
+    printf >&2 "ERROR: Script must be run with elevated privileges (root).\n"
+    exit 1
+}
+
 declare -r HTTPD_CONFIG="/etc/httpd/conf/httpd.conf"
 
 # Ensure httpd is installed and active
