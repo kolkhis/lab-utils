@@ -1,0 +1,31 @@
+---
+- name: Set up Samba share
+  hosts: all
+  vars:
+    samba_share: //192.168.4.11/PublicShare
+    mount_point: /mnt/samba/public
+    samba_user: sambauser
+  vars_files: ./vault.yaml 
+  tasks:
+    - name: Set up mount
+      become: true
+      block:
+        - name: Install dependencies
+          ansible.builtin.package:
+            name: cifs-utils
+            state: present
+            # TODO: Add var for `when: client`
+
+        - name: Create mount point
+          ansible.builtin.file:
+            path: "{{ mount_point }}"
+            state: directory
+            mode: 0755
+
+        - name: Mount the Samba share
+          ansible.posix.mount:
+            fstype: cifs
+            opts: username={{ samba_user }},password={{ samba_password }},noauto
+            path: "{{ mount_point }}"
+            src: "{{ samba_share }}"
+            state: mounted

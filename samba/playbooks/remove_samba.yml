@@ -1,0 +1,11 @@
+---
+- name: Remove Samba share from mountpoint
+  hosts: all
+  vars:
+    mount_point: /mnt/samba/secure-share
+  tasks:
+    - name: Remove /etc/fstab entry
+      become: true
+      ansible.posix.mount:
+        path: "{{ mount_point }}"
+        state: absent
