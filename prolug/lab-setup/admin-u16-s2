@@ -1,9 +1,23 @@
 #!/bin/bash
-
-# Verification script for Admin course unit 16 scenario 2
-# 
-# Verifies that the 3 extra disks are available with 3GB each for the user to 
-# turn into a logical volume.  
+#===============================================================================
+#
+#          FILE:  admin-u16-s2
+#
+#         USAGE:  ./admin-u16-s2
+#
+#   DESCRIPTION:  This script verifies the conditions for the second scenario for the
+#                 unit 16 lab of the ProLUG Linux admin course:
+#                 https://professionallinuxusersgroup.github.io/lac/u16lab.html#scenario-2
+#                 Verifies that there are 3 extra disks (xvd.) with at least 3GB of
+#                 space each for the student to use with LVM.
+#
+#
+#       OPTIONS:  There are currently no options for this script.
+#  REQUIREMENTS:  Rocky Linux 9.x (dnf, rpm), bash >= 4.4
+#        AUTHOR:  Connor W. (https://github.com/kolkhis)
+#       CREATED:  2025-08-17
+#
+#===============================================================================
 
 declare SCENARIO='
     A ticket has come in that a mount point, /space, is not working correctly. 

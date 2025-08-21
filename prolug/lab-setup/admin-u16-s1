@@ -1,11 +1,23 @@
 #!/bin/bash
+#===============================================================================
+#
+#          FILE:  admin-u16-s1
+#
+#         USAGE:  ./admin-u16-s1
+#
+#   DESCRIPTION:  This script sets up the first scenario for the unit 16 lab of 
+#                 the ProLUG Linux admin course:
+#                 https://professionallinuxusersgroup.github.io/lac/u16lab.html#scenario-1
+#
+#
+#       OPTIONS:  There are currently no options for this script.
+#  REQUIREMENTS:  Rocky Linux 9.x (dnf, rpm), bash >= 4.4
+#        AUTHOR:  Connor W. (https://github.com/kolkhis)
+#       CREATED:  2025-08-16
+#
+#===============================================================================
 
 declare -r HTTPD_CONFIG="/etc/httpd/conf/httpd.conf"
-
-: "
-This script sets up the first scenario:
-https://professionallinuxusersgroup.github.io/lac/u16lab.html#scenario-1
-"
 
 # Ensure httpd is installed and active
 if ! rpm -qa | grep -qi "httpd"; then
@@ -36,7 +48,6 @@ if ! systemctl is-active 'firewalld' > /dev/null 2>&1; then
         exit 1
     }
 fi
-
 
 # change the port for httpd server
 if grep -Pqi '^Listen 80$' "${HTTPD_CONFIG}"; then 
