@@ -1,0 +1,4 @@
+#!/bin/bash
+
+rsync -aiv "$HOME/Repos/github.com/kolkhis/scripts-playbooks/bastion" bastion:/home/kolkhis/
+
