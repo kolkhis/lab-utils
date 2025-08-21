@@ -1,0 +1,41 @@
+---
+- name: Make a sudoers group for clean rocky installations then add user to suoders
+  hosts: rocky
+  become: true
+  vars:
+    users:
+      - kolkhis
+    sudo_group_line: "%sudo ALL=(ALL:ALL) ALL"
+  tasks:
+
+    - name: Check for sudoers group in /etc/sudoers
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        regexp: |
+          ^%sudo\s+ALL\(ALL(:ALL)?\)\s+ALL
+        line: "{{ sudo_group_line }}"  # will be added if regex doesn't match
+      register: line_info
+
+    - name: Debug the output of lineinfile
+      ansible.builtin.debug:
+        msg: "Output: {{ line_info }}"
+
+    - name: Create the sudo group
+      ansible.builtin.group:
+        name: sudo
+        state: present
+
+    - name: Add user to the sudoers group
+      ansible.builtin.user:
+        name: "{{ item }}"
+        groups:
+          - sudo
+        state: present
+      loop: users
+
+    - name: Make sure that 'set -o vi' is set in /etc/profile
+      ansible.builtin.lineinfile:
+        path: /etc/profile
+        line: 'set -o vi'
+        regex: '^set -o vi'
+        state: present

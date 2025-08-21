@@ -1,0 +1,10 @@
+#!/bin/bash
+printf "Checking for current host configuration in /etc/hosts...\n"
+
+if ! grep -qi "127.0.0.1 $(hostname)" /etc/hosts; then
+    printf "Local host configuration not found in /etc/hosts. Adding...\n"
+    sed -i -E -e "/^127\.0\.0\.1/s/^(127\.0\.0\.1) (.*)/\1 $(hostname) \2/" /etc/hosts || {
+        printf "failed to add %s to the localhost line in /etc/hosts!\n" "$(hostname)"
+        exit 1
+    }
+fi

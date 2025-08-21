@@ -1,0 +1,26 @@
+---
+- name: Capture the status of 2 services
+  hosts: localhost
+  tasks:
+    - name: Loop over sshd and firewalld and capture services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+      loop:
+        - sshd
+        - firewalld
+      register: service_states
+
+    - name: Output the service_states fact
+      ansible.builtin.debug:
+        var: service_states
+
+    - name: Set fact for the formatted services
+      ansible.builtin.set_fact:
+        service_states_formatted: |
+          {% for item in service_states.results %}
+          {{ item.item }}: {{ item.status.ActiveState }}
+          {% endfor %}
+
+    - name: Output the service_states fact
+      ansible.builtin.debug:
+        var: service_states_formatted
