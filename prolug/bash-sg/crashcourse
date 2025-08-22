@@ -9,24 +9,27 @@ declare INPUT # not required, but good practice
 read -r -p 'Enter input: ' INPUT
 printf "You typed: %s\n" "$INPUT"
 
+# unsetting variables
+unset INPUT
 
 # conditionals
 true    # returns 0 (which is true in bash)
-false   # returns 1 (false in bash)
+false   # returns 1 (non-zero is false in bash)
 
-if [[ -f ./examples/hello.c ]]; then         # file exists and is a regular file
+if [[ -f ./examples/hello.c ]]; then    # file exists and is a regular file
     return
 fi
 
-if [[ $VAR == 'hello' ]]; then      # VAR is equal to 'hello'
+if [[ $VAR == 'hello' ]]; then          # VAR is equal to 'hello'
     printf 'Hi\n'
 fi
 
-if [[ $VAR == *hello* ]]; then      # VAR contains 'hello'
+# == supports patterns (like globs)
+if [[ $VAR == *hello* ]]; then          # VAR contains 'hello'
     printf 'Hi\n'
 fi
 
-if ! cd /home/kolkhis/testdir; then # error handling (uses the exit code, 0 is true)
+if ! cd /home/kolkhis/testdir; then # error handling (uses the exit code, remember 0 is true)
     return
 fi
 
@@ -44,6 +47,8 @@ else
 fi
 
 printf 'Arguments passed to the script are stored in $1, $2, $3, etc..\n'
+printf 'The name of the script that is currently running is stored in $0 \n'
+
 # Manual option parsing
 while [[ -n $1 ]]; do
     printf "Argument: %s\n" "$1"
@@ -75,8 +80,9 @@ while [[ -n $1 ]]; do
     esac
 done
 
-printf 'The default array holds all arguments given to the script: $@\n'
+printf 'The "default array" holds all arguments given to the script: $@\n'
 printf "Let's loop over the cli args.\n"
+
 for arg in "${@}"; do
     printf "Argument: %s\n" "$arg"
 done
@@ -118,7 +124,7 @@ printf "Let's get some stuff into it.\n"
 # defining array
 MY_ARR=('one' 'two' 'three')
 
-# accessing elements
+# accessing elements (zero-based indexing)
 printf "The first element: %s\n" "${MY_ARR[0]}"
 printf "The second element: %s\n" "${MY_ARR[1]}"
 
@@ -127,7 +133,10 @@ printf "Let's just loop over it.\n"
 for THING in "${MY_ARR[@]}"; do
     printf "Element: %s\n" "$THING"
 done
-printf "printf also works nicely with arrays: %s\n" "${MY_ARR[@]}"
+
+printf "If you just want to print the elements, just use printf.\n"
+printf "printf has an internal iterator for arrays.\n" 
+printf "Element: %s\n" "${MY_ARR[@]}"
 
 # What about the default array?
 printf 'The default array holds all arguments given to the script: $@\n'
@@ -135,6 +144,9 @@ printf "Let's loop over the cli args.\n"
 for arg in "${@}"; do
     printf "Argument: %s\n" "$arg"
 done
+
+printf "Or, printf! \n"
+printf "Argument: %s\n" "${@}"
 
 # check current OS using `which`
 if which apt; then
