@@ -439,6 +439,7 @@ printf "Well, we could source the script.\n"
     source mkdir-and-cd
     . mkdir-and-cd
 
+printf "Sourcing a file runs the code in the **current** shell environment.\n"
 
 
 
@@ -490,9 +491,76 @@ printf "Well, we could source the script.\n"
 
 
 
-printf "An alternative would also be to turn it into a function in our .bashrc file.\n"
+printf "An alternative would also be to turn it into a function in our ~/.bashrc file.\n"
+
+printf "Everything in .bashrc gets loaded when bash starts.\n"
+printf "Basically, ~/.bashrc is SOURCED when the shell first loads.\n"
+
+printf "So if we put a function definition in there, it will always be available.\n"
+
+printf "A basic function definition looks like this:\n"
+
+    function-name() {
+        : code goes here
+    }
+
+printf "Once a function is defined, you can call it by name.\n"
+
+    function-name
+
 printf "This is an alternative to writing a script for personal use.\n"
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "So let's try that with our mkdir-and-cd script. Turn it into a function.\n"
+
+    # in our ~/.bashrc file 
     mkdir-and-cd() {
         mkdir -p /home/kolkhis/testdir
         cd /home/kolkhis/testdir
@@ -565,6 +633,81 @@ printf 'So we would use $1 again.\n'
 
 
 printf "That's a brief overview of how bash scripts and functions work.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Questions?\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
