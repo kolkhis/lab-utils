@@ -24,10 +24,7 @@ setup-cron() {
         return 1
     fi
 
-    { 
-        crontab -l 2>/dev/null;
-        printf "* * */1 * * %s\n" "$cmd"; 
-    } | crontab -
+    { crontab -l 2>/dev/null; printf "* * */1 * * %s\n" "$cmd"; } | crontab -
 }
 
 if [[ $1 =~ ^(-c|--cron) ]]; then
@@ -46,7 +43,7 @@ while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
                 printf >&2 "Bad or missing arguement to: -o | --output-format\n";
                 exit 1;
             }
-            if [[ ! $OUTPUT_FORMAT =~ (ansible|txt|ip) ]]; then
+            if [[ ! $OUTPUT_FORMAT =~ (ansible|txt|ip|raw) ]]; then
                 printf >&2 "Output format should be one of: ansible | txt | ip\n"
                 exit 1
             fi
@@ -76,7 +73,7 @@ OPTIONS:
   -f, --format <fmt>       Output format for the file.
                              Valid values:
                                - ansible : INI-style lines (default)
-                               - txt     : Plain "<hostname> <ip>" format
+                               - raw     : Plain "<hostname> <ip>" format
                                - ip      : Output only "<ip>" format
 
   -o, --outfile <file>     Destination file path to write output to.
@@ -150,7 +147,7 @@ format-output() {
                 printf "%s\n" "${IP_LIST[$key]}"
             done
             ;;
-        txt)
+        txt|raw)
             for key in "${!IP_LIST[@]}"; do
                 printf "%s %s\n" "$key" "${IP_LIST[$key]}"
             done
