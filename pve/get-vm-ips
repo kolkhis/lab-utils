@@ -50,6 +50,12 @@ while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
             shift;
             ;;
 
+        -r|--raw)
+            # Alias for `-f raw` or `--format raw`
+            OUTPUT_FORMAT='raw'
+            shift;
+            ;;
+
         -o|--outfile)
             { [[ -n $2 && ! $2 =~ ^- ]] && shift && OUTPUT_FILE="$1"; } || {
                 printf >&2 "Bad or missing argument to: -f | --file\n" && exit 1
