@@ -1,0 +1,577 @@
+#!/bin/bash
+# shellcheck disable=SC2016,SC2164,SC2129,SC1091,SC2317,SC2120,SC2218
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Writing Your First Script.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Bash scripting is simply taking the commands you run at the command line and putting them into a file.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "For example: What did we do to create this script file?\n"
+
+    touch first-script
+    chmod 755 first-script
+
+printf "We use 'touch' to create the file, then use 'chmod' to make it executable.\n"
+
+printf "Then, at the top of the file, we have what's called a 'shebang line'.\n"
+printf "The shebang line tells the system what binary to use to execute the code in the file.\n"
+
+    #!/bin/bash
+
+printf "This says 'execute this code with the /bin/bash binary'\n"
+
+printf "So, those two lines of code, when put into a file with a shebang line, are a bash script!\n"
+
+printf "We may call this script something like 'script-init'\n"
+
+    touch script-init
+    chmod 755 script-init
+
+printf "Now we can put those lines of code into the 'script-init' file.\n"
+
+    printf '#!/bin/bash' >> script-init
+    printf 'touch first-script' >> script-init
+    printf 'chmod 755 first-script' >> script-init
+
+printf "Great! Just run this script and it will create 'first-script' and make it executable.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "But... We only need one 'first-script' file.\n"
+
+printf "What if we want to give the option of passing an argument to the script?\n"
+
+printf 'We can use the $1 variable.\n'
+
+printf "So, instead of this:\n"
+    #!/bin/bash
+    touch first-script
+    chmod 755 first-script
+    
+printf 'We would use $1.\n'
+
+    #!/bin/bash
+    touch "$1"
+    chmod 755 "$1"
+
+printf "Then we'd execute the script like:\n"
+
+    ./script-init new-script
+
+printf "This will make a new file called 'new-script' and make it executable.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Subshells!
+printf "Let's take another common task: Making a directory and then moving into it.\n"
+printf "We'll call this 'mkdir-and-cd'.\n"
+
+    #!/bin/bash
+    mkdir -p /home/kolkhis/testdir
+    cd /home/kolkhis/testdir
+    pwd
+
+printf "Nice. We've written another bash script.\n"
+printf "Let's run it.\n"
+
+    ./mkdir-and-cd
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Wait, what happened? My pwd didn't change.\n"
+
+
+printf "That's because scripts run in subshells. That means they won't affect your current environment.\n"
+
+printf "So, what is the solution?"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Well, we could source the script.\n"
+
+    source mkdir-and-cd
+    . mkdir-and-cd
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "An alternative would also be to turn it into a function in our .bashrc file.\n"
+printf "This is an alternative to writing a script for personal use.\n"
+
+    mkdir-and-cd() {
+        mkdir -p /home/kolkhis/testdir
+        cd /home/kolkhis/testdir
+        pwd
+    }
+
+printf "Then we'd have access to this function in our shell.\n"
+
+    mkdir-and-cd
+
+printf "Of course, we wouldn't want to hard-code the directory for this.\n"
+printf 'So we would use $1 again.\n'
+
+    mkdir-and-cd() {
+        mkdir -p "$1"
+        cd "$1"
+        pwd
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "That's a brief overview of how bash scripts and functions work.\n"
+
+
+
+
+
+
+
+
+
+
