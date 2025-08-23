@@ -470,11 +470,65 @@ printf "Now, yes, we can simply say 'VAR=value' and Bash will create the variabl
 
 printf "If we want to be more explicit, we can use the 'declare' builtin.\n"
 
-    declare MY_VAR
+    declare MY_VAR 
 
 printf "This will create the variable, but will not assign any value to it.\n"
 
 printf "This is known as 'initializing' a variable.\n"
+
+printf "The 'typeset' command is a synonym for 'declare'.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -486,6 +540,40 @@ printf "This is known as 'initializing' a variable.\n"
 
 # Scope
 # Functions (local/declare in fns)
+
+printf "By default, variables in bash are **globally-scoped**.\n"
+printf "What does that mean?\n" 
+
+printf "They can be accessed anywhere in the script (e.g., in functions, 'if' statements, etc.).\n"
+
+    # Exported vars (subshells)
+    printf "If you're using a subshell, you won't have access to the variable unless you export it.\n"
+    printf "More on this later.\n"
+
+printf "An exception to this is when using 'local' or 'declare' inside a function.\n"
+
+    myfunc(){
+        local private_var='hello'
+        declare private_var2='world'
+        echo "$private_var"  # hello
+        echo "$private_var2" # world
+    }
+    echo "$private_var"  # No output
+    echo "$private_var2" # No output
+
+cat << EOF
+Both of these variables are **locally-scoped** to the function.
+They can only be used inside the function itself.
+If you try to access them outside the function, you won't get anything (unless there's
+    a global variable with the same name)
+EOF
+
+
+
+
+
+
+
 # Variable attributes (declare [-i, -a, -A])
 
 
