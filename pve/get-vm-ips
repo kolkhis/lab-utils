@@ -41,9 +41,9 @@ setup-cron() {
     local cmd
     printf "Setting up script as a cron job...\n"
     if [[ $# -gt 0 ]]; then
-        cmd="${BASH_SOURCE[0]} $*"
+        cmd="$(realpath "${BASH_SOURCE[0]}") $*"
     else
-        cmd="${BASH_SOURCE[0]} -f ansible -o $HOME/generated-hosts.ini"
+        cmd="$(realpath "${BASH_SOURCE[0]}") -f ansible -o $HOME/generated-hosts.ini"
     fi
     printf "Command to be added to cron:\n\n\t%s\n\n" "$cmd"
 
@@ -60,6 +60,8 @@ setup-cron() {
     return 0
 }
 
+# TODO(feat): Extend functionality to allow a specific cron time entry
+#   - e.g., -c '* 12 * * *'
 if [[ $1 =~ ^(-c|--cron) ]]; then
     shift
     setup-cron "$@" || {
