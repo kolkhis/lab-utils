@@ -1,8 +1,7 @@
 #!/bin/bash
 
 declare -a VMID_LIST
-declare -i FAILURE=0
-declare -i SUCCESS=0
+declare -a SKIP_VMID_LIST
 declare REBOOT=0
 
 while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
@@ -42,45 +41,78 @@ EOF
     esac
 done
 
-IFS=$'\n' read -r -d '' -a VMID_LIST < <(
-    sudo qm list | perl -ne 'print "$1\n" if m/^\s*(\d{1,})\s/'
-)
+fetch-ips(){
+    IFS=$'\n' read -r -d '' -a VMID_LIST < <(
+        sudo qm list | perl -ne 'print "$1\n" if m/^\s*(\d{1,})\s/'
+    )
 
-if [[ -z "${VMID_LIST[*]}" ]]; then
-    printf >&2 "Error: VMID list is empty. Make sure you're running with root permissions.\n"
-    exit 1
-fi
+    if [[ -z "${VMID_LIST[*]}" ]]; then
+        printf >&2 "[ERROR]: VMID list is empty. Make sure you're running with root permissions.\n"
+        return 1
+    fi
+}
 
-for id in "${VMID_LIST[@]}"; do
-    printf "Attempting to enable QEMU guest agent for VM: %s\n" "$id"
-    { sudo qm set "$id" --agent enabled=1,fstrim_cloned_disks=1 && (( SUCCESS++ )); } || {
-        printf >&2 "ERROR: Failed to enable QEMU guest agent for VM with ID %s\n" "$id"
-        (( FAILURE++ ))
-        continue
-    }
-done
+enable-qemu-agent() {
+    local -i FAILURE=0
+    local -i SUCCESS=0
+    local -i SKIPPED=0
 
-printf "Finished.\n" 
-printf "Succesful: %d\nFailed: %d\n" "$SUCCESS" "$FAILURE"
+    for id in "${VMID_LIST[@]}"; do
+        printf "Attempting to enable QEMU guest agent for VM: %d\n" "$id"
+        if ! sudo qm guest cmd "$id" ping > /dev/null 2>&1; then
+            { sudo qm set "$id" --agent enabled=1,fstrim_cloned_disks=1 && (( SUCCESS++ )); } || {
+                printf >&2 "ERROR: Failed to enable QEMU guest agent for VM with ID %d\n" "$id"
+                (( FAILURE++ ))
+                continue
+            }
+        else
+            printf "QEMU Guest Agent already enabled for VM: %d\n" "$id"
+            SKIP_VMID_LIST=("${SKIP_VMID_LIST[@]}" "$id")
+            (( SKIPPED++ ))
+        fi
+    done
 
-if [[ "${#VMID_LIST[@]}" -eq $FAILURE ]]; then
-    printf >&2 "All units failed. Please make sure the 'qemu-guest-agent' package is installed on all guest hosts and try again.\n"
-    exit 1
-fi
+    printf "Finished.\n" 
+    printf "Succesful: %d\nFailed: %d\nSkipped: %d\n" "$SUCCESS" "$FAILURE" "$SKIPPED"
 
-(( FAILURE=0 )); (( SUCCESS=0 ));
+    if [[ "${#VMID_LIST[@]}" -eq $FAILURE ]]; then
+        printf >&2 "[ERROR]: All units failed. Please make sure the 'qemu-guest-agent' package is installed on all guest hosts and try again.\n"
+        return 1
+    fi
+    return 0
+}
+
+
+
+
+reboot-vms() {
+    local -i FAILURE=0
+    local -i SUCCESS=0
+    local REGEX
+
+    if [[ "$REBOOT" -gt 0 ]]; then
+        printf "Attempting to reboot all VMs...\n"
+        for vmid in "${VMID_LIST[@]}"; do
+            REGEX="\<$vmid\>"
+            [[ "${SKIP_VMID_LIST[*]}" =~ $REGEX ]] && continue
+            sudo qm reboot "$vmid" || {
+                printf >&2 "Failed to reboot VM with ID: %s\n" "$vmid" &&
+                (( FAILURE++ )) && continue
+            }
+            (( SUCCESS++ ))
+        done
+        printf "Finished reboot process.\n"
+        printf "Successful: %d\nFailed: %d\n" "$SUCCESS" "$FAILURE"
+    fi
+
+}
+
+fetch-ips || { printf >&2 "[ERROR]: Could not fetch VMID list.\n"; exit 1; }
+
+enable-qemu-agent || { printf >&2 "[ERROR]: Failed to enable QEMU guest agent!\n"; exit 1; }
 
 if [[ $REBOOT -gt 0 ]]; then
-    printf "Attempting to reboot all VMs...\n"
-    for vmid in "${VMID_LIST[@]}"; do
-        sudo qm reboot "$vmid" || {
-            printf >&2 "Failed to reboot VM with ID: %s\n" "$vmid" &&
-            (( FAILURE++ )) && continue
-        }
-        (( SUCCESS++ ))
-    done
-    printf "Finished reboot process.\n"
-    printf "Successful: %d\nFailed: %d\n" "$SUCCESS" "$FAILURE"
+    reboot-vms || { printf >&2 "[ERROR]: Failed to reboot VMs!\n"; exit 1; }
 fi
 
 exit 0
