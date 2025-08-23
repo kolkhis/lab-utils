@@ -149,8 +149,8 @@ get-ips(){
             printf >&2 "Can't connect to VMID: %d\n" "$vmid" && continue
         }
 
-        host_name=$(jq '."host-name"' < <(qm guest cmd "$vmid" get-host-name) | tr -d '"')
-        ip=$(jq '.[1]."ip-addresses"[0]."ip-address"' < <(qm guest cmd "$vmid" network-get-interfaces) | tr -d '"') 
+        host_name=$(jq -r '."host-name"' < <(qm guest cmd "$vmid" get-host-name))
+        ip=$(jq -r '.[1]."ip-addresses"[0]."ip-address"' < <(qm guest cmd "$vmid" network-get-interfaces)) 
         debug "Extracted: $host_name - $ip"
         IP_LIST[$host_name]="$ip"
     done
