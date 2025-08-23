@@ -104,7 +104,11 @@ reboot-vms() {
         printf "Finished reboot process.\n"
         printf "Successful: %d\nFailed: %d\n" "$SUCCESS" "$FAILURE"
     fi
-
+    
+    if [[ $FAILURE -eq $(("${#VMID_LIST[@]}" - "${#SKIP_VMID_LIST[@]}")) ]]; then
+        printf >&2 "All units failed to reboot!\n"
+        return 1
+    fi
 }
 
 fetch-ips || { printf >&2 "[ERROR]: Could not fetch VMID list.\n"; exit 1; }
