@@ -214,18 +214,15 @@ format-output() {
     esac
 }
 
-output-to-file() {
-    : > "$OUTPUT_FILE"
-    format-output > "$OUTPUT_FILE"
+output-results() {
+    {
+        [[ -z $OUTPUT_FILE ]] && format-output; 
+    } || {
+        : > "$OUTPUT_FILE"; format-output > "$OUTPUT_FILE"; 
+    }
 }
 
 get-ips "$@"
 [[ -z "${IP_LIST[*]}" ]] && printf >&2 "IP list is empty!\n" && exit 1
 
-if [[ -z "$OUTPUT_FILE" ]]; then
-    format-output
-else
-    output-to-file "$@"
-fi
-
-
+output-results
