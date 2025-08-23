@@ -104,10 +104,10 @@ printf "So, we set up these variables to read from the user.\n"
 
 printf "An example, a script to install an arbitrary package:\n"
 
-declare PACKAGE
-read -r -p "Enter package name: " PACKAGE
+    declare PACKAGE
+    read -r -p "Enter package name: " PACKAGE
 
-sudo apt-get install -y "$PACKAGE" || { printf >&2 "Failed to install package: %s\n" "$PACKAGE"; }
+    sudo apt-get install -y "$PACKAGE" || { printf >&2 "Failed to install package: %s\n" "$PACKAGE"; }
 
 printf "This is a way to read a single value from the user.\n"
 printf "However, this method makes the script interactive, which is typically not what we want.\n"
@@ -236,9 +236,10 @@ printf "There are a couple different ways to parse command line arguments.\n"
 
 
 printf "This is my preferred way:\n"
-while [[ -n $1 ]]; do
-    printf "We handle the parsing logic in here.\n"
-done
+
+    while [[ -n $1 ]]; do
+        printf "We handle the parsing logic in here.\n"
+    done
 
 printf 'This is a loop that says "while the value of $1 is non-zero, keep running"\n' 
 
@@ -292,27 +293,27 @@ printf "Let's look at a more thorough example.\n"
 
 printf "Let's look at how we actually handle the parsing logic.\n"
 
-while [[ -n $1 ]]; do
-    case $1 in
-        -h|--help)
-            # remember, use | to specify multiple patterns
-            printf "Print out some help text.\n"
-            shift;
-            printf "usually we exit after this command.\n"
-            exit 0
-            ;;
-        -v|--version)
-            printf "Print out the program version.\n"
-            shift;
-            printf "We usually exit after this one too.\n"
-            exit 0
-            ;;
-        *)
-            printf "Unknown option. Discarding.\n"
-            shift;
-            ;;
-    esac
-done
+    while [[ -n $1 ]]; do
+        case $1 in
+            -h|--help)
+                # remember, use | to specify multiple patterns
+                printf "Print out some help text.\n"
+                shift;
+                printf "usually we exit after this command.\n"
+                exit 0
+                ;;
+            -v|--version)
+                printf "Print out the program version.\n"
+                shift;
+                printf "We usually exit after this one too.\n"
+                exit 0
+                ;;
+            *)
+                printf "Unknown option. Discarding.\n"
+                shift;
+                ;;
+        esac
+    done
 
 printf "Now, we're not doing anything substantial with these flags.\n"
 printf "This is just to show you how 'shift' works.\n"
@@ -394,7 +395,11 @@ $2 is empty
 EOF
 
 printf "That's how 'shift' enables us to use:"
-while [[ -n $1 ]]; do shift; done
+
+    while [[ -n $1 ]]; do
+        printf "Parse argument: %s\n" "$1"
+        shift;
+    done
 
 printf 'Once we have parsed all CLI arguments, the $@ array (holds all $1, $2, etc) will be empty.\n'
 
@@ -446,24 +451,24 @@ printf 'Once we have parsed all CLI arguments, the $@ array (holds all $1, $2, e
 printf 'There is another way to do this, instead of "-n $1" \n'
 printf 'The $# variable holds the number of command line arguments.\n'
 
-while [[ $# -gt 0 ]]; do 
-    case $1 in
-        -h|--help)
-            printf "Print some help text.\n"
-            shift
-            exit 0
-            ;;
-        -v|--version)
-            printf "Print the version.\n"
-            shift;
-            exit 0
-            ;;
-        *)
-            printf "Unknown argument: %s\n" "$1"
-            shift;
-            ;;
-    esac
-done
+    while [[ $# -gt 0 ]]; do 
+        case $1 in
+            -h|--help)
+                printf "Print some help text.\n"
+                shift
+                exit 0
+                ;;
+            -v|--version)
+                printf "Print the version.\n"
+                shift;
+                exit 0
+                ;;
+            *)
+                printf "Unknown argument: %s\n" "$1"
+                shift;
+                ;;
+        esac
+    done
 
 printf "So that's another way to do the while loop.\n"
 printf "Let's look at another one.\n"
@@ -510,11 +515,14 @@ printf "Let's look at another one.\n"
 
 
 
+printf "We can just add another condition to check that the first character is a dash (-).\n"
 
+    while [[ -n $1 && $1 =~ ^- ]]; do
+        printf "Option found: %s\n" "$1"
+        shift
+    done
 
-while [[ -n $1 && $1 =~ ^- ]]; do
-    shift
-done
+printf "This condition uses the regex operator (=~) to check that the first character is dash (-).\n"
 printf 'This one will only continue if $1 starts with a dash (-)\n'
 printf "This will help prevent us from getting rid of non-option arguments (e.g., filenames, other args)\n"
 
@@ -576,93 +584,37 @@ printf "Okay, so let's look at an example where we pass an argument to a flag.\n
 
 printf "Let's define a variable with a default value that we're gonna change\n"
 
-declare MY_VAR='default value'
+    declare MY_VAR='default value'
 
-printf "We'll keep it simple.\n"
-while [[ -n $1 ]]; do
-    case $1 in
-        -s|--set-var)  # -s "my value" 
+    while [[ -n $1 && $1 =~ ^- ]]; do
+        case $1 in
+            -s|--set-var)  # -s "my value" 
 
-            printf "We need to check if another argument was passed after -s (our var value)\n"
-            if [[ -n $2 ]] && [[ ! $2 =~ ^- ]]; then
-                MY_VAR=$2 && shift;
-                printf "DEBUG - MY_VAR was set to: %s\n" "${MY_VAR}"
-            else
-                printf "The -s (--set-var) option was given but no valid values were specified.\n" && exit 1
-            fi
-            shift;  # Always shift at the end of your case
-            ;;
-        *)
-            printf "Unknown argument: %s\n" "$1"
-            shift;
-            ;;
-    esac
-done
+                printf "We need to check if another argument was passed after -s (our var value)\n"
+                if [[ -n $2 ]] && [[ ! $2 =~ ^- ]]; then
+                    MY_VAR=$2 && shift;
+                    printf "DEBUG - MY_VAR was set to: %s\n" "${MY_VAR}"
+                else
+                    printf "The -s (--set-var) option was given but no valid values were specified.\n" && exit 1
+                fi
+                shift;  # Always shift at the end of your case
+                ;;
+            *)
+                printf "Unknown argument: %s\n" "$1"
+                shift;
+                ;;
+        esac
+    done
 
 printf "Let's look at that a little closer.\n"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Rundown recap
-printf "Recap:\n"
-if [[ -n $1 ]] && [[ ! $2 =~ ^- ]]; then
-    printf 'We are checking that there is another arg after $1 ($2)\n.'
-    printf 'We are also making sure that arg ($2) does not start with a dash (-)\n'
-    MY_VAR=$2 && shift; # We're immediately popping $2 into $1 since we know the arg was there
-else
-    printf 'The -s option was given but either $2 did not exist or it started with a dash.\n' && exit 1
-fi
+    if [[ -n $1 ]] && [[ ! $2 =~ ^- ]]; then
+        printf 'We are checking that there is another arg after $1 ($2)\n.'
+        printf 'We are also making sure that arg ($2) does not start with a dash (-)\n'
+        MY_VAR=$2 && shift; # We're immediately popping $2 into $1 since we know the arg was there
+    else
+        printf 'The -s option was given but either $2 did not exist or it started with a dash.\n' && exit 1
+    fi
 
 
 
@@ -711,19 +663,20 @@ fi
 
 
 printf "We could handle that assignment logic a little differently if we want.\n"
-while [[ -n $1 ]]; do
-    case $1 in
-        -s|--set-var)  # -s "my value" 
-            shift; # shifting at the top of the case
-            [[ -n $1 ]] && [[ ! $1 =~ ^- ]] && MY_VAR=$1 && shift ||
-                printf "The -s (--set-var) option was given but no valid values were specified.\n" && exit 1
-            ;;
-        *)
-            printf "Unknown argument: %s\n" "$1"
-            shift;
-            ;;
-    esac
-done
+
+    while [[ -n $1 ]]; do
+        case $1 in
+            -s|--set-var)  # -s "my value" 
+                shift; # shifting at the top of the case
+                [[ -n $1 ]] && [[ ! $1 =~ ^- ]] && MY_VAR=$1 && shift ||
+                    printf "The -s (--set-var) option was given but no valid values were specified.\n" && exit 1
+                ;;
+            *)
+                printf "Unknown argument: %s\n" "$1"
+                shift;
+                ;;
+        esac
+    done
 
 
 
@@ -842,23 +795,24 @@ done
 printf "We often use '--' to specify the end of arguments.\n"
 
 printf "We can account for that in our while loop condition.\n"
-while [[ $1 =~ ^- && ! $1 == "--" ]]; do
-    case $1 in
-        -s|--set-var) 
-            [[ -n $2 ]] && [[ ! $2 =~ ^- ]] && MY_VAR=$2 && shift || 
-                printf >&2 "The -s (--set-var) option was given but no valid values were specified.\n"
-            shift;
-            ;;
-        *)
-            printf "Unknown argument: %s\n" "$1"
-            shift;
-            ;;
-    esac
-done
 
-if [[ "$1" == '--' ]]; then  
-    shift;  # Clean up the argument list 
-fi  
+    while [[ $1 =~ ^- && ! $1 == "--" ]]; do
+        case $1 in
+            -s|--set-var) 
+                [[ -n $2 ]] && [[ ! $2 =~ ^- ]] && MY_VAR=$2 && shift || 
+                    printf >&2 "The -s (--set-var) option was given but no valid values were specified.\n"
+                shift;
+                ;;
+            *)
+                printf "Unknown argument: %s\n" "$1"
+                shift;
+                ;;
+        esac
+    done
+
+    if [[ "$1" == '--' ]]; then  
+        shift;  # Clean up the argument list 
+    fi  
 
 printf 'We changed the while loop from [[ -n $1 ]] to [[ $1 =~ ^- && ! $1 == "--" ]]\n'
 printf 'So it will run until $1 does not start with a dash or it finds -- as the arg.\n'
@@ -909,31 +863,31 @@ printf "The 'getopts' command is a shell builtin that is used to parse option ar
 
 printf "This is done in a similar way to the way I've shown you (while/case), but it uses special syntax.\n"
 
-declare MY_FILE='default value'
+    declare MY_FILE='default value'
 
-while getopts ":hvf:" OPT; do
-    case $OPT in
-        h) 
-            printf "Print help text.\n" 
-            exit 0
-            ;;
-        v)
-            printf "Print version.\n"
-            exit 0
-            ;;
-        f)
-            MY_FILE="$OPTARG"
-            printf "Filename was specified: %s\n" "$MY_FILE"
-            ;;
-        \?) 
-            printf "Unknown option given: %s\n" "$OPTARG" 
-            printf "This is a special case that is hit when the arg doesn't match the argument string.\n"
-            ;;
-        *) 
-            printf "This case handles everything else.\n"
-            ;;
-    esac
-done
+    while getopts ":hvf:" OPT; do
+        case $OPT in
+            h) 
+                printf "Print help text.\n" 
+                exit 0
+                ;;
+            v)
+                printf "Print version.\n"
+                exit 0
+                ;;
+            f)
+                MY_FILE="$OPTARG"
+                printf "Filename was specified: %s\n" "$MY_FILE"
+                ;;
+            \?) 
+                printf "Unknown option given: %s\n" "$OPTARG" 
+                printf "This is a special case that is hit when the arg doesn't match the argument string.\n"
+                ;;
+            *) 
+                printf "This case handles everything else.\n"
+                ;;
+        esac
+    done
 
 
 printf "Your custom options are specified in the option string.\n"
@@ -1047,6 +1001,65 @@ EOF
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 cat << EOF
 Other resources:
 
@@ -1063,6 +1076,87 @@ EOF
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+printf "Questions?\n"
 
 
 
