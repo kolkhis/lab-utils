@@ -1,5 +1,31 @@
 #!/bin/bash
 
+#===============================================================================
+#
+#          FILE:  get-vm-ips
+#
+#         USAGE:  ./get-vm-ips [OPTIONS]
+#                 Can be run manually or installed as a daily cron job.
+#
+#   DESCRIPTION:  Collects IP addresses of online Proxmox VMs using the QEMU 
+#                 Guest Agent. Outputs the list in a variety of formats such as
+#                 raw host/ip lines, IP-only, or INI Ansible inventory-style.
+#
+#       OPTIONS:  -f, --format     Output format: ansible | raw | ip
+#                 -r, --raw        Alias for '--format raw'
+#                 -o, --outfile    Write output to the given file
+#                 -c, --cron       Install this script as a daily cron job
+#                 -v, --verbose    Enable verbose logging
+#                 -h, --help       Show this help message and exit
+#
+#  REQUIREMENTS:  bash >= 4.4, Proxmox host with root privileges,
+#                 jq, QEMU Guest Agent installed and running in VMs
+#
+#        AUTHOR:  Connor W. (https://github.com/kolkhis)
+#       CREATED:  2025-07-24
+#
+#===============================================================================
+
 declare -a VMID_LIST
 declare -A IP_LIST
 declare -l OUTPUT_FORMAT='raw'
