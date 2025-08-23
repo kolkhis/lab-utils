@@ -60,8 +60,8 @@ debug() {
 }
 
 err() {
-    printf >&2 "[\033[31m ERROR \033[0m]: "
     if [[ $# -gt 0 ]]; then
+        printf >&2 "[\033[31m ERROR \033[0m]: "
         printf >&2 "%s\n" "$*"
     fi
 }
@@ -128,7 +128,7 @@ EOF
 
         *)
             printf "Invalid argument: %s\n" "$1"
-            shift;
+            exit 1
             ;;
     esac
 done
