@@ -175,6 +175,7 @@ declare MY_FILE='./text'
 printf "You can use pattern matching with the == or = operators.\n"
 
 [[ $MY_FILE == *[a-z]* ]]
+[[ $MY_FILE = *[a-z]* ]]
 # man bash /^\s*Pattern Matching
 
 
@@ -231,7 +232,9 @@ printf "We have a number of tools at our disposal to achieve this goal.\n"
 
 printf "We can match a literal string with regex to see if the string contains a substring.\n"
 
-    if [[ "abcdefg" =~ abc ]]; then :; fi  # Will match the substring 'abc' 
+    if [[ "abcdefg" =~ abc ]]; then  # Will match the substring 'abc' 
+        printf "String contains the substring: 'abc'.\n";
+    fi  
 
 printf "The '.' (dot) character will match any single character.\n"
 
