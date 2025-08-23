@@ -892,19 +892,20 @@ printf "Pipelines are usually sufficient for this type of thing.\n"
 # File Descriptor redirects
 printf "We can also control which input stream is redirected (stderr, stdout)\n"
 
-printf "By default, '>' redirects stdout.\n"
+printf "By default, '>' redirects stdout (file descriptor 1).\n"
 
 printf "These are the same:\n"
-cat file.txt > /dev/null
-cat file.txt 1> /dev/null
 
-printf "Let's redirect stderr to somewhere.\n"
+    cat file.txt > /dev/null
+    cat file.txt 1> /dev/null
 
-cat somefile 2> /dev/null
+printf "Let's redirect stderr to somewhere (file descriptor 2).\n"
 
-# 0 stdin
-# 1 stdout
-# 2 stderr
+    cat somefile 2> /dev/null
+
+    # 0 stdin
+    # 1 stdout
+    # 2 stderr
 
 printf "This redirects only stderr to /dev/null, so stdout will remain untouched.\n"
 
@@ -962,14 +963,15 @@ printf "This redirects only stderr to /dev/null, so stdout will remain untouched
 
 # Attaching fds 
 printf "We can redirect both stdout and stderr by *attaching* the file descriptors.\n"
-cat somefile > /dev/null 2>&1 # GOOD
+
+    cat somefile > /dev/null 2>&1 # GOOD
 
 printf "Note the order here. It matters.\n"
 printf "The shell evaluates the redirections before any command is evalutated.\n"
 
 printf "So, if you were to do:\n"
 
-cat somefile 2>&1 > /dev/null  # BAD
+    cat somefile 2>&1 > /dev/null  # BAD
 
 printf "This would not work as intended.\n"
 
@@ -977,7 +979,7 @@ printf "The redirects themselves can be anywhere, but the order matters.\n"
 
 printf "For example, this would work:\n"
 
-> /dev/null 2>&1 cat somefile
+    > /dev/null 2>&1 cat somefile
 
 printf "Because the redirects happen in the correct order, and are evaluated before the cmd is run.\n"
 
@@ -1043,10 +1045,10 @@ printf "Because the redirects happen in the correct order, and are evaluated bef
 printf "We can also redirect stdout to stderr.\n"
 printf "We utilize this is bash scripts to print error messages to stderr, where they belong.\n"
 
-printf >&2 "This will print to stderr.\n"
+    printf >&2 "This will print to stderr.\n"
 
-# >&2
-# 1>&2
+    # >&2
+    # 1>&2
 
 printf "This effectively attaches stdout to stderr.\n"
 printf "This works because &2 is essentially a file (of type FIFO/named pipe).\n"
@@ -1054,8 +1056,7 @@ printf "This works because &2 is essentially a file (of type FIFO/named pipe).\n
 printf "Remember, when using '>' alone will redirect stdout.\n"
 printf "So, this is the same as:\n"
 
-printf 1>&2 "This will print to stderr.\n"
-
+    printf 1>&2 "This will print to stderr.\n"
 
 # About the >& syntax
 printf "The syntax '>&' is actually 'duplicating' the file desciptor.\n"
@@ -1134,8 +1135,7 @@ printf "But what if you wanted to silence one?\n"
 
 printf "For example, if we wanted to silence stderr for a line:\n"
 
-cat somefile.txt 2>&-           # &- is a null fd
-cat somefile.txt 2>/dev/null    # Same thing kinda
+    cat somefile.txt 2>&-           # &- is a null fd
 
 printf "This effectively closes file descriptor 2 (stderr) for the 'cat' command.\n"
 
@@ -1193,11 +1193,12 @@ printf "This allows you to set redirections for all commands in the entire scrip
 
 printf "Let's look at an example.\n"
 
-exec 2>error.log
+    exec 2>error.log
 
 printf "This will redirect stderr to error.log for ALL commands that come after it inside the script.\n"
 
-help exec
+    help exec
+
 printf "exec changes the shell's file descriptors.\n"
 printf "You probably don't want to do this in an interactive shell.\n"
 
@@ -1438,8 +1439,11 @@ EOF
 printf "Herestrings treat the string after it as a file for stdin.\n"
 # TODO(feat): Update this section on herestrings
 
-entr -c bash -c "./testscript" <<< ./testscript
-entr -c bash -c "./testscript" < <(find . -name "testscript")
+    entr -c bash -c "./testscript" <<< ./testscript
+    entr -c bash -c "./testscript" < <(find . -name "testscript")
+
+    declare testvar='old old old'
+    perl -pe 's/old/new/g' <<< "$testvar"
 
 
 
