@@ -2,18 +2,26 @@
 
 declare LAST_COMMAND_TIME
 declare CURRENT_TIME
-HISTTIMEFORMAT="%y-%d-%m %T " history 1
+# HISTTIMEFORMAT="%y-%d-%m %T " history 1
 
 extract-hour() { awk -F'[-, ,:]' '{print $4}' <<< "$1"; }
 extract-day() { awk -F'[-, ]' '{print $3}' <<< "$1"; }
 extract-month() { cut -d'-' -f2 <<< "$1"; }
 
 set-times() {
-    LAST_COMMAND_TIME="$(HISTTIMEFORMAT="%F %T " history 1 | awk '{printf "%s ", $2; printf "%s\n", $3}')"
+    # TODO(fix): Set HISTTIMEFORMAT and grep history file
+    #   - The history doesn't work inside subshells
+    #   - Use last modified time on history file?
+
+    LAST_COMMAND_TIME="$(
+        HISTTIMEFORMAT="%y-%d-%m %T " history 1 | awk '{printf "%s ", $2; printf "%s\n", $3}'
+    )"
     CURRENT_TIME="$(date '+%F %T')"
 }
 
 set-times
+
+# printf "Last cmd time: %s\n" "$LAST_COMMAND_TIME"
 
 check-difference(){
     local -i cmd_month
@@ -34,12 +42,32 @@ check-difference(){
     current_day="$(extract-day "$CURRENT_TIME")"; echo "$current_day"
     current_hour="$(extract-hour "$CURRENT_TIME")"; echo "$current_hour"
 
+    cat << EOF
+Report:
+
+    Last Cmd Time: $LAST_COMMAND_TIME
+    Current Time:  $CURRENT_TIME
+
+    Current Hour:   $current_hour
+    Current day:    $current_day
+    Current month:  $current_month
+
+    Cmd Hour:   $cmd_hour
+    Cmd day:    $cmd_day
+    Cmd month:  $cmd_month
+
+    Difference: $(( current_hour - cmd_hour ))
+
+EOF
+
+
     if [[ "$current_hour" -gt "$cmd_hour" ]]; then
         # It's at least an hour later than last cmd (same-day)
         hr_difference=$(( current_hour - cmd_hour ))
 
         if [[ $hr_difference -gt 8 ]]; then
-            reboot
+            printf "No command was run in 8 hours.\n"
+            # reboot
         fi
 
     elif [[ "$current_day" -gt "$cmd_day" ]]; then
@@ -47,11 +75,11 @@ check-difference(){
         hr_difference=$(( current_hour + 24 - cmd_hour  ))
 
         if [[ $hr_difference -gt 8 ]]; then
-            reboot
+            printf "No command was run in 8 hours.\n"
+            # reboot
         fi
 
     fi
-
 }
 check-difference
 
