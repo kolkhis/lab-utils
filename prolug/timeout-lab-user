@@ -1,85 +1,37 @@
 #!/bin/bash
 
-declare LAST_COMMAND_TIME
-declare CURRENT_TIME
-# HISTTIMEFORMAT="%y-%d-%m %T " history 1
+declare -i NEEDS_REBOOT=0
 
-extract-hour() { awk -F'[-, ,:]' '{print $4}' <<< "$1"; }
-extract-day() { awk -F'[-, ]' '{print $3}' <<< "$1"; }
-extract-month() { cut -d'-' -f2 <<< "$1"; }
-
-set-times() {
-    # TODO(fix): Set HISTTIMEFORMAT and grep history file
-    #   - The history doesn't work inside subshells
-    #   - Use last modified time on history file?
-
-    LAST_COMMAND_TIME="$(
-        HISTTIMEFORMAT="%y-%d-%m %T " history 1 | awk '{printf "%s ", $2; printf "%s\n", $3}'
-    )"
-    CURRENT_TIME="$(date '+%F %T')"
+reboot-if-needed(){
+    [[ $NEEDS_REBOOT -gt 0 ]] || return 0
+    local current_time
+    printf -v current_time "%(%F %T)T"
+    wall "Timeout Limit Reached for user. Rebooting lab machine now: $current_time"
+    # exec reboot
 }
 
-set-times
+get-idle-time() {
+    local idle_time
+    local -i hours_idle
 
-# printf "Last cmd time: %s\n" "$LAST_COMMAND_TIME"
+    idle_time="$(/usr/bin/who -u | awk '/^root\s*pts\/0/ {print $5}')"
+    
+    printf "Idle time: %s\n" "$idle_time"
 
-check-difference(){
-    local -i cmd_month
-    local -i cmd_day
-    local -i cmd_hour
-
-    local -i current_month
-    local -i current_day
-    local -i current_hour
-
-    local -i hr_difference
-
-    cmd_month="$(extract-month "$LAST_COMMAND_TIME")";  echo "$cmd_month"
-    cmd_day="$(extract-day "$LAST_COMMAND_TIME")"; echo "$cmd_day"
-    cmd_hour="$(extract-hour "$LAST_COMMAND_TIME")"; echo "$cmd_hour"
-
-    current_month="$(extract-month "$CURRENT_TIME")";  echo "$current_month"
-    current_day="$(extract-day "$CURRENT_TIME")"; echo "$current_day"
-    current_hour="$(extract-hour "$CURRENT_TIME")"; echo "$current_hour"
-
-    cat << EOF
-Report:
-
-    Last Cmd Time: $LAST_COMMAND_TIME
-    Current Time:  $CURRENT_TIME
-
-    Current Hour:   $current_hour
-    Current day:    $current_day
-    Current month:  $current_month
-
-    Cmd Hour:   $cmd_hour
-    Cmd day:    $cmd_day
-    Cmd month:  $cmd_month
-
-    Difference: $(( current_hour - cmd_hour ))
-
-EOF
-
-
-    if [[ "$current_hour" -gt "$cmd_hour" ]]; then
-        # It's at least an hour later than last cmd (same-day)
-        hr_difference=$(( current_hour - cmd_hour ))
-
-        if [[ $hr_difference -gt 8 ]]; then
-            printf "No command was run in 8 hours.\n"
-            # reboot
-        fi
-
-    elif [[ "$current_day" -gt "$cmd_day" ]]; then
-        # It's the next day. Add 24 to hr to check
-        hr_difference=$(( current_hour + 24 - cmd_hour  ))
-
-        if [[ $hr_difference -gt 8 ]]; then
-            printf "No command was run in 8 hours.\n"
-            # reboot
-        fi
-
+    if [[ "$idle_time" == '.' ]]; then
+        # Last command was run in the last 60 seconds
+        NEEDS_REBOOT=0
+    elif [[ "$idle_time" == 'old' ]]; then
+        # Last cmd was run >= 24hrs ago
+        NEEDS_REBOOT=1
+    else
+        # Last cmd was run HH:MM ago
+        hours_idle="${idle_time%%:*}"
+        [[ $hours_idle -gt 8 ]] && NEEDS_REBOOT=1
     fi
 }
-check-difference
+
+get-idle-time
+reboot-if-needed
+
 
