@@ -361,7 +361,7 @@ printf "So: ALWAYS QUOTE YOUR VARIABLES! \n"
 
 
 # types
-printf "In Bash, variables are **dynamically typed**, meaning they can store any type of data.\n"
+printf "In Bash, variables are **dynamically typed** by default, meaning they can store any type of data.\n"
 
     # Storing a number
     MY_VAR=10
@@ -471,12 +471,12 @@ printf "Now, yes, we can simply say 'VAR=value' and Bash will create the variabl
 printf "If we want to be more explicit, we can use the 'declare' builtin.\n"
 
     declare MY_VAR 
+    typeset MY_VAR  # Synonym for `declare`
 
 printf "This will create the variable, but will not assign any value to it.\n"
 
 printf "This is known as 'initializing' a variable.\n"
 
-printf "The 'typeset' command is a synonym for 'declare'.\n"
 
 
 
@@ -574,7 +574,79 @@ EOF
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Variable attributes (declare [-i, -a, -A])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Exporting Variables
+printf "If you need a variable to be available in child processes and subshells, you must export it.\n"
+
+printf "There are a few ways to do this.\n"  
+
+    declare MY_VAR
+    export MY_VAR
+
+printf "First we initialize the variable, then we export it using the 'export' builtin.\n"
+
+printf "We can also use the -x option for 'declare'.\n"
+
+    declare -x MY_VAR
+
+printf "This both initializes and exports the variable.\n"
 
 
 
