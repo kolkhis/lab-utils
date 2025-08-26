@@ -12,9 +12,9 @@ reboot-if-needed(){
 
 get-idle-time() {
     local idle_time
-    local -i hours_idle
 
     idle_time="$(/usr/bin/who -u | awk '/^root\s*pts\/0/ {print $5}')"
+    [[ -n $idle_time ]] || return 1
     
     printf "Idle time: %s\n" "$idle_time"
 
@@ -26,12 +26,14 @@ get-idle-time() {
         NEEDS_REBOOT=1
     else
         # Last cmd was run HH:MM ago
-        hours_idle="${idle_time%%:*}"
-        [[ $hours_idle -gt 8 ]] && NEEDS_REBOOT=1
+        [[ "${idle_time%%:*}" -gt 8 ]] && NEEDS_REBOOT=1
     fi
 }
 
-get-idle-time
+get-idle-time || {
+    printf >&2 "[ERROR]: Failed to retrieve user idle time.\n"
+    exit 1
+}
 reboot-if-needed
 
 
