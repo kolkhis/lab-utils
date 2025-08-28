@@ -18,32 +18,32 @@
 #
 #===============================================================================
 
-declare BACKUP_DIR='/backup'
+declare -r BACKUP_DIR='/backup'
 declare -a DIRS=(
     "/lab_work"
     "/labs"
     "/opt"
 )
 
-declare LOGFILE='/var/log/backup.log'
+declare -r LOGFILE='/var/log/backup.log'
 exec >> "$LOGFILE" 2>&1
 
 declare RSYNC_BINARY
 RSYNC_BINARY="$(command -v rsync)"
 
 [[ -n "$RSYNC_BINARY" ]] || {
-    printf >&2 "%s [ERROR]: Rsync binary not found! \n" "$(date '+%F %T')"
+    printf >&2 "%(%F %T)T [ERROR]: Rsync binary not found! \n"
     exit 1
 }
 
 backup-dirs() {
     for dir in "${DIRS[@]}"; do
-        printf "%s [INFO]: Backing up directory: %s\n" "$(date '+%F %T')" "$dir"
+        printf "%(%F %T)T [INFO]: Backing up directory: %s\n" -1 "$dir"
         "$RSYNC_BINARY" -a "$dir" "$BACKUP_DIR" || {
-            printf >&2 "%s [ERROR]: Failed to back up directory: %s\n" "$(date '+%F %T')" "$dir"
+            printf >&2 "%(%F %T)T [ERROR]: Failed to back up directory: %s\n" -1 "$dir"
             continue
         }
-        printf "%s [INFO]: Successfully backed up directory: %s\n" "$(date '+%F %T')" "$dir"
+        printf "%(%F %T)T [INFO]: Successfully backed up directory: %s\n" -1 "$dir"
     done
 }
 
