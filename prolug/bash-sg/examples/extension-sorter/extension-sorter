@@ -8,50 +8,87 @@
 #   - E.g., .txt files go into the `txt/` directory
 
 declare DIR
-DIR='.'
+# DIR='.'
+
+if [[ -n $1 ]]; then
+    DIR="${1%/}"
+fi
+printf "Directory being targeted: %s\n" "$DIR"
+
+if ! [[ -d "$1" ]]; then
+    printf >&2 "[ERROR]: First argument must be a directory that exists!\n"
+    exit 1
+fi
 
 declare -a FILES
 declare -a FILE_EXTENSIONS
 
 
 # help read
-IFS=$'\n' read -r -d '' -a FILES < <(find "$DIR" -maxdepth 1 -type f \! -wholename "${BASH_SOURCE[0]}")
+IFS=$'\n' read -r -d '' -a FILES < <(
+    find "$DIR" -maxdepth 1 -type f \! -wholename "${BASH_SOURCE[0]}"
+)
+
+if [[ -z "${FILES[*]}" ]]; then
+    printf "No regular files found.\n"
+    exit 0
+fi
 
 printf "File: %s\n" "${FILES[@]}"
 
-for file in "${FILES[@]}"; do 
-    file_extension="${file##*.}"
-    printf "Parsing file extension for: %s\n" "$file"
-    file_regex="\<$file_extension\>"
-    if [[ "${FILE_EXTENSIONS[*]}" =~ $file_regex ]]; then
-        printf "File extension is already in array: %s\n" "$file_extension"
-        continue
-    fi
-    FILE_EXTENSIONS+=("$file_extension")
-    printf "file extension for: %s\n" "${file##*.}"
-done
+gather-extensions(){
 
-printf "Parsed file extensions.\n"
-printf "File Extension: %s\n" "${FILE_EXTENSIONS[@]}"
+    for file in "${FILES[@]}"; do 
+        file_extension="${file##*.}"
+        printf "Parsing file extension for: %s\n" "$file"
+        file_regex="\<$file_extension\>"
+        if [[ "${FILE_EXTENSIONS[*]}" =~ $file_regex ]]; then
+            printf "File extension is already in array: %s\n" "$file_extension"
+            continue
+        fi
+        FILE_EXTENSIONS+=("$file_extension")
+        printf "file extension for: %s\n" "${file##*.}"
+    done
 
+    printf "Parsed file extensions.\n"
+    printf "File Extension: %s\n" "${FILE_EXTENSIONS[@]}"
 
-# mkdir md txt jpeg png sh
-mkdir "${FILE_EXTENSIONS[@]}" || {
-    printf >&2 "[ERROR]: Couldn't create all directories!\n"
 }
+
+
 
 # - [x] Move the files to the correct directory based on their extensions 
 # Loop over FILE_EXTENSIONS arr, copy over all matching files to dir
 
+create-directories(){
+    for ext in "${FILE_EXTENSIONS[@]}"; do
+        # mkdir md txt jpeg png sh
+        declare target_directory="$DIR/$ext"
+        if [[ ! -d "$target_directory" ]]; then
+            mkdir -p "$target_directory" || {
+                printf >&2 "[ERROR]: Couldn't create '%s' directories!\n" "$target_directory"
+            }
+        else
+            printf "[INFO]: Directory already exists: %s\n" "$target_directory"
+        fi
 
-for ext in "${FILE_EXTENSIONS[@]}"; do
-    printf "Moving all %s files to the %s directory\n" "$ext" "$ext"
-    for f in *."$ext"; do
-        printf "Moving File: %s %s\n" "$DIR/$f" "$DIR/$ext/$f"
-        mv "$DIR/$f" "$DIR/$ext/$f"
     done
+}
 
-done
+
+move-files() {
+    for file in "${FILES[@]}"; do
+        local ext="${file##*.}"
+        local filename
+        filename="$(basename "$file")"
+        printf "Moving file: %s to %s\n" "$file" "$ext/$filename"
+        mv "$file" "$DIR/$ext/$filename"
+    done
+}
+
+gather-extensions
+create-directories
+move-files
 
 printf "Done!\n"
 
