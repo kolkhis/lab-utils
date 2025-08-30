@@ -1,11 +1,19 @@
 #!/bin/bash
 
+# To test locally:
+#   touch file{1..5}.{md,sh,jpg,txt}
+#   ./extension-sorter .
+#
+#   The script can (will) take a directory as an argument. 
+#   Pass it `.` for the current directory.  
+
 # - [x] Take in a directory (take as input? argument? user input (interactive?)? )
 # - [x] Get a list of files in that directory
 # - [x] Get the file extensions of each file in the directory
 # - [x] Make directories based on the file extensions that are present
 # - [x] Move the files to the correct directory based on their extensions 
 #   - E.g., .txt files go into the `txt/` directory
+
 
 declare DIR
 # DIR='.'
