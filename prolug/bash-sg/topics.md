@@ -1,6 +1,8 @@
+# Topics for ProLUG Bash Study Group
 - [x] Writing your first bash script
     - Check OS of current machine?
     - Check network connection?
+    - Done in [./first-script]
 
 - [x] Conditionals
     - Main rant 
@@ -22,6 +24,8 @@
       conditionals (`if`/`else`, `case`) to perform different actions based on the value.  
         * Bonus points: Use conditional operators to print error messages if commands fail (hint: `||`).  
         * For instance, maybe a script that prints something out in a certain color based on the argument.
+
+    - Done in [./conditionals]
 
 - [x] Getting user input
     - `read`
@@ -94,9 +98,9 @@
     - Parameter tranformations
       ```bash
       "${VAR,,}"
-      "${VAR@L}" # same thing (POSIX-compliant?)
+      "${VAR@L}" # same thing
       "${VAR^^}"
-      "${VAR@U}" # same thing (POSIX-compliant?)
+      "${VAR@U}" # same thing
       ```
 
 - [ ] Using arrays 
@@ -139,5 +143,20 @@
     - Cron daily runs at 3:14 AM every morning on a linux system.  
 
 - [ ] Terminal configuration and customization (e.g., ricing)
+
+
+
+
+## Script Ideas
+
+- [x] File extension sorter
+    - Take a directory, move files into subdirectories based on file extension
+    - Done in [./examples/extension-sorter](./examples/extension-sorter)
+
+- System info reporter
+
+- File renamer 
+    - Use regex to bulk rename files 
+
 
 
