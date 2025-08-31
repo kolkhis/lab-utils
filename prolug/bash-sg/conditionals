@@ -564,19 +564,26 @@ fi
 
 
 
+# Checking multiple conditions
 printf "Now that we know what's true and what's false, we can combine some conditions.\n"
 
 printf "The '&&' (AND) and '||' (OR) operators work with these truthy and falsy values.\n"
 printf "Let's look at '&&'\n"
 
-if [[ -f ./examples/hello.c && -s ./examples/hello.c ]]; then
-    printf "File exists and is not empty.\n";
-fi
+    if [[ -f ./examples/hello.c && -s ./examples/hello.c ]]; then
+        printf "File exists and is not empty.\n";
+    fi
 
-if [ -f ./examples/hello.c ] && [ -s ./examples/hello.c ]; then # posix
-    :
-fi
-# If using single brackets [ ... ], use && and || outside
+printf "The POSIX equivalent using single brackets:\n"
+
+    # If using single brackets [ ... ], use && and || outside
+    if [ -f ./examples/hello.c ] && [ -s ./examples/hello.c ]; then
+        printf "File exists and is not empty.\n";
+    fi
+
+printf "If you want to check what a condition flag means, use 'help test':\n"
+help test | grep -- '-s'
+# Or go to `man bash` and type: /^CONDITIONAL EXPRESSIONS
 
 
 
@@ -669,16 +676,24 @@ fi
 
 
 # Short-circuit logic
-cat ./examples/hello.c && printf "Successfully ran 'cat'\n" && printf "YEY\n"
-printf "This '&&' works here just like in the if statements.\n"
+printf "Conditionals can be done without the use of 'if/elif/else', 'case', etc.\n"
 
-printf "The first condition is the exit code of 'cat ./examples/hello.c'\n"
+printf "We can use 'short-circuit' logic to run commands based on conditions.\n"
+
+    cat ./examples/hello.c && printf "Successfully ran 'cat'\n"
+
+printf "This '&&' works here just like in the 'if' statements.\n"
+printf "It checks for 0 (true) or non-zero (false).\n"
+
+printf "The first condition is the exit code of the 'cat' command.\n"
 printf "If that condition passes (exit code 0), then the next condition is evaluated.\n"
 
 printf "This makes error handling very easy in Bash.\n"
 
-cat ./nonexistent.file || printf "Failed to run 'cat'\n"
+    cat ./nonexistent.file || printf "Failed to run 'cat'\n"
 
+printf "This '||' (OR) condition checks if the 'cat' command fails (non-zero exit code).\n"
+printf "If the 'cat' fails (it does), then it will run the 'printf' command.\n"
 
 
 
@@ -753,11 +768,12 @@ cat ./nonexistent.file || printf "Failed to run 'cat'\n"
 
 
 
-
-
+# Example(s)
 printf "Let's check if a package is installed.\n"
 
     declare PKG="jq"
+
+printf "First we'll use an if/else statement.\n"
 
     if dpkg -l | grep -i "$PKG"; then
         printf "Package is installed.\n";
@@ -765,11 +781,13 @@ printf "Let's check if a package is installed.\n"
         printf "Packge is not installed.\n";
     fi
 
+printf "This works great. We can also use short-circuit logic for this:\n"
+
     dpkg -l | grep -i "$PKG" || printf "Command not found.\n"
 
 printf "This will work on my Ubuntu Server system. But what about a cross-platform solution?\n"
 
-    if which $PKG; then
+    if which "$PKG"; then
         printf "Package is installed (cmd in PATH).\n"
     else
         printf "Package is not installed (cmd not in PATH).\n"
@@ -777,12 +795,12 @@ printf "This will work on my Ubuntu Server system. But what about a cross-platfo
     fi
 
     # 'type' also works
-    if type $PKG; then printf "Package is installed\n"; fi
+    if type "$PKG"; then printf "Package is installed\n"; fi
 
 printf "Though, 'which' and 'type' are not POSIX-compliant.\n" 
 printf "Use 'command -v' if you want it to be.\n"
 
-    if command -v $PKG; then
+    if command -v "$PKG"; then
         printf "Package is installed (cmd in PATH).\n"
     else
         printf "Package is not installed (cmd not in PATH).\n"
@@ -837,6 +855,7 @@ printf "Use 'command -v' if you want it to be.\n"
 # case statements
 printf "We also have 'case' statements.\n"
 printf "These check the condition of a single value and compare it to each case.\n"
+printf "Case statements support the user of 'patterns'.\n"
 
     declare VAR="Hello, world!"
     
@@ -855,26 +874,34 @@ printf "These check the condition of a single value and compare it to each case.
             ;;
     esac
 
+printf "This is functionally equivalent to using these if/elif/else statements:\n"
+
     if [[ $VAR == *world ]]; then
         printf "Var contains 'world'\n"
     elif [[ $VAR == hello* ]]; then
         printf "Var contains 'hello'\n"
+    elif [[ $VAR == [a-z]* ]]; then
+        printf "Contains letters.\n"
+    else
+        printf "Unknown!\n"
     fi
 
+printf "When your right hand side is unquoted, it's treated as a pattern.\n"
 
 # Pattern matching v. raw string v. regex operators 
-if [[ $VAR == 'world' ]]; then
-    printf "This treats it as a raw string: 'world' (since it's in quotes)\n"
-fi
+    if [[ $VAR == 'world' ]]; then
+        printf "This treats it as a raw string: 'world' (since it's in quotes)\n"
+    fi
 
-if [[ $VAR == *world ]]; then
-    printf "This is interpreted as a pattern (since it's NOT in quotes)\n"
-fi
+    if [[ $VAR == *world ]]; then
+        printf "This is interpreted as a pattern (since it's NOT in quotes)\n"
+    fi
 
-if [[ $VAR =~ .*world ]]; then
-    printf "This uses regex (the POSIX flavor).\n"
-fi
+    if [[ $VAR =~ .*world ]]; then
+        printf "This uses regex (the POSIX flavor).\n"
+    fi
 
+    
 
 
 
