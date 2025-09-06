@@ -1,0 +1,44 @@
+#!/bin/bash
+
+which rsync && exit 1
+
+# Goals:
+# - Take a directory as an argument
+# - Use any tool to backup the directory to a remote server
+# - Log the process (generate logs)
+
+declare DIR
+if [[ -z $1 ]]; then
+    printf >&2 "%(%F %T)T [ERROR]: No argument was passed to the script!\n"
+    exit 1
+fi
+DIR="$1"
+
+declare LOGFILE='/var/log/backup.log'
+
+# exec >> "$LOGFILE" 2>&1
+
+declare REMOTE_USER='kolkhis'
+declare REMOTE_SERVER='192.168.4.54'
+# declare REMOTE_SERVER='ubuntutest'
+declare REMOTE_DESTINATION="/home/$REMOTE_USER/$DIR"
+declare COMBINED_DESTINATION="${REMOTE_USER}@${REMOTE_SERVER}:${REMOTE_DESTINATION}"
+
+
+
+if ! [[ -d "$DIR" ]]; then
+    printf >&2 "%(%F %T)T [ERROR]: Directory does not exist: %s\n" -1 "$DIR"
+    exit 1
+fi
+
+printf "%(%F %T)T [INFO]: Backing up directory: %s\n" -1 "$DIR"
+printf "%(%F %T)T [INFO]: Destination: %s\n" -1 "$COMBINED_DESTINATION"
+
+rsync -aziv "$DIR" "$COMBINED_DESTINATION" || {
+    printf >&2 "%(%F %T)T [ERROR]: rsync command failed!\n" 
+    exit 1
+}
+
+printf "%(%F %T)T [INFO]: Successfully backed up directory %s to %s\n" -1 "$DIR" "$COMBINED_DESTINATION"
+
+
