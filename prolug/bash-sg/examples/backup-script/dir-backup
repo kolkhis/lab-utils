@@ -16,11 +16,10 @@ DIR="$1"
 
 declare LOGFILE='/var/log/backup.log'
 
-# exec >> "$LOGFILE" 2>&1
+exec >> "$LOGFILE" 2>&1
 
 declare REMOTE_USER='kolkhis'
 declare REMOTE_SERVER='192.168.4.54'
-# declare REMOTE_SERVER='ubuntutest'
 declare REMOTE_DESTINATION="/home/$REMOTE_USER/$DIR"
 declare COMBINED_DESTINATION="${REMOTE_USER}@${REMOTE_SERVER}:${REMOTE_DESTINATION}"
 
