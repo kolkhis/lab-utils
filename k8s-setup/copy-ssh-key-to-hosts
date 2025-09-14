@@ -8,7 +8,7 @@ declare -A COMPLETED
 }
 
 
-while [[ -n $1 ]]; do
+while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
     case $1 in
         -u|--user)
             [[ -n $2 ]] && {
@@ -19,10 +19,12 @@ while [[ -n $1 ]]; do
             ;;
         *)
             printf "Unknown option: %s\n" "$1"
-            shift;
+            exit 1
             ;;
     esac
 done
+
+[[ $1 == '==' ]] && shift
 : "${USERNAME:=$USER}"
 printf "Using user: %s\n" "${USERNAME}"
 
@@ -38,7 +40,7 @@ while read -r l; do
                     ssh-copy-id "${USERNAME}@${NODE}" && COMPLETED[$NODE]=true &&
                         printf "\033[32mNode successfully added: %s\n\033[0m" "${NODE}"
                 } || {
-                    printf "\033[31mProblem with ssh-copy-id with node %s\n\033[0m" "${NODE}"
+                    printf >&2 "\033[31mProblem with ssh-copy-id with node %s\n\033[0m" "${NODE}"
                 }
             else
                 printf "\033[32m%s already completed. Skipping.\n\033[0m" "${NODE}"
