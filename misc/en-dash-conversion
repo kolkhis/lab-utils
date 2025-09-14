@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Helper script to detect and remove any unicode punctuation characters from MS Word
+# and replace them with their ASCII equivalent.  
+
 declare EN_DASH="–"
 declare OPEN_QUOTE='“'
 declare CLOSE_QUOTE='”'
@@ -7,7 +10,9 @@ declare APOSTRAPHE="’"
 declare ELLIPSES="…"
 
 declare -a FILES
-read -r -d '' -a FILES < <(find ./src/ -name 'u*' -type f -name '*.md' -o -name '*.txt')
+read -r -d '' -a FILES < <(
+    find ./src/ -name 'u*' -type f -name '*.md' -o -name '*.txt'
+)
 printf "File: %s\n" "${FILES[@]}"
 
 sed -iE \
@@ -23,4 +28,5 @@ sed -iE \
 #     s/\N{EN DASH}/-/g;
 #     s/\N{RIGHT SINGLE QUOTATION MARK}/'\''/g;
 # ' "${FILES[@]}"
+
 
