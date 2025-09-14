@@ -7,9 +7,13 @@ declare SAMBA_DIR='/srv/samba/share1'
 declare SAMBA_CONFIG='/etc/samba/smb.conf'
 declare INSTALL
 
-
 grep -qi 'debian' /etc/*release && OS=debian
 grep -qi 'redhat' /etc/*release && OS=redhat
+
+if [[ -z $OS ]]; then
+    type apt > /dev/null 2>&1 && OS=debian
+    type dnf > /dev/null 2>&1 && OS=redhat
+fi
 
 if [[ -n $1 ]]; then
     case "${1,,}" in
@@ -34,14 +38,15 @@ fi
 install-server-redhat() {
     sudo dnf install -y samba || {
         printf >&2 "%s [ERROR]: Failed to install the samba package!\n" "$(date '+%F %T')"
+        printf >&2 "%(%F %T)T [ERROR]: Failed to install the samba package!\n"
         return 1
     }
     sudo mkdir -p -m0755 "$SAMBA_DIR" || {
-        printf >&2 "%s [ERROR]: Failed to create the samba directory: %s\n" "$(date '+%F %T')" "$SAMBA_DIR"
+        printf >&2 "%(%F %T)T [ERROR]: Failed to create the samba directory: %s\n" -1 "$SAMBA_DIR"
         return 1
     }
     [[ -f "$SAMBA_CONFIG" ]] || {
-        printf >&2 "%s [ERROR]: Samba config could not be located at: %s\n" "$(date '+%F %T')" "$SAMBA_CONFIG"
+        printf >&2 "%(%F %T)T [ERROR]: Samba config could not be located at: %s\n" -1 "$SAMBA_CONFIG"
         return 1
     }
     return 0
@@ -50,15 +55,15 @@ install-server-redhat() {
 
 install-server-debian() {
     sudo apt-get install -y samba || {
-        printf >&2 "%s [ERROR]: Failed to install the samba package!\n" "$(date '+%F %T')"
+        printf >&2 "%(%F %T)T [ERROR]: Failed to install the samba package!\n"
         return 1
     }
     sudo mkdir -p -m0755 "$SAMBA_DIR" || {
-        printf >&2 "%s [ERROR]: Failed to create the samba directory: %s\n" "$(date '+%F %T')" "$SAMBA_DIR"
+        printf >&2 "%(%F %T)T [ERROR]: Failed to create the samba directory: %s\n" -1 "$SAMBA_DIR"
         return 1
     }
     [[ -f "$SAMBA_CONFIG" ]] || {
-        printf >&2 "%s [ERROR]: Samba config could not be located at: %s\n" "$(date '+%F %T')" "$SAMBA_CONFIG"
+        printf >&2 "%(%F %T)T [ERROR]: Samba config could not be located at: %s\n" -1 "$SAMBA_CONFIG"
         return 1
     }
     return 0
@@ -66,7 +71,7 @@ install-server-debian() {
 
 install-client-redhat() {
     sudo dnf install -y cifs-utils || {
-        printf >&2 "%s [ERROR]: Failed to install the cifs-utils package!\n" "$(date '+%F %T')"
+        printf >&2 "%(%F %T)T [ERROR]: Failed to install the cifs-utils package!\n"
         return 1
     }
     return 0
@@ -74,7 +79,7 @@ install-client-redhat() {
 
 install-client-debian() {
     sudo apt-get install -y cifs-utils || {
-        printf >&2 "%s [ERROR]: Failed to install the cifs-utils package!\n" "$(date '+%F %T')"
+        printf >&2 "%(%F %T)T [ERROR]: Failed to install the cifs-utils package!\n"
         return 1
     }
     return 0
