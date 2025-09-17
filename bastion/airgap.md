@@ -594,7 +594,6 @@ the default system log location with our log collection tool (promtail/alloy, et
 
 
 ## Resources
-- []()
 - [ProLUG Chroot Jail Killercoda Lab](https://killercoda.com/het-tanis/course/Linux-Labs/204-building-a-chroot-jail)
 - [ProLUG Bastion Host Killercoda Lab](https://killercoda.com/het-tanis/course/Linux-Labs/210-building-a-bastion-host)
     * [gh](https://github.com/het-tanis/prolug-labs/tree/main/Linux-Labs/210-building-a-bastion-host)
