@@ -189,7 +189,6 @@ get-ips(){
         ip=$(jq -r '.[1]."ip-addresses"[0]."ip-address"' < <(qm guest cmd "$vmid" network-get-interfaces)) 
         debug "Extracted: $host_name - $ip"
         IP_LIST[$host_name]="$ip"
-        IP_LIST[$ip]="$vmid"
     done
 }
 
@@ -207,7 +206,7 @@ format-output() {
             ;;
         ansible)
             for key in "${!IP_LIST[@]}"; do
-                printf "%s ansible_host=%s vmid=%d\n" "$key" "${IP_LIST[$key]}" "${IP_LIST[$ip]}" >> "$OUTPUT_FILE"
+                printf "%s ansible_host=%s\n" "$key" "${IP_LIST[$key]}" >> "$OUTPUT_FILE"
             done
             ;;
         *)
