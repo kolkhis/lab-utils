@@ -166,7 +166,7 @@ done
 [[ $1 == '--' ]] && shift;
 
 if [[ $EUID -ne 0 ]]; then
-    printf >&2 "Script must be run as root.\n"
+    printf >&2 "[ERROR]: Script must be run as root.\n"
     exit 1
 fi
 
@@ -217,11 +217,11 @@ format-output() {
 }
 
 output-results() {
-    {
-        [[ -z $OUTPUT_FILE ]] && format-output; 
-    } || {
-        : > "$OUTPUT_FILE"; format-output > "$OUTPUT_FILE"; 
-    }
+    if [[ -z $OUTPUT_FILE ]]; then
+        format-output
+    else
+        format-output > "$OUTPUT_FILE"
+    fi
 }
 
 get-ips "$@"
