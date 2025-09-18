@@ -206,7 +206,7 @@ format-output() {
             ;;
         ansible)
             for key in "${!IP_LIST[@]}"; do
-                printf "%s ansible_host=%s\n" "$key" "${IP_LIST[$key]}" >> "$OUTPUT_FILE"
+                printf "%s ansible_host=%s\n" "$key" "${IP_LIST[$key]}"
             done
             ;;
         *)
