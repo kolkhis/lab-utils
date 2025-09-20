@@ -1,21 +1,100 @@
 #!/bin/bash
-# handles cli args
 # --server|-s
 #   Set up the server
 # --client|-c
 #   Set up the client
 
+declare NFS_DIR='/nfs/share2'
+declare NFS_SERVER_IP='192.168.4.11'
+declare INSTALL_METHOD
+
+if type apt > /dev/null 2>&1; then
+    INSTALL_METHOD='apt'
+elif type dnf > /dev/null 2>&1; then
+    INSTALL_METHOD='dnf'
+fi
+
+if [[ $EUID -ne 0 ]]; then
+    printf >&2 "[ERROR]: Script must be run as root!\n"
+    exit 1
+fi
+
+install-with-apt() {
+    [[ -n $1 ]] && local pkg="$1"
+
+    if ! dpkg -s "$pkg" > /dev/null 2>&1; then
+        apt-get install -y "$pkg" && printf "Package %s installed.\n" "$pkg"
+    else
+        printf "%s already installed!\n" "$pkg"
+    fi
+}
+
+install-with-dnf() {
+    [[ -n $1 ]] && local pkg="$1"
+    if ! rpm -qa | grep -qi "$pkg"; then
+        dnf install -y "$pkg"
+    else
+        printf "%s already installed!\n" "$pkg"
+    fi
+}
+
+nfs-client-setup() {
+    local MOUNT_DIR='/mnt/nfs/'
+    local FSTAB_ENTRY="$NFS_SERVER_IP:$NFS_DIR $MOUNT_DIR nfs defaults 0 1"
+
+    mkdir -p "$MOUNT_DIR" && printf "Mount directory created: %s\n" "$MOUNT_DIR"
+
+    # package: nfs-common (Debian-based)
+    # package: nfs-utils  (RedHat-based)
+    if [[ $INSTALL_METHOD == 'apt' ]]; then
+        install-with-apt "nfs-common"
+    elif [[ $INSTALL_METHOD == 'dnf' ]];  then
+        install-with-dnf "nfs-utils"
+    fi
+
+    if ! grep -qi "$FSTAB_ENTRY" /etc/fstab; then
+        printf "%s\n" "$FSTAB_ENTRY" >> /etc/fstab
+    else
+        printf "fstab entry already exists in /etc/fstab.\n"
+    fi
+
+    mount -a && printf "Remounted stuff.\n"
+}
+
+nfs-server-setup() {
+    local NFS_DIR='/nfs/share2'
+    local NFS_OPTIONS='(rw,sync,no_subtree_check)'
+    local NFS_IP_RANGE='192.168.4.0/24'
+    local EXPORTS_ENTRY="${NFS_DIR}  ${NFS_IP_RANGE}${NFS_OPTIONS}"
+
+    if [[ $INSTALL_METHOD == 'apt' ]]; then
+        install-with-apt "nfs-kernel-server"
+    elif [[ $INSTALL_METHOD == 'dnf' ]];  then
+        install-with-dnf "nfs-utils"
+    fi
+
+    systemctl enable --now nfs-server
+
+    if ! [[ -d $NFS_DIR ]]; then
+        mkdir -p "$NFS_DIR"
+    fi
+
+    if ! grep -qi "$EXPORTS_ENTRY" /etc/exports; then
+        printf "%s\n" "$EXPORTS_ENTRY" >> /etc/exports
+    fi
+    exportfs -rav
+}
 
 while [[ -n $1 && $1 =~ ^- ]]; do
     case $1 in 
         -s|--server)
             printf "Running NFS server setup.\n"
-            sudo ./nfs-server-setup
+            nfs-server-setup
             shift
             ;;
         -c|--client)
             printf "Running NFS client setup.\n"
-            sudo ./nfs-client-setup
+            nfs-client-setup
             shift
             ;;
         *)
@@ -24,4 +103,6 @@ while [[ -n $1 && $1 =~ ^- ]]; do
             ;;
     esac
 done
+
+printf "Done.\n"
 
