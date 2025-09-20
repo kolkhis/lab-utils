@@ -59,6 +59,7 @@ nfs-client-setup() {
     fi
 
     mount -a && printf "Remounted stuff.\n"
+    systemctl daemon-reload
 }
 
 nfs-server-setup() {
