@@ -1,0 +1,43 @@
+#!/bin/bash
+# NFS setup script
+# Used to configure an NFS server and share.  
+# - Install deps
+#   - `nfs-kernel-server` (Debian-based systems)
+#   - `nfs-utils` (on Redhat-based systems)
+# - Create a directory to share over NFS
+#   - /nfs/share1
+#   - /srv/nfs
+# - Add share in `/etc/exports`
+
+declare NFS_DIR='/nfs/share2'
+declare NFS_OPTIONS='(rw,sync,no_subtree_check)'
+declare NFS_IP_RANGE='192.168.4.0/24'
+declare EXPORTS_ENTRY="${NFS_DIR}  ${NFS_IP_RANGE}${NFS_OPTIONS}"
+
+if [[ $EUID -ne 0 ]]; then
+    printf >&2 "[ERROR]: This script must be run as root!\n"
+    exit 1
+fi
+
+apt-get install -y nfs-kernel-server
+
+systemctl enable --now nfs-server
+
+mkdir -p "$NFS_DIR"
+
+printf "%s\n" "$EXPORTS_ENTRY" >> /etc/exports
+
+exportfs -rav
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,27 @@
+#!/bin/bash
+# handles cli args
+# --server|-s
+#   Set up the server
+# --client|-c
+#   Set up the client
+
+
+while [[ -n $1 && $1 =~ ^- ]]; do
+    case $1 in 
+        -s|--server)
+            printf "Running NFS server setup.\n"
+            sudo ./nfs-server-setup
+            shift
+            ;;
+        -c|--client)
+            printf "Running NFS client setup.\n"
+            sudo ./nfs-client-setup
+            shift
+            ;;
+        *)
+            printf >&2 "[ERROR]: Invalid argument: %s\n" "$1"
+            exit 1
+            ;;
+    esac
+done
+
