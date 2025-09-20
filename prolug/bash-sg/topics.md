@@ -146,6 +146,9 @@
 
 
 
+- [ ] PiHole install review
+    - <https://github.com/pi-hole/pi-hole/blob/master/automated%20install/basic-install.sh>
+
 
 ## Script Ideas
 
