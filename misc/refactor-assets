@@ -1,0 +1,4 @@
+#!/bin/bash
+for dir in {lac,psc,pcae}; do
+    perl -pi -e 's,\./(assets/)(.*),../../$1'"$dir"'/$2,' docs/${dir}/*.md
+done

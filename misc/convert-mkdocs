@@ -1,0 +1,21 @@
+#!/bin/bash
+
+for type in {intro,ws,lab,b}; do
+    declare title=
+    case $type in
+        intro)
+            title='Intro'
+            ;;
+        ws)
+            title='Worksheet'
+            ;;
+        lab)
+            title='Lab'
+            ;;
+        b)
+            title='Bonus'
+            ;;
+    esac
+    perl -pi -e 's/(^\s*- )(.*\/u\d+'"$type"'\.md)/$1'"$title: "'$2/' mkdocs.yml
+done
+
