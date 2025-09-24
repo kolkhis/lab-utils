@@ -1,0 +1,3 @@
+#!/bin/bash
+
+perl -pi -e 's/^(\s*```bash (?!linenums))/\1 linenums="1"/' **/*.md
