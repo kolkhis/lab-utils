@@ -1,7 +1,7 @@
 #!/bin/bash
 
 [ -n "$1" ] && IP=$1
-: "${IP:="$(hostname -I | awk '{print $1}' | tr -d ' ')"}"
+: "${IP:="$(hostname -I | cut -d' ' -f1)"}"
 
 
 check-service() {
