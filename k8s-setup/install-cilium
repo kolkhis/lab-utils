@@ -1,5 +1,10 @@
 #!/bin/bash
-# Cilium only needs to be installed on the master node.
+# Installer script for Cilium. 
+# Run only on your k8s control node.  
+# Cilium only needs to be installed on the master node. As a safety mechanism, 
+# this script will not install Cilium if the local hostname does not contain 
+# the word 'control' or 'master'.  
+
 
 declare -r CILIUM_DOWNLOAD_LINK='https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz'
 declare -r CILIUM_TARBALL="${CILIUM_DOWNLOAD_LINK##*/}"
