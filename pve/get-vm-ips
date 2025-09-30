@@ -12,7 +12,7 @@
 #                 raw host/ip lines, IP-only, or INI Ansible inventory-style.
 #
 #       OPTIONS:  -f, --format     Output format: ansible | raw | ip
-#                 -r, --raw        Alias for '--format raw'
+#                 -r, --raw        Alias for '--format raw' (default)
 #                 -o, --outfile    Write output to the given file
 #                 -c, --cron       Install this script as a daily cron job
 #                 -v, --verbose    Enable verbose logging
@@ -38,6 +38,11 @@ debug() {
 }
 
 setup-cron() {
+    if crontab -l 2>/dev/null | grep -qi "${BASH_SOURCE[0]}"; then
+        printf >&2 "Cron job already specified! Use 'crontab -e' and delete the entry before adding a new one.\n"
+        return 1
+    fi
+
     local cmd
     printf "Setting up script as a cron job...\n"
     if [[ $# -gt 0 ]]; then
@@ -46,11 +51,6 @@ setup-cron() {
         cmd="$(realpath "${BASH_SOURCE[0]}") -f ansible -o $HOME/generated-hosts.ini"
     fi
     printf "Command to be added to cron:\n\n\t%s\n\n" "$cmd"
-
-    if crontab -l 2>/dev/null | grep -qi "${BASH_SOURCE[0]}"; then
-        printf >&2 "Cron job already specified! Use 'crontab -e' and delete the entry before adding a new one.\n"
-        return 1
-    fi
 
     printf "Adding cron job...\n"
     { crontab -l 2>/dev/null; printf "* * */1 * * %s\n" "$cmd"; } | crontab - || {
