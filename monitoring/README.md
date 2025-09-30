@@ -126,7 +126,7 @@ ansible-playbook -i hosts.ini -K deploy_all.yml --tags=collector
 
 ## Skipping SSH Fingerprint Prompts
 
-### Using the Provided Script
+### Using the Provided Script (`./add-ssh-fingerprints`)
 I've provided a script that will parse your Ansible inventory file, or SSH
 configuration file, to then add all of the remote host's SSH fingerprints to
 your `known_hosts` file.  
@@ -163,6 +163,53 @@ As a one-liner:
 for ip in {101..105}; do ssh-keyscan -H 192.168.4.$ip >> ~/.ssh/known_hosts; done
 ```
 
+## `./output-links`
+
+This script acts as a helper script for endpoints.    
+It simply prints out a quick reference of the default ports used for
+the monitoring tools used in this project, and includes clickable links to 
+their local UIs/endpoints. 
+
+Accepts an IP as an argument.  
+If you don't pass an IP address as the first argument, the script auto-detects the first
+host IP.  
+
+It checks if key services are running via `pgrep` and prints direct links to
+their endpoints if the services are running. If not, it will print what the
+endpoint **would be** for a node running the service.  
+
+
+Usage:
+```bash
+./output-links # Uses current node IP (hostname -I | cut -d' ' -f1)
+./output-links 192.168.1.50
+```
+
+Output:
+```plaintext
+Default Ports:
+        Node_exporter:  9100
+        Prometheus:     9090
+        - The Prometheus service is not running on this node.
+        - The link will be http://192.168.1.50:9090
+        InfluxDB2:      8086
+        Promtail:       9080
+        - The Promtail service is not running on this node.
+        - The link will be http://192.168.1.50:9080
+        Grafana:        3000
+        - The Grafana service is not running on this node.
+        - The link will be http://192.168.1.50:3000
+        Loki:   3100
+
+Remember, you can check what is using a port with 'lsof'
+Ex: sudo lsof -i :9096
+
+If you need to query Loki manually, use curl:
+
+    curl http://192.168.1.50:3100/loki/api/v1/query_range \
+        --data-urlencode 'query={job="all"}' \
+        --data-urlencode 'limit=10'
+```
 
 
 
