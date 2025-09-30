@@ -4,6 +4,23 @@
 : "${WORKER1:=192.168.4.67}"
 : "${WORKER2:=192.168.4.68}"
 
+declare PKG_MANAGER
+
+_has(){
+    [[ -n "$1" ]] && command -v "$1" > /dev/null 2>&1 && return 0
+    return 1
+}
+
+if _has apt-get; then
+    PKG_MANAGER='apt'
+elif _has rpm; then
+    _has dnf && PKG_MANAGER='dnf' || _has yum && PKG_MANAGER='yum'
+fi
+
+if [[ -z "$PKG_MANAGER" ]]; then
+    printf >&2 "[ERROR]: Supported package manager not found. Currently supported: apt, yum, dnf\n"
+    exit 1
+fi
 
 restart-and-enable() {
     if ! sudo systemctl restart haproxy > /dev/null; then
@@ -90,7 +107,7 @@ rhel-install-haproxy() {
         }
     fi
 
-    if ! sudo dnf install haproxy -y; then
+    if ! sudo "$PKG_MANAGER" install haproxy -y; then
         printf >&2 "There was a problem installing HAProxy!\n" && return 1
     fi
 
@@ -147,7 +164,7 @@ done
 if [[ -z $NODE_PORT ]]; then
     cat <<- EOF
     No NodePort was specified.
-    Run this script again with '-p <NodePort>' or enter the NodePort after running.  
+    Run this script again with '-p <NodePort>', or enter the NodePort when prompted.  
 
     You need to specify the NodePort that was assigned to the Kubernetes cluster.
 
@@ -169,32 +186,14 @@ fi
 
 printf "Starting installation of HAProxy.\n"
 
-OS_FAMILY=$(cat /etc/*release | grep -i "id_like" | awk -F= '{print $2}')
-if [[ -z "$OS_FAMILY" ]]; then
-    printf "Trying again to determine OS family.\n"
-    {
-        which apt && printf "OS_FAMILY: %s\n" "${OS_FAMILY:=debian}"; 
-    } || {
-        which dnf && printf "OS_FAMILY: %s\n" "${OS_FAMILY:=rhel}"; 
-    }
-fi
-
-[[ -z "$OS_FAMILY" ]] && {
-    printf "Failed to determine OS family (RHEL/Debian)!\n" && exit 1
-}
-
-
-if [[ ${OS_FAMILY,,} == *debian* ]]; then
+if [[ "$PKG_MANAGER" == 'apt' ]]; then
     printf "Starting HAProxy installation for Debian-based systems.\n"
     debian-install-haproxy || {
         printf >&2 "There was a problem installing HAProxy.\n" && exit 1
     }
     printf "Successfully installed HAProxy.\n"
     printf "Check the configuration file at /etc/haproxy/haproxy.cfg to verify everything is correct.\n"
-fi
-
-
-if [[ ${OS_FAMILY,,} == *rhel* ]]; then
+else
     printf "Starting HAProxy installation for RedHat-based systems.\n"
     rhel-install-haproxy || {
         printf >&2 "There was a problem installing HAProxy.\n" && exit 1
@@ -203,5 +202,5 @@ if [[ ${OS_FAMILY,,} == *rhel* ]]; then
     printf "Check the configuration file at /etc/haproxy/haproxy.cfg to verify everything is correct.\n"
 fi
 
-
+exit 0
 
