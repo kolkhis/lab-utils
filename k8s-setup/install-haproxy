@@ -162,6 +162,9 @@ if [[ -z $NODE_PORT ]]; then
 
 	EOF
     exit 1
+elif [[ $NODE_PORT =~ [^0-9] ]]; then
+    printf >&2 "[ERROR]: The specified NodePort contains non-number characters!\n"
+    exit 1
 fi
 
 printf "Starting installation of HAProxy.\n"
