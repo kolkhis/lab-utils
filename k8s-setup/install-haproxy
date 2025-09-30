@@ -6,11 +6,11 @@
 
 
 restart-and-enable() {
-    if ! sudo systemctl restart haproxy; then
+    if ! sudo systemctl restart haproxy > /dev/null; then
         printf >&2 "Couldn't restart HAProxy!\n" && return 1
     fi
 
-    if ! sudo systemctl enable --now haproxy; then
+    if ! sudo systemctl enable haproxy > /dev/null; then
         printf >&2 "Couldn't enable HAProxy!\n" && return 1
     fi
 }
