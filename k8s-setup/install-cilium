@@ -1,38 +1,43 @@
 #!/bin/bash
 # Cilium only needs to be installed on the master node.
 
+declare -r CILIUM_DOWNLOAD_LINK='https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz'
+declare -r CILIUM_TARBALL="${CILIUM_DOWNLOAD_LINK##*/}"
+declare -r TMP_INSTALL_DIR="/tmp/cilium-install"
+
 install-cilium() {
 
     printf "Creating temporary install directory...\n"
-    mkdir -p /tmp/cilium-install || {
-        printf >&2 "Unable to create temporary directory: /tmp/cilium-install\n" && return 1
+    mkdir -p "$TMP_INSTALL_DIR" || {
+        printf >&2 "Unable to create temporary directory: %s\n" "$TMP_INSTALL_DIR" && return 1
     }
-    cd /tmp/cilium-install || {
-        printf >&2 "Couldn't switch directory to /tmp/cilium-install\n" && return 1
+
+    cd "$TMP_INSTALL_DIR" || {
+        printf >&2 "Couldn't switch to directory: %s\n" "$TMP_INSTALL_DIR" && return 1
     }
 
     printf "Downloading Cilium tarball...\n"
-    curl -LO https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz || {
+    curl -LO "$CILIUM_DOWNLOAD_LINK" || {
         printf >&2 "Problem downloading cilium tarball.\n" && return 1
     }
 
     printf "Extracting tarball...\n"
-    tar -xzvf /tmp/cilium-install/cilium-linux-amd64.tar.gz || {
+    tar -xzvf "$TMP_INSTALL_DIR/$CILIUM_TARBALL" || {
         printf >&2 "Problem extracting cilium tarball.\n" && return 1
     }
 
     printf "Copying Cilum binary to /usr/local/bin..."
-    sudo cp /tmp/cilium-install/cilium /usr/local/bin || {
+    sudo cp "$TMP_INSTALL_DIR/cilium" /usr/local/bin || {
         printf >&2 "Problem copying cilium binary to /usr/local/bin\n" && return 1
     }
 
     printf "Cleaning up installation files...\n"
-    rm -rf /tmp/cilium-install || {
+    rm -rf "$TMP_INSTALL_DIR" || {
         printf >&2 "Failed to remove cilium install directory.\n" && return 1
     }
 
     printf "Verifying installation...\n"
-    { [[ -f /usr/local/bin/cilium ]] && which cilium; } && {
+    { [[ -x /usr/local/bin/cilium ]] && command -v cilium > /dev/null 2>&1; } && {
         printf "Successfully installed and added Cilium to PATH.\n"
         return 0
     }
