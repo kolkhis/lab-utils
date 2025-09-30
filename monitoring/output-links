@@ -1,8 +1,13 @@
 #!/bin/bash
 
-[ -n "$1" ] && IP=$1
+[[ -n "$1" ]] && IP=$1
 : "${IP:="$(hostname -I | cut -d' ' -f1)"}"
 
+if ! [[ "$IP" =~ [0-9]{1,}\.[0-9]{1,}\.[0-9]{1,}\.[0-9]{1,} ]]; then
+    printf >&2 "[ERROR]: Bad IP address: %s\n" "$IP"
+    printf >&2 "This script only accepts an IP as an argument. Defaults to current host.\n"
+    exit 1
+fi
 
 check-service() {
     if pgrep -i "$1" > /dev/null 2>&1; then
@@ -31,8 +36,8 @@ for idx in "${!PORTS[@]}"; do
         if check-service "$idx"; then
             printf "\t- %s link: %s\n" "$idx" "http://${IP}:${PORTS[$idx]}"
         else
-            printf "\t- The %s service is not running on this node.\n" "$idx"
-            printf "\t- The link will be http://<host-ip>:%s\n" "${PORTS[$idx]}"
+            printf "\t- The %s service is not running on the current node.\n" "$idx"
+            printf "\t- The link will be http://%s:%s\n" "${IP}" "${PORTS[$idx]}"
         fi
     elif [[ $idx =~ Loki ]] && check-service "$idx"; then
         printf "\t- %s Ready link: %s/ready\n" "$idx" "http://${IP}:${PORTS[$idx]}"
