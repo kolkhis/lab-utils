@@ -97,7 +97,7 @@ rhel-install-haproxy() {
         }
     fi
 
-    if [[ $(sudo systemctl is-active firewalld) == 'active' ]]; then
+    if sudo systemctl is-active firewalld > /dev/null 2>&1; then
         printf "Firewalld is active. Adding HTTP/S ports to Firewalld.\n"
         {
             sudo firewall-cmd --add-port={443,80}/tcp --permanent
