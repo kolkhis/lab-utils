@@ -1,0 +1,29 @@
+#!/bin/bash
+
+declare NFS_DIR='/nfs/share2'
+declare NFS_SERVER_IP='192.168.4.11'
+declare MOUNT_DIR='/mnt/nfs/'
+declare FSTAB_ENTRY="$NFS_SERVER_IP:$NFS_DIR $MOUNT_DIR nfs defaults 0 1"
+
+# 192.168.4.11:/nfs/share1 /mnt/share1 nfs defaults 0 1
+
+if [[ $EUID -ne 0 ]]; then
+    printf >&2 "[ERROR]: Script must be run as root!\n"
+    exit 1
+fi
+
+mkdir -p "$MOUNT_DIR" && printf "Mount directory created: %s\n" "$MOUNT_DIR"
+
+# package: nfs-common (Debian-based)
+# package: nfs-utils  (RedHat-based)
+
+apt-get install -y nfs-common && printf "Package nfs-common installed.\n"
+
+if ! grep -qi "$FSTAB_ENTRY" /etc/fstab; then
+    printf "%s\n" "$FSTAB_ENTRY" >> /etc/fstab
+else
+    printf "fstab entry already exists in /etc/fstab.\n"
+fi
+
+mount -a && printf "Remounted stuff.\n"
+
