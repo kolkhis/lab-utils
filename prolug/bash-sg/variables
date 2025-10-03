@@ -22,8 +22,8 @@
 
 
 
-printf "Variables in Bash (and programming).\n"
 
+: ------------- Variables in Bash, and their Attributes -------------
 
 
 
@@ -147,7 +147,8 @@ printf "You give them a name, and they store a value.\n"
 
 
 
-# Creating variables
+: ---------------------- Creating Variables -------------------------
+
 printf "Let's look at a very simple example of creating a variable in Bash:\n"
 
     MY_VAR=10
@@ -262,7 +263,8 @@ printf "Then we're using the **assignment operator** (=) to assign it the value 
 
 
 
-# Using variables
+: ----------------------- Using Variables ---------------------------
+
 printf "Now that we've seen how to create a variable, let's actually use one.\n"
 
     echo "$MY_VAR"
@@ -272,7 +274,6 @@ printf 'We just use $ (dollar sign) and then the variable name.\n'
 printf "This 'expands' to the value stored in MY_VAR (10).\n"
 
 printf "Note that I'm using double-quotes around that variable.\n"
-
 printf "You should *always* double-quote your variables.\n"
 
 printf "It will technically work if you do not include quotes at all:\n"
@@ -280,7 +281,6 @@ printf "It will technically work if you do not include quotes at all:\n"
     echo $MY_VAR
 
 printf "However, this can cause word splitting and leaves you open to shell injection attacks.\n"
-
 printf "So: ALWAYS QUOTE YOUR VARIABLES! \n"
 
 
@@ -360,7 +360,8 @@ printf "So: ALWAYS QUOTE YOUR VARIABLES! \n"
 
 
 
-# types
+: ------------------------ Types in Bash ----------------------------
+
 printf "In Bash, variables are **dynamically typed** by default, meaning they can store any type of data.\n"
 
     # Storing a number
@@ -464,7 +465,7 @@ printf "So just be mindful of this. If you're using a var for a number, keep it 
 
 
 
-# Creating variables (declare)
+: ------------------------ Using declare ----------------------------
 
 printf "Now, yes, we can simply say 'VAR=value' and Bash will create the variable for us.\n"
 
@@ -538,8 +539,8 @@ printf "This is known as 'initializing' a variable.\n"
 
 
 
-# Scope
-# Functions (local/declare in fns)
+
+: -------------------- Scope and Functions --------------------------
 
 printf "By default, variables in bash are **globally-scoped**.\n"
 printf "What does that mean?\n" 
@@ -602,7 +603,6 @@ EOF
 
 
 
-# Variable attributes (declare [-i, -a, -A])
 
 
 
@@ -624,23 +624,20 @@ EOF
 
 
 
-
-
-
-
-
-
-
-
-# Exporting Variables
+: -------------------- Exporting Variables --------------------------
 printf "If you need a variable to be available in child processes and subshells, you must export it.\n"
 
 printf "There are a few ways to do this.\n"  
 
-    declare MY_VAR
+    declare MY_VAR="hello there"
     export MY_VAR
 
 printf "First we initialize the variable, then we export it using the 'export' builtin.\n"
+printf "This can also be done in a single line with 'export'\n"
+
+    export MY_VAR="hello there"
+
+: ----------------------- declare -x --------------------------------
 
 printf "We can also use the -x option for 'declare'.\n"
 
@@ -651,6 +648,424 @@ printf "This both initializes and exports the variable.\n"
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+: ----------------------- Variable Attributes -----------------------
+# (declare [-i, -a, -A])
+printf "How does Bash know when a variable is exported, though?\n"
+printf "Under the hood, variables have a bunch of attributes that we can set.\n"
+
+printf "We just saw 'declare -x'.\n"
+printf "What this is doing is it's setting the 'export attribute' on the variable.\n"
+
+printf "There are a lot more attributes we can set with 'declare' or 'local'.\n"
+
+printf "For instance, if we want a read-only variable (cannot be changed after defined), we can use '-r'\n"
+
+    declare -r MY_READONLY_VAR="This will never change!"
+
+printf "This sets the variable as read-only. Now, there's another way we can do this...\n"
+
+    readonly MY_READONLY_VAR="This will never change!"
+
+printf "Just like 'export' can be used to define variables with the 'export' attribute,
+        'readonly' can be used to define variables with the read-only attribute.\n"
+
+: ------------------------ Integers ---------------------------------
+
+printf "Another very useful attribute is the 'integer' attribute.\n"
+
+printf "If we know a variable is going to be a number, and should never become a string, we can set this.\n"
+
+    declare -i MY_INTEGER=1
+
+printf "This attribute will not allow the variable to be assigned anything other than an integer.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+: ----------------------- Variable Attributes '(cont)' --------------
+
+printf "Some other fun variable attributes in Bash are 'lowercase' and 'uppercase'.\n"
+
+    declare -l MY_LOWER="HELLO THERE"
+    printf "%s\n" "$MY_LOWER"
+
+    declare -u MY_UPPER="hello again"
+    printf "%s\n" "$MY_UPPER"
+
+printf "These force the case of the value in the variable to uppercase or lowercase.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+: ---------------------------- Arrays -------------------------------
+
+printf "One other attribute you may have seen me use is '-a'.\n"
+printf "This sets the 'array' attribute.\n"
+printf "We set this attribute when we want to create an indexed array.\n"
+
+    declare -a MY_ARR=("One" "Two" "Three")
+
+printf "Arrays are very useful, and can be used to group a set of variables.\n"
+printf "Side note: Arrays are not POSIX-compliant.\n"
+
+printf "You can expand an array into all its elements by calling on it like this:\n"
+
+    echo "${MY_ARR[@]}"
+
+printf "The '[@]' substring is used to expand the array into all its elements separately.\n"
+printf "So this expands to:\n"
+
+    echo "One" "Two" "Three"
+
+printf "This will be 3 separate arguments to the 'echo' command.\n"
+
+printf "If we need to combine all elements of the array into a single string:\n"
+
+    echo "${MY_ARR[*]}"
+
+printf "The '[*]' substring takes each element and combines it into a single string.\n"
+printf "This expands to:\n"
+
+    echo "One Two Three"
+
+printf "This is now a single argument to the 'echo' command.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+: --------------------------- Resources -----------------------------
+printf "For a full list of attributes, see:\n"
+
+    help declare
+
+printf "You can also read about them in the Bash man page.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+: --------------------------- Questions? ----------------------------
 
 
 
