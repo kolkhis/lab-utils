@@ -1,0 +1,61 @@
+#!/bin/bash
+
+declare SELECTION
+declare -a CHOICES=(
+    "Show everything"
+    "Hide domains"
+    "Hide domains and clients"
+    "Anonymous mode"
+)
+
+PS3="Enter your choice: "
+select SELECTION in "${CHOICES[@]}"; do
+    printf "You picked number: %d\n" "$REPLY"
+    case $SELECTION in
+        "${CHOICES[0]}")
+            printf "You chose: %s\n" "${CHOICES[$REPLY-1]}"
+            break;
+            ;;
+        "${CHOICES[1]}")
+            printf "You chose: %s\n" "${CHOICES[$REPLY-1]}"
+            break;
+            ;;
+        "${CHOICES[2]}")
+            printf "You chose: %s\n" "${CHOICES[$REPLY-1]}"
+            break;
+            ;;
+        "${CHOICES[4]}")
+            printf "You chose: %s\n" "${CHOICES[$REPLY-1]}"
+            break;
+            ;;
+        *)
+            printf "Invalid selection: %d\n" "$REPLY"
+            ;;
+    esac
+done
+
+PS3="Enter your choice: "
+select SELECTION in "${CHOICES[@]}"; do
+    case $REPLY in
+        1)
+            printf "You chose number: %d: %s\n" "$REPLY" "${CHOICES[$REPLY-1]}"
+            break;
+            ;;
+        2)
+            printf "You chose number: %d: %s\n" "$REPLY" "${CHOICES[$REPLY-1]}"
+            break;
+            ;;
+        3)
+            printf "You chose number: %d: %s\n" "$REPLY" "${CHOICES[$REPLY-1]}"
+            break;
+            ;;
+        4)
+            printf "You chose number: %d: %s\n" "$REPLY" "${CHOICES[$REPLY-1]}"
+            break;
+            ;;
+        *)
+            printf "Invalid selection: %s\n" "$REPLY"
+            ;;
+    esac
+done
+
