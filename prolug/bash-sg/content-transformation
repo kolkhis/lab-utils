@@ -170,10 +170,10 @@ printf "But, there are things perl can do that sed cannot, and visa versa.\n"
 printf "One of the most common use cases is performing substitutions.\n"
 printf "I've shown these types of substitutions before but I've never really went indepth into how it works.\n"
 
-    sed 's/old/new/' 
+    sed 's/old/new/' file.txt
 
 printf "It's simple on the face of it: Match a pattern, replace it with something else.\n"
-printf "There are modifiers you can add at the end (like 'g' for global).\n"
+printf "There are modifiers you can add at the end (like 'g' for global, or 'i' for case-insensitive).\n"
 
 
 
@@ -257,9 +257,13 @@ printf "But what's happening here?\n"
 
 printf "Doing a substutition or other one-liner with perl, you'll usually want to use the -pe options.\n"
 
-printf "The '-p' wraps the input in a printing loop.\n"
-printf "The '-e' specifies the expression.\n"
+    printf "The '-p' wraps the input in a printing loop. \
+            Each line will print after being passed through the expression.\n"
+    printf "The '-e' specifies the expression.\n"
+
 printf "Each line will be printed after being run through whatever code we put in the -e (expression).\n"
+
+    printf "Match the word hello.\n" | perl -pe 's/hello//'
 
 printf "This is the default behavior in 'sed'.\n"
 
@@ -326,7 +330,7 @@ printf "So basically, use 'perl -pe' to make it behave like sed.\n"
 
 printf "By default, 'sed' uses basic regular expressions (BREs).\n"
 printf "I went over this in the regex talk.\n"
-printf "Basically, BREs require you to escape certin regex operators (e.g., capture groups).\n"
+printf "To recap, BREs require you to escape certin regex operators (e.g., capture groups).\n"
 
     printf "Capture hello and greet the user.\n" | sed "s/.*\(hello\).*/\1, $USER./"
     # output: hello, kolkhis. 
@@ -338,7 +342,7 @@ printf "To enable Extended regular expresssions (EREs), use the -E option.\n"
     printf "Capture hello and greet the user.\n" | sed -E "s/.*(hello).*/\1, $USER./"
     # output: hello, kolkhis.
 
-printf "Now sed is acting a lot more like perl.\n"
+printf "Now sed regex looks a little bit more like perl.\n"
 
 printf "Side note: The -E is now POSIX-compliant.\n"
 
@@ -505,6 +509,7 @@ printf "Now let's change it back with sed.\n"
     cat ./examples/hello.c
 
 printf "Cool. But, what if we wanted to make a backup before we make any changes?\n"
+printf "If this was a really important system file, or we're testing changes, we might want to make a backup.\n"
 
 printf "That's built in to '-i'. Just add a suffix directly after the '-i' and it'll make a backup.\n"
 
@@ -514,7 +519,11 @@ printf "That's built in to '-i'. Just add a suffix directly after the '-i' and i
 printf "This will create a 'examples/hello.c.bak' file, which is a backup of the original.\n"
 printf "This is very useful if you're working with files that are not under version control.\n"
 
+printf "To restore a file from its backup, just use 'mv'\n"
 
+    mv ./examples/hello.c.bak ./examples/hello.c
+
+printf "Then your file is successfully restored.\n"
 
 
 
@@ -609,14 +618,16 @@ printf "Say we want to change the role for 'eve' from 'guest' to 'admin'.\n"
     sed -i.bak '/\beve\b/ s/guest/admin/' ./examples/users.txt
     sed -i.bak '/\beve\b/ s/admin/guest/' ./examples/users.txt
     # \< \> \b (word bounaries)
+    printf "We use word boundaries here so we don't also match 'steve'.\n"
 
 printf "Using sed, we specify a pattern (/eve/) BEFORE we put in the command (s///)\n"
 printf "This will perform the command _only_ on the lines matching the pattern.\n"
 
 printf "We can achieve this using perl too, in a bit of a different way.\n"
 
-    perl -pe 's/guest/admin/ if m/\beve\b/' ./examples/users.txt
-    perl -pe 's/admin/guest/ if m/\beve\b/' ./examples/users.txt
+    perl -pi.bak -e 's/guest/admin/ if m/\beve\b/' ./examples/users.txt
+    # Change it back:
+    perl -pi.bak -e 's/admin/guest/ if m/\beve\b/' ./examples/users.txt
 
 printf "We have a simple 'command if condition' here.\n"
 printf "This leverages the fact that Perl is an actual entire programming language.\n"
@@ -796,6 +807,7 @@ printf "But we added multiple lines. Let's specify multiple patterns.\n"
 printf "Here we use a capture group to specify two patterns. Match either 'fred' or 'aaron', and delete.\n"
 printf "We used -E so that we did not have to escape the parentheses.\n"
 
+printf "If we wanted to use perl to achieve this functionality, we'd use something like this:\n"
 
 
 
@@ -863,14 +875,25 @@ printf "We used -E so that we did not have to escape the parentheses.\n"
 
 printf "We can achieve a similar result using perl with the '-ne' options.\n"
 
-    perl -ne 'print $_ if not m/(fred|aaron)/' ./examples/users.txt
+    perl -ni.bak -e 'print $_ unless m/(fred|aaron)/' ./examples/users.txt
+    perl -ni.bak -e 'print $_ if not m/(fred|aaron)/' ./examples/users.txt
 
-printf "The '-n' wraps the input in a non-printing loop.\n"
+printf "The '-n' option wraps the input in a non-printing loop.\n"
+printf "Basically that means it will loop over the input, just like '-p', but it will not print it by defult.\n"
+
+printf 'The $_ variable in Perl is the "default variable."\n'
+printf "It holds the current line that is being processed.\n"
+printf "So since it's in a non-printing loop, we tell it only to print if the line does not match the pattern.\n"
+
+printf 'We could also just leave out the $_, as it is implied when calling print in this context.\n'
+
+    perl -ne 'print unless m/(fred|aaron)/' ./examples/users.txt
 
     # Same as:
-    perl -e 'while(<>) { print $_ if not m/(fred|aaron)/ }' ./examples/users.txt
+    perl -e 'while(<>) { print unless m/(fred|aaron)/ }' ./examples/users.txt
 
-printf "Basically that means it will loop over the input but it will not print it by defult.\n"
+printf "That's how you can delete lines with perl.\n"
+printf "It's a tiny bit more cumbersome (on us) than sed for this operation, but still works just fine.\n"
 
 
 
