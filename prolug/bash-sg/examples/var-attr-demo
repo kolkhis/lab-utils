@@ -1,0 +1,53 @@
+#!/bin/bash
+# Demo script for showcasing variable attributes
+#
+# -x
+# -l
+# -u
+# -r
+# -i
+# -a
+# -A?
+
+# declare private_var="This is global"
+
+# myfunc(){
+#     GLOBAL_VAR="Hello!"
+#     local private_var='hello'
+#     declare private_var2='world'
+#     echo "Inside func: $private_var"  # hello
+#     echo "Inside func: $private_var2" # world
+#     echo "Inside func: $GLOBAL_VAR" # world
+# }
+# myfunc
+
+# echo "Outside: $private_var"  # No output
+# echo "Outside: $private_var2" # No output
+# echo "Outside: $GLOBAL_VAR"
+
+
+
+# declare -i myint=10
+# echo "Value of myint: $myint"
+# myint="Hello, world." # Error
+# echo "Value of myint: $myint"
+
+# declare -l MY_LOWER="HELLO THERE"
+# printf "Value of MY_LOWER: %s\n" "$MY_LOWER"
+# declare -u MY_UPPER="hello again"
+# printf "Value of MY_UPPER: %s\n" "$MY_UPPER"
+
+# declare -a MY_ARR=("One" "Two" "Three")
+# echo "${MY_ARR[@]}"
+# printf "Element: %s\n" "${MY_ARR[@]}"
+# printf "Element: %s %s\n" "One" "Two" "Three"
+
+# declare -a nums=(0 1 2 3)
+# printf "%s\n" $(( nums++ ))
+# for n in "${nums[@]}"; do
+#     printf "%s\n" "$((nums++))"
+# done
+# printf "Nums: %d\n" "${nums[@]}"
+
+
+
