@@ -23,6 +23,7 @@
 
 
 
+
 : ------------- Variables in Bash, and their Attributes -------------
 
 
@@ -148,7 +149,6 @@ printf "You give them a name, and they store a value.\n"
 
 
 : ---------------------- Creating Variables -------------------------
-
 printf "Let's look at a very simple example of creating a variable in Bash:\n"
 
     MY_VAR=10
@@ -264,9 +264,9 @@ printf "Then we're using the **assignment operator** (=) to assign it the value 
 
 
 : ----------------------- Using Variables ---------------------------
-
 printf "Now that we've seen how to create a variable, let's actually use one.\n"
 
+    MY_VAR=10
     echo "$MY_VAR"
     # output: 10
 
@@ -276,11 +276,11 @@ printf "This 'expands' to the value stored in MY_VAR (10).\n"
 printf "Note that I'm using double-quotes around that variable.\n"
 printf "You should *always* double-quote your variables.\n"
 
-printf "It will technically work if you do not include quotes at all:\n"
-    
+printf "It will technically work if you do not include quotes at all:"
+
     echo $MY_VAR
 
-printf "However, this can cause word splitting and leaves you open to shell injection attacks.\n"
+printf "However, this can cause word splitting and leaves your script open to shell injection attacks.\n"
 printf "So: ALWAYS QUOTE YOUR VARIABLES! \n"
 
 
@@ -361,7 +361,6 @@ printf "So: ALWAYS QUOTE YOUR VARIABLES! \n"
 
 
 : ------------------------ Types in Bash ----------------------------
-
 printf "In Bash, variables are **dynamically typed** by default, meaning they can store any type of data.\n"
 
     # Storing a number
@@ -468,10 +467,9 @@ printf "So just be mindful of this. If you're using a var for a number, keep it 
 : ------------------------ Using declare ----------------------------
 
 printf "Now, yes, we can simply say 'VAR=value' and Bash will create the variable for us.\n"
-
 printf "If we want to be more explicit, we can use the 'declare' builtin.\n"
 
-    declare MY_VAR 
+    declare MY_VAR
     typeset MY_VAR  # Synonym for `declare`
 
 printf "This will create the variable, but will not assign any value to it.\n"
@@ -904,6 +902,9 @@ printf "This will be 3 separate arguments to the 'echo' command.\n"
 printf "If we need to combine all elements of the array into a single string:\n"
 
     echo "${MY_ARR[*]}"
+    if [[ "${MY_ARR[*]}" =~ Two ]]; then
+        printf "Contains 'Two'\n"
+    fi
 
 printf "The '[*]' substring takes each element and combines it into a single string.\n"
 printf "This expands to:\n"
@@ -1066,7 +1067,6 @@ printf "You can also read about them in the Bash man page.\n"
 
 
 : --------------------------- Questions? ----------------------------
-
 
 
 
