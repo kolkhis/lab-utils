@@ -1,0 +1,30 @@
+#!/bin/bash
+# Cleanup script for VMs affected by storage failure
+# Don't run this
+# Don't run this
+# Don't run this
+# Don't run this
+# Don't run this
+
+declare -a DELETE=( 100 101 103 201 202 203 204 205 9001 )
+printf "[WARNING]: Attempting to destroy VMs.\n"
+printf "The following VMs with the IDs will be destroyed:\n"
+printf "- %d\n" "${DELETE[@]}"
+
+declare -l CHOICE
+read -r -p "Continue? [y/N]" CHOICE
+
+if [[ ${CHOICE:-no} == 'no' ]]; then
+    printf "Exiting.\n"
+    exit 0
+fi
+
+for vmid in "${DELETE[@]}"; do
+    if [[ $(sudo qm status "$vmid") == "status: running" ]]; then
+        qm stop "$vmid"
+    fi
+    qm destroy "$vmid" || {
+        printf >&2 '[ERROR]: Failed to destroy VM with ID: %d\n' "$vmid"
+        continue
+    }
+done
