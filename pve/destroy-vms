@@ -25,8 +25,10 @@ for vmid in "${DELETE[@]}"; do
     if [[ $(sudo qm status "$vmid") == "status: running" ]]; then
         qm stop "$vmid"
     fi
+    printf "Destroying VMID: %d...\n" "$vmid"
     qm destroy "$vmid" || {
         printf >&2 '[ERROR]: Failed to destroy VM with ID: %d\n' "$vmid"
         continue
     }
+    printf "VM successfully destroyed.\n"
 done
