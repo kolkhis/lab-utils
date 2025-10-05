@@ -14,8 +14,7 @@ declare -a VMID_LIST
 IFS=$'\n' read -r -d '' -a VMID_LIST < <(sudo qm list | awk 'NR > 1 {print $1}')
 
 for vmid in "${VMID_LIST[@]}"; do
-    printf "Checking VMID: %d - %s\n" "$vmid" \
+    printf "VMID: %d - %s\n" "$vmid" \
         "$(qm config "$vmid" | grep -i disk | grep -v 'agent:')"
-    # qm config "$vmid" | grep -i disk | grep -v 'agent:'
 done
 
