@@ -1,0 +1,20 @@
+#!/bin/bash
+
+if [[ $EUID -ne 0 ]]; then
+    printf >&2 '[ERROR]: Run script as root.\n'
+    exit 1
+fi
+
+if ! command -v qm > /dev/null 2>&1; then
+    printf >&2 '[ERROR]: Could not find the qm command.\n'
+    exit 1
+fi
+
+declare -a VMID_LIST
+IFS=$'\n' read -r -d '' -a VMID_LIST < <(sudo qm list | awk 'NR > 1 {print $1}')
+
+for vmid in "${VMID_LIST[@]}"; do
+    printf "Checking VMID: %d\n" "$vmid"
+    qm config "$vmid" | grep -i disk
+done
+
