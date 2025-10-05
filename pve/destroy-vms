@@ -6,10 +6,12 @@
 # Don't run this
 # Don't run this
 
+[[ $EUID -ne 0 ]] && printf "Run as root.\n" && exit 1
+
 declare -a DELETE=( 100 101 103 201 202 203 204 205 9001 )
 printf "[WARNING]: Attempting to destroy VMs.\n"
 printf "The following VMs with the IDs will be destroyed:\n"
-printf "- %d\n" "${DELETE[@]}"
+printf -- "- %d\n" "${DELETE[@]}"
 
 declare -l CHOICE
 read -r -p "Continue? [y/N]" CHOICE
