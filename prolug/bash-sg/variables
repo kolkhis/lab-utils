@@ -538,6 +538,108 @@ printf "This is known as 'initializing' a variable.\n"
 
 
 
+
+
+: ------------------------ Using Expressions ------------------------
+printf "If we need to, we can use expressions to declare variables.\n"
+printf "This is done in the double parentheses ((...)) notation.\n"
+
+    (( MY_VAR = 10 ))
+    echo "$MY_VAR" # 10
+
+printf "This can be any arithmetic expression as well.\n"
+
+    (( MY_VAR = 10 + 12 ))
+    echo "$MY_VAR" # 22
+
+printf "We can also use other variables in the expression.\n"
+
+    (( MY_OTHER_VAR = MY_VAR + 50 ))
+    echo "$MY_OTHER_VAR" # 72
+
+printf "We can read about the different operators supported with 'help let'.\n"
+
+    help let
+
+printf "The double paren syntax is preferred over using 'let', so I won't cover 'let'.\n"
+printf "You can read about that with 'help let'.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 : -------------------- Scope and Functions --------------------------
 
 printf "By default, variables in bash are **globally-scoped**.\n"
