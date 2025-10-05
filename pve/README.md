@@ -62,6 +62,35 @@ host-name ansible_host=192.168.1.12
 > Additionally, the `qemu-guest-agent` **must** be enabled for this script to work
 > properly.    
 
+## `./check-storage`
+
+This is a simple helper script for storage troublshooting.  
+It loops over the VMs in your Proxmox node and prints out the disk that it
+uses.  
+
+I wrote this to troubleshoot a storage issue I was having. A disk in a 
+non-redundant ZFS pool failed, and I had to determine what VMs were using that
+disk so I could clean up and rebuild.  
+
+Functionality is sort of equivalent to:
+```bash
+qm config 100 | grep -i "scsi0"
+```
+...but for all VMs in the node, with a little extra formatting.  
+
+Simply invoke the script with escalated privileges.  
+```bash
+sudo ./check-storage
+```
+
+The output will look something like this:
+```plaintext
+VMID: 100 - scsi0: vmdata:vm-100-disk-0,iothread=1,size=80G
+VMID: 101 - scsi0: vmdata:vm-101-disk-0,iothread=1,size=60G
+VMID: 102 - scsi0: local-lvm:vm-102-disk-0,iothread=1,size=32G
+```
+
+
 
 ## Playbooks
 
