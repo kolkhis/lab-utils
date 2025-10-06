@@ -6,9 +6,16 @@
 # Don't run this
 # Don't run this
 
-[[ $EUID -ne 0 ]] && printf "Run as root.\n" && exit 1
+[[ $EUID -ne 0 ]] && printf "[ERROR]: Must run as root.\n" && exit 1
+[[ $# -eq 0 ]] && printf >&2 "[ERROR]: Must pass in VMIDs as arguments.\n" && exit 1
 
-declare -a DELETE=( 100 101 103 201 202 203 204 205 9001 )
+if [[ "${*}" =~ [^0-9] ]]; then
+    printf >&2 "[ERROR]: Non-digit characters found in arguments.\n"
+    printf >&2 "Pass in only VMIDs for deletion.\n"
+    exit 1
+fi
+
+declare -a DELETE=("$@")
 printf "[WARNING]: Attempting to destroy VMs.\n"
 printf "The following VMs with the IDs will be destroyed:\n"
 printf -- "- %d\n" "${DELETE[@]}"
@@ -16,7 +23,7 @@ printf -- "- %d\n" "${DELETE[@]}"
 declare -l CHOICE
 read -r -p "Continue? [y/N]" CHOICE
 
-if [[ ${CHOICE:-no} == 'no' ]]; then
+if [[ ${CHOICE:-n} == n* || "${CHOICE:-n}" != y*  ]]; then
     printf "Exiting.\n"
     exit 0
 fi
