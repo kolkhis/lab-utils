@@ -1,0 +1,40 @@
+#!/bin/bash
+# Script for setting up a RAID1 array to mirror the root filesystem and EFI
+# System Partition (ESP).
+# Meant to be run (once) on a Proxmox installation that used LVM for setup.  
+# Will assume the default naming convention for the LVM Proxmox setup.
+
+declare -r DISK1="/dev/sda"
+declare -r DISK2="/dev/sdc"
+declare -r DISK1_ESP="${DISK1}2"
+declare -r DISK2_ESP="${DISK2}2"
+declare -r ARRAY_NAME="/dev/md1"
+
+declare -a DEPS=(
+    "gdisk"
+    "mdadm"
+    "efibootmgr"
+    "lvm2"
+)
+
+install-deps() {
+    [[ "${#DEPS[@]}" -gt 0 ]] || return 1
+    printf "Installing dependencies...\n"
+    if ! sudo apt-get install -y "${DEPS[@]}"; then
+        printf >&2 '[ERROR]: Failed to install dependencies!\n'
+        return 1
+    fi
+    return 0
+}
+
+if ! _has apt-get; then
+    printf >&2 "[ERROR]: Currently only supports Debian-based systems.\n"
+    exit 1
+fi
+
+if ! type "${DEPS[@]}" > /dev/null 2>&1; then
+    install-deps || {
+        printf >&2 '[ERROR]: Dependencies could not be installed. Exiting.\n'
+        exit 1; 
+    }
+fi
