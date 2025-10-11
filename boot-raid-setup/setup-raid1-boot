@@ -6,8 +6,12 @@
 
 declare -r DISK1="/dev/sda"
 declare -r DISK2="/dev/sdc"
-declare -r DISK1_ESP="${DISK1}2"
-declare -r DISK2_ESP="${DISK2}2"
+declare -r DISK1_ROOT="${DISK1}3"
+declare -r DISK2_ROOT="${DISK2}3"
+declare -r VG_NAME="pve"
+# declare -r DISK1_ESP="${DISK1}2"
+# declare -r DISK2_ESP="${DISK2}2"
+
 declare -r ARRAY_NAME="/dev/md1"
 
 declare -a DEPS=(
@@ -16,6 +20,11 @@ declare -a DEPS=(
     "efibootmgr"
     "lvm2"
 )
+
+if [[ $EUID -ne 0 ]]; then
+    printf >&2 '[ERROR]: Must run as root.\n'
+    exit 1
+fi
 
 install-deps() {
     [[ "${#DEPS[@]}" -gt 0 ]] || return 1
@@ -27,7 +36,97 @@ install-deps() {
     return 0
 }
 
-if ! _has apt-get; then
+clone-partition-table(){
+    if ! sgdisk --backup="table.${DISK1##*/}" "$DISK1"; then
+        printf >&2 '[ERROR]: Failed to back up partition table for %s\n' "${DISK1}"
+    fi
+    if ! sgdisk --load-backup="table.${DISK1##*/}" "$DISK2"; then
+        printf >&2 '[ERROR]: Failed to load partition table onto disk: %s\n' "${DISK2}"
+    fi
+    if ! sgdisk --randomize-guids "$DISK2"; then
+        printf >&2 '[ERROR]: Failed to randomize GUIDs for disk: %s\n' "$DISK2"
+    fi
+}
+
+create-array(){
+    mdadm --create "${ARRAY_NAME}" --level=1 --raid-devices=2 "${DISK2_ROOT}" missing || {
+        printf >&2 '[ERROR]: Failed to create RAID1 array!\n'
+        return 1
+    }
+    if ! grep -qi "${DISK2_ROOT##*/}" /proc/mdstat; then
+        printf >&2 "[ERROR]: Could not verify the existence of the new RAID array!\n"
+        return 1
+    fi
+}
+
+add-array-to-lvm(){
+    pvcreate "$ARRAY_NAME" || {
+        printf "[ERROR]: Failed to add array to LVM as a PV!\n"
+        return 1
+    }
+    if ! pvs | grep -qi "$ARRAY_NAME"; then
+        printf >&2 "[ERROR]: Coudn't verify array as a PV!\n"
+        return 1
+    fi
+
+    if ! vgextend "$VG_NAME" "$ARRAY_NAME"; then
+        printf >&2 "[ERROR]: Failed to add array to VG: %s\n" "${VG_NAME}"
+        return 1
+    fi
+
+    if [[ "$(vgs | awk "/$VG_NAME/ {print \$2}")" -lt 2 ]]; then
+        printf >&2 "[ERROR]: Only 1 PV found in the VG: %s\n" "${VG_NAME}"
+        return 1
+    fi
+}
+
+migrate-data-to-array(){
+    printf "[INFO]: Migrating LVM data to new array.\n"
+    printf "[INFO]: This will take a while...\n"
+    printf "Starting at: %(%T)T"
+    if ! pvmove "$DISK1_ROOT" "$ARRAY_NAME"; then
+        printf >&2 "[ERROR]: Failed to migrate LVM data from %s to %s\n" "$DISK1_ROOT" "$ARRAY_NAME"
+        return 1
+    fi
+    printf "Migration finished at: %(%T)T\n"
+
+    if ! lvs -o +devices | awk '/root/ { print $NR }' | grep "$ARRAY_NAME"; then
+        printf >&2 "[ERROR]: Failed to verify root filesystem migration!\n"
+        return 1
+    fi
+
+    if ! vgreduce "$ARRAY_NAME" "$DISK1_ROOT"; then
+        printf >&2 '[ERROR]: Failed to remove PV: %s\n' "$DISK1_ROOT"
+        return 1
+    fi
+}
+
+save-raid-config(){
+    if ! mdadm --detail --scan | tee -a /etc/mdadm/mdadm.conf; then
+        printf >&2 '[ERROR]: Failed to save RAID configuration!\n'
+        return 1
+    fi
+    update-initramfs -u || {
+        printf >&2 '[ERROR]: Failed to update initramfs!\n' 
+        return 1
+    }
+}
+
+verify-and-reboot(){
+    local choice
+    local ln2
+    printf "[INFO]: Verify changes and reboot.\n"
+    lsblk -o NAME,SIZE,TYPE,MOUNTPOINT
+    IFS=$'\n' read -r -d '' _ ln2 ln3 ln4 < <(lsblk | grep -A 3 "${DISK2_ROOT##*/}")
+    if ! grep -qi "${ARRAY_NAME##*/}" <<< "$ln2"; then
+        printf >&2 "[ERROR]: Could not verify RAID array %s in parition: %s\n" "$ARRAY_NAME" "$DISK2_ROOT"
+        return 1
+    fi
+    printf "[INFO]: Verification complete. Reboot machine.\n"
+}
+
+
+if ! type apt-get > /dev/null 2>&1; then
     printf >&2 "[ERROR]: Currently only supports Debian-based systems.\n"
     exit 1
 fi
@@ -38,3 +137,4 @@ if ! type "${DEPS[@]}" > /dev/null 2>&1; then
         exit 1; 
     }
 fi
+
