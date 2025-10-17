@@ -113,16 +113,22 @@ save-raid-config(){
 }
 
 verify-and-reboot(){
+    # : TODO(validate): Come up with more reliable way to check if rootfs is
+    # mounted from within RAID array across different LVM naming schemes (e.g.,
+    # ubuntu LVM)
+
     local choice
     local ln2
-    printf "[INFO]: Verify changes and reboot.\n"
     lsblk -o NAME,SIZE,TYPE,MOUNTPOINT
     IFS=$'\n' read -r -d '' _ ln2 ln3 ln4 < <(lsblk | grep -A 3 "${DISK2_ROOT##*/}")
+
+    # Ensure the RAID array is in the new disk
     if ! grep -qi "${ARRAY_NAME##*/}" <<< "$ln2"; then
         printf >&2 "[ERROR]: Could not verify RAID array %s in parition: %s\n" "$ARRAY_NAME" "$DISK2_ROOT"
         return 1
     fi
-    printf "[INFO]: Verification complete. Reboot machine.\n"
+    printf "[INFO]: Array %s verified to be in disk %s\n" "${ARRAY_NAME##*/}" "${DISK2_ROOT##*/}"
+    printf "[INFO]: Reboot required.\n"
 }
 
 
