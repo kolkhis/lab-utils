@@ -402,6 +402,7 @@ printf "Also not a boolean. This program returns an 'unsuccessful result' (1)\n"
 
 
 printf "Take this example:\n"
+
 if [[ -f ./examples/hello.c ]]; then
     printf "The file exists.\n"
 fi
@@ -490,10 +491,11 @@ fi
 printf "Well what if we want to check if a condition is NOT met?\n"
 printf "For that, we use the '!' (NOT) operator.\n" 
 
-if [[ ! -f ./goodbye.c ]]; then printf "File does not exist\n"; fi
+if [[ ! -f ./goodbye.c ]]; then 
+    printf "File does not exist\n";
+fi
 
 printf "The '!' operator simply reverses the condition.\n"
-
 
 printf "The ! operator can be used either inside or outside the brackets in bash.\n"
 
@@ -577,6 +579,7 @@ printf "Let's look at '&&'\n"
 printf "The POSIX equivalent using single brackets:\n"
 
     # If using single brackets [ ... ], use && and || outside
+    # if test -f ./examples/hello.c && test -s ./examples/hello.c; then
     if [ -f ./examples/hello.c ] && [ -s ./examples/hello.c ]; then
         printf "File exists and is not empty.\n";
     fi
@@ -674,13 +677,13 @@ help test | grep -- '-s'
 
 
 
-
 # Short-circuit logic
 printf "Conditionals can be done without the use of 'if/elif/else', 'case', etc.\n"
 
 printf "We can use 'short-circuit' logic to run commands based on conditions.\n"
 
     cat ./examples/hello.c && printf "Successfully ran 'cat'\n"
+    [[ -f ./examples/hello.c ]] && printf "Successfully ran 'cat'\n"
 
 printf "This '&&' works here just like in the 'if' statements.\n"
 printf "It checks for 0 (true) or non-zero (false).\n"
@@ -691,6 +694,10 @@ printf "If that condition passes (exit code 0), then the next condition is evalu
 printf "This makes error handling very easy in Bash.\n"
 
     cat ./nonexistent.file || printf "Failed to run 'cat'\n"
+
+    if ! cat ./nonexistent.file; then
+        printf "Failed to run 'cat'\n"
+    fi
 
 printf "This '||' (OR) condition checks if the 'cat' command fails (non-zero exit code).\n"
 printf "If the 'cat' fails (it does), then it will run the 'printf' command.\n"
@@ -858,7 +865,7 @@ printf "These check the condition of a single value and compare it to each case.
 printf "Case statements support the user of 'patterns'.\n"
 
     declare VAR="Hello, world!"
-    
+
     case $VAR in
         *world)
             printf "Var contains 'world'\n"
