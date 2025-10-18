@@ -1,0 +1,32 @@
+#!/bin/bash
+
+
+declare CURRENT_TIME
+printf -v CURRENT_TIME "%(%s)T"
+
+
+declare oldest_session
+oldest_session="$(grep -i 'session opened' /var/log/auth.log | head -n 1)"
+
+read -r month day time _ <<< "$oldest_session"
+printf "Month: %s, Day: %s, Time: %s\n" "$month" "$day" "$time"
+
+declare session_time
+session_time="$(date -d "$month $day $time" +%s)"
+
+declare delta=$(( CURRENT_TIME - session_time ))
+echo "Delta: $delta"
+
+# divide by 3600 to get hrs
+declare hours
+hours=$((delta / 3600))
+echo "Oldest sesh: $hours"
+
+
+if (( delta / 3600 < 10 )); then
+    printf "It's been less than 10 hours!\n"
+fi
+
+# Oct 18 14:11:25
+# YYYY-MM-DD HH:MM:SS
+
