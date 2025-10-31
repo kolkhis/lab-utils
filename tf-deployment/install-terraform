@@ -1,112 +1,66 @@
 #!/bin/bash
-# Terraform installer script
 
-declare OS_TYPE
-OS_TYPE=$(grep -i "id_like" /etc/*release | awk -F= '/rhel/ { print $2 } { print $1 }')
-if [[ -z "$OS_TYPE" ]]; then
-    {
-        which apt > /dev/null 2>&1 && printf "OS type detected: %s\n" "${OS_TYPE:=debian}"
-    } || {
-        which dnf > /dev/null 2>&1 && printf "OS type detected: %s\n" "${OS_TYPE:=rhel_dnf}"
-    } || {
-        which yum > /dev/null 2>&1 && printf "OS type deteched: %s\n" "${OS_TYPE:=rhel_yum}"
+if [[ $EUID -ne 0 ]]; then
+    printf >&2 "[ERROR]: Run as root.\n"
+fi
+
+debian-install(){
+    local repo_endpoint="https://apt.releases.hashicorp.com"
+    local gpg_keyfile="/usr/share/keyrings/hashicorp-archive-keyring.gpg"
+    printf "Performing Debian-based installation...\n"
+
+    # Add gpg key and repo
+    wget -O- "${repo_endpoint}/gpg" | gpg --dearmor -o "$gpg_keyfile"
+    printf "deb [arch=%s signed-by=%s] %s %s main" \
+        "$(dpkg --print-architecture)" \
+        "$gpg_keyfile" \
+        "$repo_endpoint" \
+        "$(lsb_release -cs 2>/dev/null)" |
+        tee /etc/apt/sources.list.d/hashicorp.list || {
+            printf >&2 "[ERROR]: Failed to add Hashicorp repository.\n"
+            return 1
+        }
+    apt-get update || return 1
+    apt-get install -y terraform || return 1
+    return 0
+}
+
+redhat-install(){
+    printf "Performing RedHat-based installation...\n"
+    if type dnf > /dev/null 2>&1; then
+        printf "Using dnf to install Terraform...\n"
+        rpm -qa | grep -qi 'dnf-plugins-core' || dnf install -y dnf-plugins-core
+        dnf config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo || return 1
+        dnf install -y terraform || return 1
+    elif type yum > /dev/null 2>&1; then
+        printf "Using yum to install Terraform...\n"
+        rpm -qa | grep -qi 'yum-utils' || yum install -y yum-utils
+        yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo || return 1
+        yum install -y terraform || return 1
+    fi
+    return 0
+}
+
+
+if type apt-get > /dev/null 2>&1; then
+    debian-install || {
+        printf >&2 '[ERROR]: Failed to install Terraform (Debian).\n'
+        exit 1
     }
 fi
 
-err() {
-    [ $# -gt 0 ] && {
-        printf "[ \033[31mERROR\033[0m ]: %s\n" "$*"
+if type rpm > /dev/null 2>&1; then
+    redhat-install || {
+        printf >&2 '[ERROR]: Failed to install Terraform (RedHat).\n'
+        exit 1
     }
-}
+fi
 
-deb-install-tf() {
 
-    # install deps
-    if ! sudo apt-get update && sudo apt-get install -y gnupg software-properties-common; then
-        err "Failed to install dependencies!" && return 1
-    fi
-
-    # pull gpg key
-    curl -sL https://apt.releases.hashicorp.com/gpg |
-        gpg --dearmor |
-        sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg || {
-        err "Failed to pull the HashiCorp GPG key!" && return 1
-    }
-
-    # verify fingerprint
-    gpg --no-default-keyring \
-        --keyring /usr/share/keyrings/hashicorp-archive-keyring.gpg \
-        --fingerprint || {
-        err "There was a problem verifying the fingerprint of the GPG key." && return 1
-    }
-
-    # add hashicorp apt repo
-    if ! sudo apt-get update && sudo apt-get install terraform; then
-        err "Failed to install Terraform!" && return 1
-    fi
-
-    which terraform || {
-        err "Installation succeeded but could not verify Terraform in path." && return 1
-    }
-
-}
-
-rhel-yum-install-tf() {
-    # install deps
-    sudo yum install -y yum-utils || {
-        err "Failed to install dependency yum-utils!" && return 1
-    }
-
-    # add repo
-    sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo || {
-        err "Failed to add yum repository!" && return 1
-    }
-
-    sudo yum install -y terraform || {
-        err "Failed to install Terraform with YUM!" && return 1
-    }
-}
-
-rhel-dnf-install-tf() {
-    # install deps
-    sudo dnf install -y dnf-plugins-core
-
-    # pull gpg key
-    curl -sL https://rpm.releases.hashicorp.com/gpg | 
-        sudo tee /etc/pki/rpm-gpg/RPM-GPG-KEY-hashicorp || {
-        err "Failed to pull the HashiCorp GPG key!" && return 1
-    }
-
-    # sudo dnf config-manager --add-repo "https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo"
-    sudo curl -o /etc/yum.repos.d/hashicorp.repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo || {
-        err "Failed to add the HashiCorp repository!" && return 1
-    }
-
-    sudo dnf install -y terraform || {
-        err "Failed to install Terraform with DNF!" && return 1
-    }
-
-}
-
-case $OS_TYPE in
-    *debian*)
-        if ! deb-install-tf; then
-            err "There was a problem installing Terraform!" && exit 1
-        fi
-        ;;
-    *rhel*)
-        if which dnf; then
-            rhel-dnf-install-tf || {
-                err "there was a problem installing terraform (dnf)!" && exit 1 
-            }
-        elif which yum; then
-            rhel-yum-install-tf || {
-                err "There was a problem installing Terraform!" && exit 1
-            }
-        fi
-        ;;
-    *)
-        err "Failed to determine OS family." && exit 1
-        ;;
-esac
+if terraform --version > /dev/null 2>&1; then
+    printf "[\033[32mSUCCESS\033[0m]: %s has been successfully installed.\n" \
+        "$(terraform --version | head -n 1)"
+else
+    printf >&2 '[ERROR]: Could not validate Terraform installation.\n'
+fi
 

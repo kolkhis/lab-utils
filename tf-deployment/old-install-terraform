@@ -1,0 +1,112 @@
+#!/bin/bash
+# Terraform installer script
+
+declare OS_TYPE
+OS_TYPE=$(grep -i "id_like" /etc/*release | awk -F= '/rhel/ { print $2 } { print $1 }')
+if [[ -z "$OS_TYPE" ]]; then
+    {
+        which apt > /dev/null 2>&1 && printf "OS type detected: %s\n" "${OS_TYPE:=debian}"
+    } || {
+        which dnf > /dev/null 2>&1 && printf "OS type detected: %s\n" "${OS_TYPE:=rhel_dnf}"
+    } || {
+        which yum > /dev/null 2>&1 && printf "OS type deteched: %s\n" "${OS_TYPE:=rhel_yum}"
+    }
+fi
+
+err() {
+    [ $# -gt 0 ] && {
+        printf "[ \033[31mERROR\033[0m ]: %s\n" "$*"
+    }
+}
+
+deb-install-tf() {
+
+    # install deps
+    if ! sudo apt-get update && sudo apt-get install -y gnupg software-properties-common; then
+        err "Failed to install dependencies!" && return 1
+    fi
+
+    # pull gpg key
+    curl -sL https://apt.releases.hashicorp.com/gpg |
+        gpg --dearmor |
+        sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg || {
+        err "Failed to pull the HashiCorp GPG key!" && return 1
+    }
+
+    # verify fingerprint
+    gpg --no-default-keyring \
+        --keyring /usr/share/keyrings/hashicorp-archive-keyring.gpg \
+        --fingerprint || {
+        err "There was a problem verifying the fingerprint of the GPG key." && return 1
+    }
+
+    # add hashicorp apt repo
+    if ! sudo apt-get update && sudo apt-get install terraform; then
+        err "Failed to install Terraform!" && return 1
+    fi
+
+    which terraform || {
+        err "Installation succeeded but could not verify Terraform in path." && return 1
+    }
+
+}
+
+rhel-yum-install-tf() {
+    # install deps
+    sudo yum install -y yum-utils || {
+        err "Failed to install dependency yum-utils!" && return 1
+    }
+
+    # add repo
+    sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo || {
+        err "Failed to add yum repository!" && return 1
+    }
+
+    sudo yum install -y terraform || {
+        err "Failed to install Terraform with YUM!" && return 1
+    }
+}
+
+rhel-dnf-install-tf() {
+    # install deps
+    sudo dnf install -y dnf-plugins-core
+
+    # pull gpg key
+    curl -sL https://rpm.releases.hashicorp.com/gpg | 
+        sudo tee /etc/pki/rpm-gpg/RPM-GPG-KEY-hashicorp || {
+        err "Failed to pull the HashiCorp GPG key!" && return 1
+    }
+
+    # sudo dnf config-manager --add-repo "https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo"
+    sudo curl -o /etc/yum.repos.d/hashicorp.repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo || {
+        err "Failed to add the HashiCorp repository!" && return 1
+    }
+
+    sudo dnf install -y terraform || {
+        err "Failed to install Terraform with DNF!" && return 1
+    }
+
+}
+
+case $OS_TYPE in
+    *debian*)
+        if ! deb-install-tf; then
+            err "There was a problem installing Terraform!" && exit 1
+        fi
+        ;;
+    *rhel*)
+        if which dnf; then
+            rhel-dnf-install-tf || {
+                err "there was a problem installing terraform (dnf)!" && exit 1 
+            }
+        elif which yum; then
+            rhel-yum-install-tf || {
+                err "There was a problem installing Terraform!" && exit 1
+            }
+        fi
+        ;;
+    *)
+        err "Failed to determine OS family." && exit 1
+        ;;
+esac
+
