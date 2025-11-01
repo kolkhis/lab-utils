@@ -1,0 +1,71 @@
+#!/bin/bash
+# shellcheck disable=SC2124,SC2027,SC1078,SC2087
+# Goals:
+#   - Get a list of locally installed packages that were installed manually
+#   - Connect to remote host
+#   - Install the packages
+#   - Target OS type: Debian-based operating systems
+#   - Skip package if already installed
+#
+# Local hosts:
+#   - 192.168.4.98
+#   - 192.168.4.99
+# sudo apt-get install -y htop wget tmux jq ansible
+
+declare LOCAL_SERVER='192.168.4.98'
+declare TARGET_SERVER='root@192.168.4.99'
+
+declare -a PKG_NAMES
+read -r -d '' -a PKG_NAMES < <(apt-mark showmanual)
+
+declare -a PKGS_TO_INSTALL
+
+ssh "$TARGET_SERVER" "if ! [[ -f .hushlogin]]; then touch .hushlogin; fi"
+
+check-installed() {
+    if [[ -n $1 ]]; then
+        pkg="$1"
+    fi
+    local install_pkg=
+    read -r -d '' install_pkg < <(
+    ssh -T "$TARGET_SERVER" << EOF
+#!/bin/bash
+if ! dpkg -l | grep -qi "$pkg"; then
+    printf "%s" "$pkg"
+fi
+EOF
+)
+
+    if [[ -n $install_pkg ]]; then
+        printf "Package needs installing: %s\n" "$install_pkg"
+        PKGS_TO_INSTALL=("${PKGS_TO_INSTALL[@]}" "$install_pkg")
+    fi
+
+    # printf "Packages to install: %s\n" "${pkgs_to_install[@]}"
+    # for pkg in "${pkgs_to_install[@]}"; do
+    #     if [[ -n $pkg ]]; then
+    #         PKGS_TO_INSTALL=("${PKGS_TO_INSTALL[@]}" "$pkg")
+    #     fi
+    # done
+
+}
+
+install-pkgs(){
+    if ! [[ "${#PKGS_TO_INSTALL[@]}" -gt 0 ]]; then
+        printf "No packages need to be installed.\n"
+        return 0
+    fi
+    ssh "$TARGET_SERVER" "apt-get install -y ${PKGS_TO_INSTALL[*]}"
+}
+
+for pkg in "${PKG_NAMES[@]}"; do
+    check-installed "$pkg"
+done
+
+printf "Package to install: %s\n" "${PKGS_TO_INSTALL[@]}"
+
+install-pkgs
+
+
+
+
