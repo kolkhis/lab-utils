@@ -14,7 +14,6 @@
 # Local hosts:
 #   - 192.168.4.98
 #   - 192.168.4.99
-# sudo apt-get install -y htop wget tmux jq ansible
 
 declare LOCAL_SERVER='192.168.4.98'
 declare TARGET_SERVER='root@192.168.4.99'
