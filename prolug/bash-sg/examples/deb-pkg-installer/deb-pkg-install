@@ -19,10 +19,9 @@
 declare LOCAL_SERVER='192.168.4.98'
 declare TARGET_SERVER='root@192.168.4.99'
 
+declare -a PKGS_TO_INSTALL
 declare -a PKG_NAMES
 read -r -d '' -a PKG_NAMES < <(apt-mark showmanual)
-
-declare -a PKGS_TO_INSTALL
 
 ssh "$TARGET_SERVER" "if ! [[ -f .hushlogin]]; then touch .hushlogin; fi"
 
@@ -44,13 +43,6 @@ EOF
         printf "Package needs installing: %s\n" "$install_pkg"
         PKGS_TO_INSTALL=("${PKGS_TO_INSTALL[@]}" "$install_pkg")
     fi
-
-    # printf "Packages to install: %s\n" "${pkgs_to_install[@]}"
-    # for pkg in "${pkgs_to_install[@]}"; do
-    #     if [[ -n $pkg ]]; then
-    #         PKGS_TO_INSTALL=("${PKGS_TO_INSTALL[@]}" "$pkg")
-    #     fi
-    # done
 
 }
 
