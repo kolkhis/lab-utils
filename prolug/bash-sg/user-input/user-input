@@ -234,7 +234,6 @@ printf "We'll use all of these to parse command line arguments.\n"
 
 printf "There are a couple different ways to parse command line arguments.\n"
 
-
 printf "This is my preferred way:\n"
 
     while [[ -n $1 ]]; do
