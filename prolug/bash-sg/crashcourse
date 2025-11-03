@@ -34,6 +34,162 @@ if ! cd /home/kolkhis/testdir; then # error handling (uses the exit code, rememb
 fi
 
 
+
+
+
+
+# Loops
+printf "There are two main types of loops used in Bash.\n"
+
+# for loops
+printf "For-loops are a way to iterate over a set of values.\n"
+
+    for num in 1 2 3; do
+        printf "Num: %d\n" "$num"
+    done
+
+    # alternate syntax (brace expansion)
+    for num in {1,2,3}; do
+        printf "Num: %d\n" "$num"
+    done
+
+    # ranges
+    for num in {1..3}; do
+        printf "Num: %d\n" "$num"
+    done
+
+    # C-style for loops
+    for (( num=0; num >= 3; num++ )); do
+        printf "Num: %d\n" "$num"
+    done
+
+printf "These all do the same exact thing.\n"
+printf "They run the code with the temporary variable 'num'.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# while loops
+printf "We could accomplish the same thing with a 'while' loop.\n"
+printf "A 'while' loop keeps running while a certain condition is met.\n"
+
+    declare -i num=1
+    while [[ $num -le 3 ]]; do
+        printf "Num: %d\n" "$num"
+        (( num++ ))
+    done
+
+printf "Although, this is not the preferred way to do this specific type of operation.\n"
+printf "A for-loop is more appropriate in this context.\n"
+
+printf "But while-loops are perfect for something like CLI argument parsing.\n"
+
+    while [[ -n $1 ]]; do
+        printf "Command line argument: %s\n" "$1"
+        shift; # pop out $1 
+    done
+    # more on this later
+
+printf "We can even use commands as our condition.\n"
+
+    while systemctl is-active firewalld; do
+        printf "Firewalld is active.\n"
+        sleep 2
+    done
+
+printf "This will use the exit code of the command to determine if the condition is true.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # parsing cli arguments
 
 printf '$@ is an array that contains all of the arguments passed to the script.\n'
