@@ -1,0 +1,27 @@
+#!/bin/bash
+
+
+
+declare MY_VAR="Hello, world.\n"
+
+cat << EOF
+    With this syntax, all variables and subshells are expanded.  
+    So, I can say: $MY_VAR # Hello, world.
+    I can also call subshells: $(printf "Hello, world!") # Hello, world!
+EOF
+
+
+
+cat <<- EOF
+	This syntax <<- will strip leading *tabs* (NOT spaces).
+	So these lines won't be indented.
+EOF
+
+
+
+cat << 'EOF'
+Surrounding the limit string with quotes will stop the heredoc from expanding variables/subshells.
+So, this will be literal: $MY_VAR (this won't expand)
+So will this: $(printf "Hello, world!")
+EOF
+
