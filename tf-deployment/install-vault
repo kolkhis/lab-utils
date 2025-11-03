@@ -1,0 +1,31 @@
+#!/bin/bash
+
+declare HC_GPG_ENDPOINT='https://apt.releases.hashicorp.com/gpg'
+declare HC_GPG_KEYRING='/usr/share/keyrings/hashicorp-archive-keyring.gpg'
+declare HC_REPO_FILE='/etc/apt/sources.list.d/hashicorp.list'
+declare HC_REMOTE_REPO='https://apt.releases.hashicorp.com'
+
+if ! type gpg curl > /dev/null 2>&1; then
+    sudo apt-get install -y gpg curl
+fi
+
+curl -fsSL "$HC_GPG_ENDPOINT" | gpg --dearmor | sudo tee "$HC_GPG_KEYRING" > /dev/null || {
+    printf >&2 '[ERROR]: Failed to retrieve the Hashicorp GPG key.\n'
+    exit 1
+}
+
+echo "deb [signed-by=$HC_GPG_KEYRING] $HC_REMOTE_REPO $(lsb_release -cs 2>/dev/null) main" |
+    sudo tee "$HC_REPO_FILE"
+
+if ! sudo apt-get update && sudo apt-get install -y vault; then
+    printf >&2 '[ERROR]: There was a problem installing Vault.\n';
+    exit 1;
+fi
+
+if vault --version; then
+    printf "Hashicorp Vault successfully installed.\n"
+else
+    printf "[ERROR]: Could not validate Vault installation.\n"
+fi
+
+
