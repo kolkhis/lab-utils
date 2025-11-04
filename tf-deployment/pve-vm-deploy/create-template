@@ -1,0 +1,32 @@
+#!/bin/bash
+# Create a VM template that is cloud-init ready
+
+declare -i VMID=9000
+declare -i MEM=2048
+declare -i CORES=1
+declare -i SOCKETS=1
+declare STORAGE_POOL='vmdata'
+declare VM_STORAGE_LOCATION="${STORAGE_POOL}:vm-$VMID-disk-0"
+declare CI_USER='luser'
+declare CI_PASS='luser'
+declare CLOUD_TEMPLATE='/var/lib/vz/template/qcow/Rocky-9-GenericCloud-Base.latest.x86_64.qcow2'
+declare CPU_TYPE='x86-64-v2-AES'
+declare TEMPLATE_NAME='rocky9-gencloud-template'
+
+qm create "$VMID" --name "$TEMPLATE_NAME" \
+    --memory "$MEM" \
+    --net0 virtio,bridge=vmbr0 \
+    --cores "$CORES" \
+    --sockets "$SOCKETS" \
+    --cpu "$CPU_TYPE" \
+    --storage "$STORAGE_POOL"
+
+qm importdisk "$VMID" "$CLOUD_TEMPLATE" "$VM_STORAGE_LOCATION"
+qm set "$VMID" --virtio0 "$VM_STORAGE_LOCATION"
+qm set "$VMID" --boot c --bootdisk virtio0
+qm set "$VMID" --ide2 "${STORAGE}:cloudinit"
+qm set "$VMID" --ciuser "$CI_USER" --cipassword "$CI_PASS"
+qm set "$VMID" --agent 1
+qm template "$VMID"
+
+
