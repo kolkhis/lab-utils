@@ -43,57 +43,62 @@ err() {
     printf "[ %sERROR%s ]: " "${COLORS[red]}" "${COLORS[reset]}" 
 }
 
+debug() {
+    if [[ $VERBOSE -gt 0 ]]; then
+        [[ $# -gt 0 ]] && printf '[ DEBUG ]: %s\n' "$*"
+        [[ $# -eq 0 ]] && printf '[ DEBUG ]: '
+    fi
+}
+
 is-forkbomb() {
-    local CMD=
-    local PARSED=
+    local cmd=
+    local parsed=
     [[ -z $1 ]] && printf "No input provided to function!\n" && return 0
-    CMD="$1"
-    PARSED=$(
-        perl -ne 'print $1 if m/(.{1,}\s*\(\s*\)\s*[{]\s*.{1,}\s*[|]\s*.{1,}\s*&\s*[}]).*/' <<< "$CMD"
+    cmd="$1"
+    parsed=$(
+        perl -ne 'print $1 if m/(.{1,}\s*\(\s*\)\s*[{]\s*.{1,}\s*[|]\s*.{1,}\s*&\s*[}]).*/' <<< "$cmd"
     )
 
-    printf "Parsed command: %s\n" "$PARSED"
-    [[ -z $PARSED ]] && return 1
-    [[ -n $PARSED ]] && printf "Forkbomb detected in '%s' -- This part: %s\n" \
-        "${COLORS[red]}${CMD}${COLORS[reset]}" \
-        "${COLORS[green]}${PARSED}${COLORS[reset]}" && return 0
+    # printf "Parsed command: %s\n" "$parsed"
+    [[ -z $parsed ]] && return 1
+    [[ -n $parsed ]] && printf "Forkbomb detected in '%s' -- This part: %s\n" \
+        "${COLORS[red]}${cmd}${COLORS[reset]}" \
+        "${COLORS[green]}${parsed}${COLORS[reset]}" && return 0
 }
 
 
 is-malicious-cmd() {
-    local CMD
+    local cmd
     [[ -z $1 ]] && printf "No input provided to function!\n" && return 0
-    CMD="$1"
-    is-forkbomb "$CMD" && return 0
+    cmd="$1"
+    is-forkbomb "$cmd" && return 0
 
-    [[ "${EXCLUDE_KEYWORDS[*]}" =~ ${CMD} ]] &&
-        printf "Illegal command: %s\n" "$CMD" &&
+    if [[ "${EXCLUDE_KEYWORDS[*]}" =~ ${cmd} ]]; then
+        warn; printf "Illegal command: %s\n" "$cmd"
         return 0
+    fi
 
-    [[ $CMD =~ ([[:cntrl:]]+) ]] &&
-        printf "Illegal character(s) found in command %s: %s\n" "$CMD" "${BASH_REMATCH[1]}" &&
+    if [[ $cmd =~ ([[:cntrl:]]+) ]]; then
+        warn; printf "Illegal character(s) found in command %s: %s\n" "$cmd" "${BASH_REMATCH[1]}" 
         return 0
+    fi
 
     # extra layer for control seqs
     for EX in "${EXCLUDE_KEYWORDS[@]}"; do
-        [[ $CMD =~ ${EX} ]] &&
-            printf "Illegal substring found in command %s: %s\n" "$CMD" "$EX" &&
+        if [[ $cmd =~ ${EX} ]]; then
+            warn; printf "Illegal substring found in command %s: %s\n" "$cmd" "$EX"
             return 0
+        fi
     done
     return 1
 }
 
 
 main() {
-    # Watch for events (create, modify, delete, etc.)
-    while read -r _; do
-        local -a LINE=()
+    # Follow the tail of $WATCH_FILE
+    while read -r line; do
 
-        # mapfile -d ':' -t LINE < <(tail -n 1 "${WATCH_FILE}")
-        IFS=':' read -r -a LINE <<< "$(tail -n 1 "${WATCH_FILE}")"
-        user="${LINE[0]}"
-        source="${LINE[1]}"
-        command="${LINE[2]//$'\n'/}"
+        IFS=':' read -r user source command <<< "$line"
 
         printf "User: %s answered on %s. Their command is: %s\n" \
                 "${COLORS[green]}${user}${COLORS[reset]}" \
@@ -102,30 +107,27 @@ main() {
 
         # Select a server to use
         num=$(( (RANDOM % 5) + 15 ))
-        printf "Using rocky%s\n" "$num"
+        printf "Using server: rocky%s\n" "$num"
 
         sleep 2
 
         # Check connectivity
-        if ! ping -c 1 rocky$num > /dev/null 2>&1; then
-            printf "The server 'rocky%s' is unreachable!\n" "$num"
+        if ! ping -c 1 "rocky$num" > /dev/null 2>&1; then
+            err; printf "The server 'rocky%d' is unreachable!\n" "$num"
             continue
         fi
 
         # skip if user is a douchebag
-        is-malicious-cmd "$command" &&
-            printf "Good one, %s 😘\n" "${COLORS[red]}${user}${COLORS[reset]}" &&
+        if is-malicious-cmd "$command"; then
+            printf "Nice try, %s\n" "${COLORS[red]}${user}${COLORS[reset]}"
             continue
+        fi
 
         # Execute the command
         timeout 15 ssh -i /root/.ssh/cluster_key rocky$num "timeout 15 $command"
 
-    done < <(inotifywait -m -r -e create,modify,delete "$WATCH_FILE")
+    done < <(tail -F "$WATCH_FILE")
 }
-
-if ! type inotifywait > /dev/null 2>&1; then
-    err; printf >&2 "The inotify-tools package is not installed! Exiting.\n" && exit 1;
-fi
 
 main || {
     err; printf >&2 "Script encountered an error! Exiting.\n" && exit 1;
