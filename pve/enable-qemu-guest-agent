@@ -41,7 +41,7 @@ EOF
     esac
 done
 
-fetch-ips(){
+fetch-vmids(){
     IFS=$'\n' read -r -d '' -a VMID_LIST < <(
         sudo qm list | perl -ne 'print "$1\n" if m/^\s*(\d{1,})\s/'
     )
@@ -111,7 +111,7 @@ reboot-vms() {
     fi
 }
 
-fetch-ips || { printf >&2 "[ERROR]: Could not fetch VMID list.\n"; exit 1; }
+fetch-vmids || { printf >&2 "[ERROR]: Could not fetch VMID list.\n"; exit 1; }
 
 enable-qemu-agent || { printf >&2 "[ERROR]: Failed to enable QEMU guest agent!\n"; exit 1; }
 
