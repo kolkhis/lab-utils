@@ -1,6 +1,6 @@
 terraform {
   required_providers {
-    terraform = {
+    proxmox = {
       source = "Telmate/proxmox"
     }
   }
