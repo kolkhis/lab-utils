@@ -13,7 +13,6 @@ provider "proxmox" {
   pm_tls_insecure     = true
 }
 
-
 resource "proxmox_vm_qemu" "test-tf-vm" {
   name        = ""
   agent       = 1
@@ -24,5 +23,4 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   cores       = 2
   memory      = 2048
 }
-
 
