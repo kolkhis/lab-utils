@@ -1,13 +1,13 @@
 variable "pm_api_url" {
   description = "Proxmox API endpoint"
   type        = string
+  default     = "http://192.168.4.49:8006/api2/json"
 }
 
 variable "pm_user" {
   description = "Proxmox user for Terraform"
   type        = string
   default     = "terraform@pve"
-
 }
 
 variable "pm_api_token_id" {
@@ -21,3 +21,4 @@ variable "pm_api_token_secret" {
   type        = string
   sensitive   = true
 }
+
