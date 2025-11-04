@@ -491,27 +491,35 @@ fi
 printf "Well what if we want to check if a condition is NOT met?\n"
 printf "For that, we use the '!' (NOT) operator.\n" 
 
-if [[ ! -f ./goodbye.c ]]; then 
-    printf "File does not exist\n";
-fi
+    if [[ ! -f ./goodbye.c ]]; then 
+        printf "File does not exist\n";
+    fi
 
 printf "The '!' operator simply reverses the condition.\n"
 
 printf "The ! operator can be used either inside or outside the brackets in bash.\n"
 
-# Also valid:
+    # Also valid:
+    if ! [[ -f ./examples/hello.c ]]; then
+        printf "File doesn't exist!\n"
+    fi
 
-if ! [[ -f ./examples/hello.c ]]; then
-    printf "File doesn't exist!\n"
-fi
-printf "This is preference. I prefer to use it inside the brackets.\n"
-printf "In POSIX-compliant scripts, do it outside the brackets.\n"
+printf "The main difference here lies in how many conditional statements you use.\n"
+printf "Here, we're only using one condition.\n"
+printf "If we had multiple, using the '!' before the brackets will negate all conditions.\n"
 
-if ! [ -f ./examples/hello.c ]; then
-    printf "File doesn't exist.\n"
-fi
+    if ! [[ -f ./examples/hello.c && -f ./nonexistent.txt ]]; then
+        printf "Files do not exist!\n"
+    fi
 
+printf "Note: Multiple conditions inside a single pair of brackets is not POSIX-compliant.\n"
 
+    # POSIX-compliant version
+    if ! [ -f ./examples/hello.c ] && ! [ -f ./nonexistent.txt ]; then
+        printf "Files do not exist!\n"
+    fi
+
+printf "We'd have to specify multiple pairs of single brackets to achieve POSIX-compliance.\n"
 
 
 
