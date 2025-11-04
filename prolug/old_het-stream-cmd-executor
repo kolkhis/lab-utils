@@ -1,0 +1,133 @@
+#!/bin/bash
+# shellcheck disable=SC2120
+shopt -s extquote
+
+declare WATCH_FILE="/data/stream_write/stream_answers"
+
+declare -a EXCLUDE_KEYWORDS=(
+    'rm -rf /'
+    '-Rf'
+    'rm --recursive'
+    'rm -R'
+    'rm -f'
+    'rm --force'
+    '--no-preserve-root'
+    'cat /dev/urandom'
+    'cat /dev/random'
+    '/dev/random'
+    '/dev/urandom'
+    'virsh'
+    ':(){:|:&}'
+    '\x1b['
+    '\033['
+    '\e['
+    '\u001b['
+    'reboot'
+    'shutdown'
+)
+
+declare -A COLORS=(
+    [red]=$'\033[31m'
+    [green]=$'\033[32m'
+    [yellow]=$'\033[33m'
+    [reset]=$'\033[0m'
+)
+
+warn() {
+    [[ $# -gt 0 ]] && printf "[ %sWARNING%s ]: %s\n" "${COLORS[yellow]}" "${COLORS[reset]}" "$*" && return 0
+    printf "[ %sWARNING%s ]: " "${COLORS[yellow]}" "${COLORS[reset]}"
+}
+
+err() {
+    [[ $# -gt 0 ]] && printf "[ %sERROR%s ]: %s\n" "${COLORS[red]}" "${COLORS[reset]}" "$*" && return 0
+    printf "[ %sERROR%s ]: " "${COLORS[red]}" "${COLORS[reset]}" 
+}
+
+is-forkbomb() {
+    local CMD=
+    local PARSED=
+    [[ -z $1 ]] && printf "No input provided to function!\n" && return 0
+    CMD="$1"
+    PARSED=$(
+        perl -ne 'print $1 if m/(.{1,}\s*\(\s*\)\s*[{]\s*.{1,}\s*[|]\s*.{1,}\s*&\s*[}]).*/' <<< "$CMD"
+    )
+
+    printf "Parsed command: %s\n" "$PARSED"
+    [[ -z $PARSED ]] && return 1
+    [[ -n $PARSED ]] && printf "Forkbomb detected in '%s' -- This part: %s\n" \
+        "${COLORS[red]}${CMD}${COLORS[reset]}" \
+        "${COLORS[green]}${PARSED}${COLORS[reset]}" && return 0
+}
+
+
+is-malicious-cmd() {
+    local CMD
+    [[ -z $1 ]] && printf "No input provided to function!\n" && return 0
+    CMD="$1"
+    is-forkbomb "$CMD" && return 0
+
+    [[ "${EXCLUDE_KEYWORDS[*]}" =~ ${CMD} ]] &&
+        printf "Illegal command: %s\n" "$CMD" &&
+        return 0
+
+    [[ $CMD =~ ([[:cntrl:]]+) ]] &&
+        printf "Illegal character(s) found in command %s: %s\n" "$CMD" "${BASH_REMATCH[1]}" &&
+        return 0
+
+    # extra layer for control seqs
+    for EX in "${EXCLUDE_KEYWORDS[@]}"; do
+        [[ $CMD =~ ${EX} ]] &&
+            printf "Illegal substring found in command %s: %s\n" "$CMD" "$EX" &&
+            return 0
+    done
+    return 1
+}
+
+
+main() {
+    # Watch for events (create, modify, delete, etc.)
+    while read -r _; do
+        local -a LINE=()
+
+        # mapfile -d ':' -t LINE < <(tail -n 1 "${WATCH_FILE}")
+        IFS=':' read -r -a LINE <<< "$(tail -n 1 "${WATCH_FILE}")"
+        user="${LINE[0]}"
+        source="${LINE[1]}"
+        command="${LINE[2]//$'\n'/}"
+
+        printf "User: %s answered on %s. Their command is: %s\n" \
+                "${COLORS[green]}${user}${COLORS[reset]}" \
+                "${COLORS[green]}${source}${COLORS[reset]}" \
+                "${COLORS[yellow]}${command}${COLORS[reset]}"
+
+        # Select a server to use
+        num=$(( (RANDOM % 5) + 15 ))
+        printf "Using rocky%s\n" "$num"
+
+        sleep 2
+
+        # Check connectivity
+        if ! ping -c 1 rocky$num > /dev/null 2>&1; then
+            printf "The server 'rocky%s' is unreachable!\n" "$num"
+            continue
+        fi
+
+        # skip if user is a douchebag
+        is-malicious-cmd "$command" &&
+            printf "Good one, %s 😘\n" "${COLORS[red]}${user}${COLORS[reset]}" &&
+            continue
+
+        # Execute the command
+        timeout 15 ssh -i /root/.ssh/cluster_key rocky$num "timeout 15 $command"
+
+    done < <(inotifywait -m -r -e create,modify,delete "$WATCH_FILE")
+}
+
+if ! type inotifywait > /dev/null 2>&1; then
+    err; printf >&2 "The inotify-tools package is not installed! Exiting.\n" && exit 1;
+fi
+
+main || {
+    err; printf >&2 "Script encountered an error! Exiting.\n" && exit 1;
+}
+
