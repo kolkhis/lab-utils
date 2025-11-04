@@ -2,6 +2,7 @@
 #===============================================================================
 #
 #          FILE:  get-vm-ips
+#       VERSION: 1.1.0
 #
 #         USAGE:  ./get-vm-ips [OPTIONS]
 #                 Can be run manually or installed as a daily cron job.
