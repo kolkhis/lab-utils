@@ -1,5 +1,4 @@
 #!/bin/bash
-
 #===============================================================================
 #
 #          FILE:  get-vm-ips
@@ -181,6 +180,9 @@ get-ips(){
         debug "Attempting to extract IP from vmid: $vmid"
         ip=
         host_name=
+        if qm config "$vmid" | grep -qi '^template: 1'; then
+            continue
+        fi
         qm guest cmd "$vmid" ping > /dev/null 2>&1 || {
             printf >&2 "Can't connect to VMID: %d\n" "$vmid" && continue
         }
