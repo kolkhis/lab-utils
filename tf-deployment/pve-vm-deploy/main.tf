@@ -17,6 +17,7 @@ provider "proxmox" {
 
 resource "proxmox_vm_qemu" "test-tf-vm" {
   name        = "test-tf-vm"
+  vmid        = 6000
   agent       = 1
   boot        = "order=scsi0"
   target_node = "home-pve"
