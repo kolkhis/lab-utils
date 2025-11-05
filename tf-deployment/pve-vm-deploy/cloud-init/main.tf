@@ -19,9 +19,10 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   name        = "test-rocky10-cloudinit-vm"
   vmid        = 7000
   agent       = 1
-  boot        = "order=scsi0,virtio0"
+  boot        = "order=scsi0"
   target_node = "home-pve"
   clone       = "rocky-10-cloudinit-template"
+  full_clone  = false
 
   memory = 4096
 
@@ -57,8 +58,8 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   }
 
   # Cloud-Init configuration
-  cicustom   = "vendor=local:snippets/qemu-guest-agent.yml" # /var/lib/vz/snippets/qemu-guest-agent.yml
-  ciupgrade  = true
+  cicustom  = "vendor=local:snippets/qemu-guest-agent.yml" # /var/lib/vz/snippets/qemu-guest-agent.yml
+  ciupgrade = true
   # nameserver = "1.1.1.1 8.8.8.8"
   # ipconfig0  = "ip=192.168.4.10/24,gw=192.168.4.1,ip6=dhcp"
   skip_ipv6  = true
