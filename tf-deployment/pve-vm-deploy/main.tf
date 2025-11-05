@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     proxmox = {
-      source = "Telmate/proxmox"
+      source  = "Telmate/proxmox"
       version = "3.0.2-rc04"
     }
   }
@@ -22,11 +22,12 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   target_node = "home-pve"
   clone       = "ubuntu-22.04-template"
   disk {
-    storage  = "vmdata"
-    size     = "16G"
-    type     = "scsi"
+    storage = "vmdata"
+    size    = "16G"
+    type    = "scsi"
   }
   network {
+    id     = 0
     model  = "virtio"
     bridge = "vmbr0"
   }
