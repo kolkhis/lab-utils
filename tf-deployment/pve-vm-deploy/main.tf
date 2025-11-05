@@ -24,7 +24,6 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
     storage  = "vmdata"
     size     = "16G"
     type     = "scsi"
-    iothread = true
   }
   network {
     model  = "virtio"
