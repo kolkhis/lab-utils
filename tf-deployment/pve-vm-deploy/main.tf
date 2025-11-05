@@ -15,13 +15,22 @@ provider "proxmox" {
 }
 
 resource "proxmox_vm_qemu" "test-tf-vm" {
-  name        = ""
+  name        = "test-tf-vm"
   agent       = 1
   boot        = "order=scsi0"
   target_node = "home-pve"
   clone       = "ubuntu-22.04-template"
-  storage     = "vmdata"
-  cores       = 2
-  memory      = 2048
+  disk {
+    storage  = "vmdata"
+    size     = "16G"
+    type     = "scsi"
+    iothread = true
+  }
+  network {
+    model  = "virtio"
+    bridge = "vmbr0"
+  }
+  cores  = 2
+  memory = 2048
 }
 
