@@ -32,7 +32,10 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
     model  = "virtio"
     bridge = "vmbr0"
   }
-  cores  = 2
+  cpu {
+    cores = 1
+    slots = 1
+  }
   memory = 2048
 }
 
