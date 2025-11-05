@@ -26,7 +26,7 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
     storage = "vmdata"
     size    = "16G"
     type    = "disk"
-    slot    = "ide0"
+    slot    = "scsi0"
   }
   network {
     id     = 0
