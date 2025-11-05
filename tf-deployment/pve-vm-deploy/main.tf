@@ -36,6 +36,6 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   cpu {
     cores = 1
   }
-  memory = 2048
+  memory = 4096
 }
 
