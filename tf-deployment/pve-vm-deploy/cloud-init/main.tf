@@ -22,7 +22,7 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   boot        = "order=scsi0"
   target_node = "home-pve"
   clone       = "rocky-10-cloudinit-template"
-  full_clone  = false
+  # full_clone  = false
 
   memory = 4096
 
