@@ -1,7 +1,19 @@
 #!/bin/bash
 # Create a VM template that is cloud-init ready
 
-create-template-virtio(){
+if [[ $EUID -ne 0 ]]; then
+    printf >&2 '[ERROR]: Run as root.\n'
+fi
+
+err() {
+    if [[ $# -gt 0 ]]; then
+        printf >&2 '[\033[31mERROR\033[0m]: %s\n' "$*"
+    else
+        printf >&2 '[\033[31mERROR\033[0m]: '
+    fi
+}
+
+create-rocky10-template(){
     local -i vmid=9030
     local -i mem=2048
     local -i cores=1
@@ -11,6 +23,10 @@ create-template-virtio(){
     local template_image="/var/lib/vz/template/qcow/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2"
     local cputype="x86-64-v2-AES"
 
+    if ! [[ -f $template_image ]]; then
+        err "Template image does not exist: $template_image"
+        return 1
+    fi
 
     qm create "$vmid" \
         --name "$template_name" \
@@ -21,7 +37,10 @@ create-template-virtio(){
         --storage "$storage_pool" \
         --net0 virtio,bridge=vmbr0 \
         --machine q35 \
-        --bios ovmf
+        --bios ovmf || {
+            err '[ERROR]: Initial VM creation failed.'
+            return 1
+        }
 
     qm disk import "$vmid" "$template_image" "$storage_pool"
     qm set "$vmid" --scsihw virtio-scsi-pci --scsi0 "$storage_pool:vm-$vmid-disk-0"
@@ -31,11 +50,11 @@ create-template-virtio(){
     qm set "$vmid" --boot order=scsi0
 
 
-    printf "Created the base image.\n" 
-    printf "Convert to a template when ready by running: qm template %d\n" "$vmid"
+    printf "[INFO]: Successfully created the base image.\n" 
+    printf "[INFO]: Convert new VM to a template when ready by running: qm template %d\n" "$vmid"
 }
 
-create-template-virtio
+create-rocky10-template
 
 
 # declare VM_STORAGE_LOCATION="${STORAGE_POOL}:vm-$VMID-disk-0"
@@ -70,5 +89,9 @@ create-template-virtio
 
 
 # qm set 9020 --scsi0 vmdata:0,import-from=/var/lib/vz/template/qcow/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2
+# qm set 9030 --scsi0 vmdata:0,import-from=/var/lib/vz/template/qcow/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2
+
 # qm set "$VMID" --scsi0 "${STORAGE_POOL}:0,import-from=${CLOUD_TEMPLATE}"
+
+# qm set --serial0 socket --vga serial0
 
