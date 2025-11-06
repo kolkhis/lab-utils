@@ -35,7 +35,7 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   cpu {
     cores   = 1
     sockets = 1
-    type    = "x86-64-v2-AES"
+    type    = "host"
   }
 
   network {
