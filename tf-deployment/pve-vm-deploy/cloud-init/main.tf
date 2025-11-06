@@ -44,7 +44,8 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
     bridge = "vmbr0"
   }
 
-  bios = "ovmf"
+  scsihw = "virtio-scsi-pci"
+  bios   = "ovmf"
   efidisk {
     storage = "vmdata"
     efitype = "4m"
