@@ -39,23 +39,17 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   }
 
   disks {
-    virtio {
-      virtio0 {
-        storage = "vmdata"
-        size    = "10G"
+    scsi {
+      scsi0 {
+        disk {
+          storage = "vmdata"
+          size    = "10G"
+        }
       }
     }
-    # scsi {
-    #   scsi0 {
-    #     disk {
-    #       storage = "vmdata"
-    #       size    = "10G"
-    #     }
-    #   }
-    # }
     ide {
       # Some images require a cloud-init disk on the IDE controller, others on the SCSI or SATA controller
-      ide2 {
+      ide0 {
         cloudinit {
           storage = "vmdata"
         }
