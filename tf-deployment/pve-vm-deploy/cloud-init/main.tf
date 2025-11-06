@@ -28,7 +28,7 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   boot        = "order=scsi0"
   target_node = "home-pve"
   clone       = "rocky-10-cloudinit-template"
-  # full_clone  = false
+  full_clone  = false
 
   memory = 4096
 
@@ -76,6 +76,5 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICGjGGUL4ld+JmvbDmQFu2XZrxEQio3IN7Yhgcir377t Optiplex Homelab key
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAQdazsCyvNGrXGT+zEc6l5X/JILWouFlnPchYsCeFZk kolkhis@home-pve
 EOF
-
 }
 
