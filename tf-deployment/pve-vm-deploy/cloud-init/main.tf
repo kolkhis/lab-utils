@@ -55,7 +55,7 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
     }
     ide {
       # Some images require a cloud-init disk on the IDE controller, others on the SCSI or SATA controller
-      ide0 {
+      ide2 {
         cloudinit {
           storage = "vmdata"
         }
