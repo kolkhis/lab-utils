@@ -1,6 +1,43 @@
 #!/bin/bash
 # Create a VM template that is cloud-init ready
 
+create-template-virtio(){
+    local -i vmid=9030
+    local -i mem=2048
+    local -i cores=1
+    local -i sockets=1
+    local storage_pool="vmdata"
+    local template_name="rocky-10-cloudinit-template"
+    local template_image="/var/lib/vz/template/qcow/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2"
+    local cputype="x86-64-v2-AES"
+
+
+    qm create "$vmid" \
+        --name "$template_name" \
+        --memory "$mem" \
+        --cpu "$cputype" \
+        --cores "$cores" \
+        --sockets "$sockets" \
+        --storage "$storage_pool" \
+        --net0 virtio,bridge=vmbr0 \
+        --machine q35 \
+        --bios ovmf
+
+    qm disk import "$vmid" "$template_image" "$storage_pool"
+    qm set "$vmid" --scsihw virtio-scsi-pci --scsi0 "$storage_pool:vm-$vmid-disk-0"
+    qm set "$vmid" --efidisk0 "$storage_pool:0,format=raw,efitype=4m"
+    qm set "$vmid" --ide2 "$storage_pool:cloudinit"
+    qm set "$vmid" --agent enabled=1
+    qm set "$vmid" --boot order=scsi0
+
+
+    printf "Created the base image.\n" 
+    printf "Convert to a template when ready by running: qm template %d\n" "$vmid"
+}
+
+create-template-virtio
+
+
 # declare VM_STORAGE_LOCATION="${STORAGE_POOL}:vm-$VMID-disk-0"
 # declare CI_USER='luser'
 # declare CI_PASS='luser'
@@ -34,40 +71,4 @@
 
 # qm set 9020 --scsi0 vmdata:0,import-from=/var/lib/vz/template/qcow/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2
 # qm set "$VMID" --scsi0 "${STORAGE_POOL}:0,import-from=${CLOUD_TEMPLATE}"
-
-create-template-virtio(){
-    local vmid=9030
-    local storage_pool="vmdata"
-    local template_name="rocky-10-cloudinit-template"
-    local template_image="/var/lib/vz/template/qcow/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2"
-    local cputype="x86-64-v2-AES"
-    local -i mem=2048
-    local -i cores=1
-    local -i sockets=1
-
-
-    qm create "$vmid" \
-        --name "$template_name" \
-        --memory "$mem" \
-        --cpu "$cputype" \
-        --cores "$cores" \
-        --sockets "$sockets" \
-        --storage "$storage_pool" \
-        --net0 virtio,bridge=vmbr0 \
-        --machine q35 \
-        --bios ovmf
-
-    qm disk import "$vmid" "$template_image" "$storage_pool"
-    qm set "$vmid" --scsihw virtio-scsi-pci --scsi0 "$storage_pool:vm-$vmid-disk-0"
-    qm set "$vmid" --efidisk0 "$storage_pool:0,format=raw,efitype=4m"
-    qm set "$vmid" --ide2 "$storage_pool:cloudinit"
-    qm set "$vmid" --agent enabled=1
-    qm set "$vmid" --boot order=scsi0
-
-
-    printf "Created the base image.\n" 
-    printf "Convert to a template when ready by running: qm template %d\n" "$vmid"
-}
-
-create-template-virtio
 
