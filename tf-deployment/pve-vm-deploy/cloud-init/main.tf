@@ -19,7 +19,7 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   name        = "test-rocky10-cloudinit-vm"
   vmid        = 7000
   agent       = 1
-  boot        = "order=scsi0"
+  boot        = "order=virtio0"
   target_node = "home-pve"
   clone       = "rocky-10-cloudinit-template"
   # full_clone  = false
@@ -39,17 +39,23 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   }
 
   disks {
-    scsi {
-      scsi0 {
-        disk {
-          storage = "vmdata"
-          size    = "10G"
-        }
+    virtio {
+      virtio0 {
+        storage = "vmdata"
+        size    = "10G"
       }
     }
+    # scsi {
+    #   scsi0 {
+    #     disk {
+    #       storage = "vmdata"
+    #       size    = "10G"
+    #     }
+    #   }
+    # }
     ide {
       # Some images require a cloud-init disk on the IDE controller, others on the SCSI or SATA controller
-      ide0 {
+      ide2 {
         cloudinit {
           storage = "vmdata"
         }
