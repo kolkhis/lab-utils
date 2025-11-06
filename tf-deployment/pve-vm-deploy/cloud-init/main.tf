@@ -19,7 +19,7 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   name        = "test-rocky10-cloudinit-vm"
   vmid        = 7000
   agent       = 1
-  boot        = "order=virtio0"
+  boot        = "order=scsi0"
   target_node = "home-pve"
   clone       = "rocky-10-cloudinit-template"
   # full_clone  = false
