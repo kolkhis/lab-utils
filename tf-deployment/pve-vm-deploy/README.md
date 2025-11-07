@@ -17,4 +17,11 @@ pm_api_token_id     = "terraform@pve!tf-token"
 ```
 In this config, the user is `terraform@pve`, and the token's ID is `tf-token`.  
 
+For the Cloud-Init Terraform config, an additional two variables can be set to
+define the Cloud-Init user and its password.  
+```hcl
+ci_user = "luser"
+ci_pass = "luser"
+```
+These two variables default to `luser` if not defined.  
 
