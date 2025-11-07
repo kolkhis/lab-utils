@@ -7,6 +7,25 @@ terraform {
   }
 }
 
+locals {
+  storage = {
+    pool = "vmdata"
+    size = "10G"
+  }
+  cpu = {
+    cores   = 1
+    sockets = 1
+    type    = "host"
+  }
+  mem      = 2048
+  pve_node = "home-pve"
+  sshkeys  = <<EOF
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICGjGGUL4ld+JmvbDmQFu2XZrxEQio3IN7Yhgcir377t Optiplex Homelab key
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAQdazsCyvNGrXGT+zEc6l5X/JILWouFlnPchYsCeFZk kolkhis@home-pve
+EOF
+
+}
+
 provider "proxmox" {
   pm_api_url          = var.pm_api_url
   pm_user             = var.pm_user
@@ -21,9 +40,11 @@ provider "proxmox" {
   }
 }
 
-resource "proxmox_vm_qemu" "test-tf-vm" {
-  name        = "test-rocky10-cloudinit-vm"
-  vmid        = 7000
+resource "proxmox_vm_qemu" "control_nodes" {
+  count = 2
+
+  name        = format("k8s-control-node%02d", count.index + 1)
+  vmid        = 6000 + count.index
   agent       = 1
   boot        = "order=scsi0"
   target_node = "home-pve"
@@ -50,7 +71,6 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
     storage = "vmdata"
     efitype = "4m"
   }
-
   disks {
     scsi {
       scsi0 {
@@ -61,7 +81,6 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
       }
     }
     ide {
-      # Some images require a cloud-init disk on the IDE controller, others on the SCSI or SATA controller
       ide2 {
         cloudinit {
           storage = "vmdata"
