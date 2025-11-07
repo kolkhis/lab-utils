@@ -23,7 +23,6 @@ locals {
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICGjGGUL4ld+JmvbDmQFu2XZrxEQio3IN7Yhgcir377t Optiplex Homelab key
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAQdazsCyvNGrXGT+zEc6l5X/JILWouFlnPchYsCeFZk kolkhis@home-pve
 EOF
-
 }
 
 provider "proxmox" {
@@ -51,12 +50,12 @@ resource "proxmox_vm_qemu" "control_nodes" {
   clone       = "rocky-10-cloudinit-template"
   full_clone  = false
 
-  memory = 4096
+  memory = local.mem
 
   cpu {
-    cores   = 1
-    sockets = 1
-    type    = "host"
+    cores   = local.cpu.cores
+    sockets = local.cpu.sockets
+    type    = local.cpu.type
   }
 
   network {
@@ -68,22 +67,22 @@ resource "proxmox_vm_qemu" "control_nodes" {
   scsihw = "virtio-scsi-pci"
   bios   = "ovmf"
   efidisk {
-    storage = "vmdata"
+    storage = local.storage.pool
     efitype = "4m"
   }
   disks {
     scsi {
       scsi0 {
         disk {
-          storage = "vmdata"
-          size    = "10G"
+          storage = local.storage.pool
+          size    = local.storage.size
         }
       }
     }
     ide {
       ide2 {
         cloudinit {
-          storage = "vmdata"
+          storage = local.storage.pool
         }
       }
     }
@@ -93,8 +92,8 @@ resource "proxmox_vm_qemu" "control_nodes" {
   cicustom   = "vendor=local:snippets/qemu-guest-agent.yml" # /var/lib/vz/snippets/qemu-guest-agent.yml
   ciupgrade  = true
   nameserver = "1.1.1.1 8.8.8.8"
-  # ipconfig0  = "ip=192.168.4.100/24,gw=192.168.4.1,ip6=dhcp"
   ipconfig0  = "ip=dhcp"
+  # ipconfig0  = "ip=192.168.4.100/24,gw=192.168.4.1,ip6=dhcp"
   skip_ipv6  = true
   ciuser     = var.ci_user
   cipassword = var.ci_pass
