@@ -22,3 +22,15 @@ variable "pm_api_token_secret" {
   sensitive   = true
 }
 
+variable "ci_user" {
+  description = "Username for the Cloud-Init user"
+  type        = string
+  default     = "luser"
+}
+
+variable "ci_pass" {
+  description = "Password for the Cloud-Init user"
+  type        = string
+  sensitive   = true
+  default     = "luser"
+}
