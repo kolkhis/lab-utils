@@ -77,8 +77,8 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   # ipconfig0  = "ip=192.168.4.100/24,gw=192.168.4.1,ip6=dhcp"
   ipconfig0  = "ip=dhcp"
   skip_ipv6  = true
-  ciuser     = "luser"
-  cipassword = "luser"
+  ciuser     = var.ci_user
+  cipassword = var.ci_pass
   sshkeys    = <<EOF
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICGjGGUL4ld+JmvbDmQFu2XZrxEQio3IN7Yhgcir377t Optiplex Homelab key
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAQdazsCyvNGrXGT+zEc6l5X/JILWouFlnPchYsCeFZk kolkhis@home-pve
