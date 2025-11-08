@@ -6,6 +6,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 install-apt() {
+    # note: Doesn't have a pkg for 'noble' (24.04.3)
     local gpg_keyfile='/usr/share/keyrings/hashicorp-archive-keyring.gpg'
 
     apt-get update && apt-get install -y gnupg software-properties-common curl
@@ -19,6 +20,7 @@ install-apt() {
         tee /etc/apt/sources.list.d/hashicorp.list
 
     apt-get update
+
     if ! apt-get install -y terraform; then
         printf >&2 '[ERROR]: Failed to install terraform (apt).\n'
         return 1
