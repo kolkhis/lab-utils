@@ -6,13 +6,11 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 install-apt() {
-    # note: Doesn't have a pkg for 'noble' (24.04.3)
     local gpg_keyfile='/usr/share/keyrings/hashicorp-archive-keyring.gpg'
 
     apt-get update && apt-get install -y gnupg software-properties-common curl
-    curl -L https://apt.releases.hashicorp.com/gpg |
-        gpg --dearmor |
-        tee "$gpg_keyfile" > /dev/null
+    curl -fsSL https://apt.releases.hashicorp.com/gpg |
+        gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
 
     gpg --no-default-keyring --keyring "$gpg_keyfile" --fingerprint
 
