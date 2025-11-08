@@ -1,0 +1,96 @@
+#!/bin/bash
+
+if [[ $EUID -ne 0 ]]; then
+    printf >&2 '[ERROR]: Run as root.\n'
+    exit 1
+fi
+
+install-apt() {
+    local gpg_keyfile='/usr/share/keyrings/hashicorp-archive-keyring.gpg'
+
+    apt-get update && apt-get install -y gnupg software-properties-common curl
+    curl -L https://apt.releases.hashicorp.com/gpg |
+        gpg --dearmor |
+        tee "$gpg_keyfile" > /dev/null
+
+    gpg --no-default-keyring --keyring "$gpg_keyfile" --fingerprint
+
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=$gpg_keyfile] https://apt.releases.hashicorp.com $(lsb_release -cs 2>/dev/null) main" |
+        tee /etc/apt/sources.list.d/hashicorp.list
+
+    apt-get update
+    if ! apt-get install -y terraform; then
+        printf >&2 '[ERROR]: Failed to install terraform (apt).\n'
+        return 1
+    fi
+
+    if ! terraform --version; then
+        printf >&2 "[ERROR]: Couldn't validate Terraform installation.\n"
+        return 1
+    fi
+    return 0
+}
+
+install-yum(){
+    yum install -y yum-utils
+    yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+    if ! yum install -y terraform ; then
+        printf >&2 '[ERROR]: Failed to install Terraform (yum).\n'
+        return 1
+    fi
+    return 0
+}
+
+install-dnf() {
+
+    dnf install -y dnf-plugins-core
+    dnf config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+
+    # Roll back if on Rocky/RHEL 10
+    local maj_version
+    maj_version=$(grep -oP '(?<=VERSION_ID=")\d+' /etc/os-release)
+
+    if [[ $maj_version -gt 9 ]]; then
+        sed -i 's/\$releasever/9/' /etc/yum.repos.d/hashicorp.repo
+    fi
+    
+
+    if ! dnf install -y terraform; then
+        printf >&2 '[ERROR]: Failed to install Terraform (dnf).\n'
+        return 1
+    fi
+    return 0
+}
+
+if command -v rpm; then
+    printf "RPM being used.\n"
+    if command -v dnf; then
+        printf "Installing via DNF.\n"
+        install-dnf || {
+            printf >&2 '[ERROR]: Problem with dnf installation.\n'
+            exit 1
+        }
+        exit 0
+    else
+        printf "Installing via YUM.\n"
+        install-yum || {
+            printf >&2 '[ERROR]: Problem with yum installation.\n'
+            exit 1
+        }
+        exit 0
+    fi
+fi
+
+if command -v apt; then
+    printf "Installing with apt...\n"
+    install-apt || {
+        printf >&2 '[ERROR]: Problem with apt installation.\n'
+        exit 1
+    }
+    exit 0
+fi
+
+
+
+
+
