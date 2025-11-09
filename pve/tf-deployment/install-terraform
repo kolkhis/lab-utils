@@ -1,4 +1,6 @@
 #!/bin/bash
+# Terraform installer script
+# Written by Connor W. (https://github.com/kolkhis)
 
 if [[ $EUID -ne 0 ]]; then
     printf >&2 "[ERROR]: Run as root.\n"
@@ -10,7 +12,7 @@ debian-install(){
     printf "Performing Debian-based installation...\n"
 
     # Add gpg key and repo
-    wget -O- "${repo_endpoint}/gpg" | gpg --dearmor -o "$gpg_keyfile"
+    curl -fsSL "${repo_endpoint}/gpg" | gpg --dearmor -o "$gpg_keyfile"
     printf "deb [arch=%s signed-by=%s] %s %s main" \
         "$(dpkg --print-architecture)" \
         "$gpg_keyfile" \
