@@ -23,7 +23,7 @@ create-rocky10-template(){
     local storage_pool="vmdata"
     local template_name="rocky-10-cloudinit-template"
     local template_image="/var/lib/vz/template/qcow/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2"
-    local cputype="x86-64-v2-AES"
+    local cputype="host"
 
     if ! [[ -f $template_image ]]; then
         err "Template image does not exist: $template_image"
@@ -45,12 +45,12 @@ create-rocky10-template(){
         }
 
     qm disk import "$vmid" "$template_image" "$storage_pool"
+
     qm set "$vmid" --scsihw virtio-scsi-pci --scsi0 "$storage_pool:vm-$vmid-disk-0"
     qm set "$vmid" --efidisk0 "$storage_pool:0,format=raw,efitype=4m"
     qm set "$vmid" --ide2 "$storage_pool:cloudinit"
     qm set "$vmid" --agent enabled=1
     qm set "$vmid" --boot order=scsi0
-
 
     printf "[INFO]: Successfully created the base image.\n" 
     printf "[INFO]: Convert new VM to a template when ready by running: qm template %d\n" "$vmid"
@@ -61,7 +61,7 @@ create-rocky10-template || {
     exit 1
 }
 
-printf "Template created.\n"
+printf "[INFO]: Template created.\n"
 exit 0
 
 
