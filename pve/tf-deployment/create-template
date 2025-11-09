@@ -1,9 +1,6 @@
 #!/bin/bash
-# Create a VM template that is cloud-init ready
-
-if [[ $EUID -ne 0 ]]; then
-    printf >&2 '[ERROR]: Run as root.\n'
-fi
+# Create a VM template that is cloud-init ready for Proxmox VE
+# Written by Connor W. (https://github.com/kolkhis)
 
 err() {
     if [[ $# -gt 0 ]]; then
@@ -12,6 +9,11 @@ err() {
         printf >&2 '[\033[31mERROR\033[0m]: '
     fi
 }
+
+if [[ $EUID -ne 0 ]]; then
+    err 'Run as root.'
+    exit 1
+fi
 
 create-rocky10-template(){
     local -i vmid=9030
@@ -54,44 +56,12 @@ create-rocky10-template(){
     printf "[INFO]: Convert new VM to a template when ready by running: qm template %d\n" "$vmid"
 }
 
-create-rocky10-template
+create-rocky10-template || {
+    err "Failed to create Rocky 10 template."
+    exit 1
+}
 
+printf "Template created.\n"
+exit 0
 
-# declare VM_STORAGE_LOCATION="${STORAGE_POOL}:vm-$VMID-disk-0"
-# declare CI_USER='luser'
-# declare CI_PASS='luser'
-# declare CLOUD_TEMPLATE='/var/lib/vz/template/qcow/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2'
-# declare CPU_TYPE='x86-64-v2-AES'
-# declare TEMPLATE_NAME='rocky9-gencloud-template'
-# declare -i VMID=9000
-# declare -i MEM=2048
-# declare -i CORES=1
-# declare -i SOCKETS=1
-# declare STORAGE_POOL='vmdata'
-
-# qm create "$VMID" --name "$TEMPLATE_NAME" \
-#     --memory "$MEM" \
-#     --net0 virtio,bridge=vmbr0 \
-#     --cores "$CORES" \
-#     --sockets "$SOCKETS" \
-#     --cpu "$CPU_TYPE" \
-#     --storage "$STORAGE_POOL"
-
-# Create config file if it doesn't exist
-# touch "/etc/pve/qemu-server/$VMID.conf"
-
-# qm importdisk "$VMID" "$CLOUD_TEMPLATE" "$STORAGE_POOL"
-# qm set "$VMID" --virtio0 "$VM_STORAGE_LOCATION"
-# qm set "$VMID" --boot c --bootdisk virtio0
-# qm set "$VMID" --ide2 "${STORAGE}:cloudinit"
-# qm set "$VMID" --ciuser "$CI_USER" --cipassword "$CI_PASS"
-# qm set "$VMID" --agent 1
-
-
-# qm set 9020 --scsi0 vmdata:0,import-from=/var/lib/vz/template/qcow/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2
-# qm set 9030 --scsi0 vmdata:0,import-from=/var/lib/vz/template/qcow/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2
-
-# qm set "$VMID" --scsi0 "${STORAGE_POOL}:0,import-from=${CLOUD_TEMPLATE}"
-
-# qm set --serial0 socket --vga serial0
 
