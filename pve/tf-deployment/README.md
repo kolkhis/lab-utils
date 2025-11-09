@@ -50,4 +50,34 @@ ci_pass = "luser"
 ```
 These two variables default to `luser` if not defined.  
 
+### Using Environment Variables
+
+These can alternatively be set in an environment file. A typical convention for
+this is a `.env` file.  
+```bash
+touch .env
+vi .env
+```
+
+The variables can be set inside this file with `export`, and each variable
+should be prefixed with `TF_VAR_`.  
+
+An example `.env` file would look something like:
+
+```bash
+export TF_VAR_pm_user="terraform@pve"
+export TF_VAR_pm_api_url="https://192.168.1.49:8006/api2/json"
+export TF_VAR_pm_api_token_id="terraform@pve!tf-token"
+export TF_VAR_pm_api_token_secret="super-secret-api-key"
+# if using cloud-init
+export TF_VAR_ci_user="luser"
+export TF_VAR_ci_pass="luser"
+```
+
+Then, before running `terraform plan` or `terraform apply`, source the file:
+```bash
+source .env
+terraform plan
+```
+
 
