@@ -40,7 +40,7 @@ create-rocky10-template(){
         --net0 virtio,bridge=vmbr0 \
         --machine q35 \
         --bios ovmf || {
-            err '[ERROR]: Initial VM creation failed.'
+            err 'Initial VM creation failed.'
             return 1
         }
 
@@ -61,7 +61,7 @@ create-rocky10-template || {
     exit 1
 }
 
-printf "[INFO]: Template created.\n"
+printf "[INFO]: Template successfully created.\n"
 exit 0
 
 
