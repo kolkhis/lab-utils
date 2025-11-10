@@ -1,3 +1,7 @@
+locals {
+  rocky_version = 10
+}
+
 terraform {
   required_providers {
     proxmox = {
@@ -22,12 +26,12 @@ provider "proxmox" {
 }
 
 resource "proxmox_vm_qemu" "test-tf-vm" {
-  name        = "test-rocky10-cloudinit-vm"
+  name        = "test-rocky${local.rocky_version}-vm"
   vmid        = 7000
   agent       = 1
   boot        = "order=scsi0"
   target_node = "home-pve"
-  clone       = "rocky-10-cloudinit-template"
+  clone       = "rocky-${local.rocky_version}-cloudinit-template"
   full_clone  = false
 
   memory = 4096
