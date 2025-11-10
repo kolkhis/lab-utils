@@ -1,5 +1,7 @@
 locals {
   rocky_version = 10
+  target_node   = "home-pve"
+  vmid_start    = 7000
 }
 
 terraform {
@@ -27,11 +29,12 @@ provider "proxmox" {
 
 resource "proxmox_vm_qemu" "test-tf-vm" {
   count       = 1
+  description = "Rocky ${local.rocky_version} test box ${count.index} managed by Terraform"
   name        = "test-rocky${local.rocky_version}-vm${format("%02d", count.index + 1)}"
-  vmid        = 7000 + count.index
+  vmid        = local.vmid_start + count.index
   agent       = 1
   boot        = "order=scsi0"
-  target_node = "home-pve"
+  target_node = local.target_node
   clone       = "rocky-${local.rocky_version}-cloudinit-template"
   full_clone  = false
 
