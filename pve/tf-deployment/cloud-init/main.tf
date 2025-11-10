@@ -2,6 +2,16 @@ locals {
   rocky_version = 10
   target_node   = "home-pve"
   vmid_start    = 7000
+  mem           = 2048
+  cpu = {
+    cores   = 1
+    sockets = 1
+    type    = "host"
+  }
+  storage = {
+    pool = "vmdata"
+    size = "10G"
+  }
 }
 
 terraform {
@@ -38,12 +48,12 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   clone       = "rocky-${local.rocky_version}-cloudinit-template"
   full_clone  = false
 
-  memory = 4096
+  memory = local.mem
 
   cpu {
-    cores   = 1
-    sockets = 1
-    type    = "host"
+    cores   = local.cpu.cores
+    sockets = local.cpu.sockets
+    type    = local.cpu.type
   }
 
   network {
@@ -63,8 +73,8 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
     scsi {
       scsi0 {
         disk {
-          storage = "vmdata"
-          size    = "10G"
+          storage = local.storage.pool
+          size    = local.storage.size
         }
       }
     }
@@ -72,7 +82,7 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
       # Some images require a cloud-init disk on the IDE controller, others on the SCSI or SATA controller
       ide2 {
         cloudinit {
-          storage = "vmdata"
+          storage = local.storage.pool
         }
       }
     }
@@ -83,7 +93,6 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   ciupgrade  = true
   nameserver = "1.1.1.1 8.8.8.8"
   ipconfig0  = "ip=192.168.4.${200 + count.index}/24,gw=192.168.4.1,ip6=dhcp"
-  # ipconfig0  = "ip=dhcp"
   skip_ipv6  = true
   ciuser     = var.ci_user
   cipassword = var.ci_pass
