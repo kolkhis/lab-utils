@@ -28,7 +28,7 @@ provider "proxmox" {
 resource "proxmox_vm_qemu" "test-tf-vm" {
   count       = 1
   name        = "test-rocky${local.rocky_version}-vm${format("%02d", count.index + 1)}"
-  vmid        = 7000
+  vmid        = 7000 + count.index
   agent       = 1
   boot        = "order=scsi0"
   target_node = "home-pve"
