@@ -1,6 +1,11 @@
 # Proxmox Terraform Config
 
-These are basic templates for using Terraform with Proxmox VE.  
+These are basic Terraform configuration templates for using Terraform with 
+Proxmox VE, and a helper script for creating Cloud-Init templates.  
+
+The `./create-template` script creates a Proxmox template using the `qm`
+command-line tool, geared towards creating a Proxmox template from a Cloud-Init
+image (typically `.qcow2` format).  
 
 The `./basic-clone` directory contains a Terraform configuration for cloning a
 regular Proxmox VM or template. It it not meant to be used with Cloud-Init, and 
@@ -79,5 +84,40 @@ Then, before running `terraform plan` or `terraform apply`, source the file:
 source .env
 terraform plan
 ```
+
+## `create-template` Usage
+
+As of right now, the script is used to create a Proxmox template from a Rocky
+Linux 10 cloud image (`Rocky-10-GenericCloud-Base.latest.x86_64.qcow2`).  
+This image is downloaded from the 
+[official Rocky Linux downloads](https://dl.rockylinux.org/pub/rocky/10/images/x86_64/) 
+website and placed in the `/var/lib/vz/template/qcow/` directory. This
+directory must be created first, as it's not present on a base Proxmox
+installation.  
+
+An example snippet for downloading the image to the directory:
+```bash
+sudo mkdir /var/lib/vz/template/qcow
+cd /var/lib/vz/template/qcow
+sudo curl -LO https://dl.rockylinux.org/pub/rocky/10/images/x86_64/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2
+```
+
+Then the script can be run directly (using `sudo`).  
+```bash
+sudo ./create-template
+```
+This creates the VM with a VMID of 9030. It allocates 2G of memory and uses the
+storage pool `vmdata`.  
+All of this can be configured by manually setting the variables within the
+`create-rocky10-template` function.  
+
+
+
+### Cloud Image Downloads
+- [Ubuntu Cloud Image Downloads](https://cloud-images.ubuntu.com/).  
+
+- Rocky Linux:
+    - [Rocky 9 Image Downloads](https://dl.rockylinux.org/pub/rocky/9/images/x86_64/)
+    - [Rocky 10 Image Downloads](https://dl.rockylinux.org/pub/rocky/10/images/x86_64/)
 
 
