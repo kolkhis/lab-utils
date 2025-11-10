@@ -26,7 +26,8 @@ provider "proxmox" {
 }
 
 resource "proxmox_vm_qemu" "test-tf-vm" {
-  name        = "test-rocky${local.rocky_version}-vm"
+  count       = 1
+  name        = "test-rocky${local.rocky_version}-vm${format("%02d", count.index)}"
   vmid        = 7000
   agent       = 1
   boot        = "order=scsi0"
@@ -78,7 +79,7 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   cicustom   = "vendor=local:snippets/qemu-guest-agent.yml" # /var/lib/vz/snippets/qemu-guest-agent.yml
   ciupgrade  = true
   nameserver = "1.1.1.1 8.8.8.8"
-  ipconfig0  = "ip=192.168.4.200/24,gw=192.168.4.1,ip6=dhcp"
+  ipconfig0  = "ip=192.168.4.${200 + count.index}/24,gw=192.168.4.1,ip6=dhcp"
   # ipconfig0  = "ip=dhcp"
   skip_ipv6  = true
   ciuser     = var.ci_user
