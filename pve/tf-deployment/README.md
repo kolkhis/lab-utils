@@ -106,8 +106,10 @@ Then the script can be run directly (using `sudo`).
 ```bash
 sudo ./create-template
 ```
-This creates the VM with a VMID of 9030. It allocates 2G of memory and uses the
-storage pool `vmdata`.  
+This creates the VM with a VMID of 9030.
+It allocates 2G of memory and uses the storage pool `vmdata`.  
+It uses a single CPU core and socket.  
+
 All of this can be configured by manually setting the variables within the
 `create-rocky10-template` function.  
 
