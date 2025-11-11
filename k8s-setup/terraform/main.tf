@@ -22,16 +22,23 @@ provider "proxmox" {
 }
 
 locals {
-  control_cnt      = 1
-  worker_cnt       = 2
-  haproxy_cnt      = 2
-  control_start_ip = "192.168.4.150"
-  worker_start_ip  = "192.168.4.${150 + control_cnt}"
-  haproxy_start_ip = "192.168.4.${150 + control_cnt + worker_cnt}"
-
-  control_vmid_start = 6000
-  worker_vmid_start  = control_vmid_start + control_cnt
-  haproxy_vmid_start = control_vmid_start + control_cnt + worker_cnt
+  network = "192.168.4."
+  # format as "${local.network}${type.ip_start}"
+  control = {
+    count      = 1
+    ip_start   = 150
+    vmid_start = 6000
+  }
+  worker = {
+    count      = 2
+    ip_start   = 150 + control.count
+    vmid_start = control.vmid_start + control.count
+  }
+  haproxy = {
+    count      = 2
+    ip_start   = 150 + control.count + worker.count
+    vmid_start = worker.vmid_start + worker.count
+  }
 
   storage = {
     pool = "vmdata"
@@ -52,10 +59,10 @@ EOF
 
 
 resource "proxmox_vm_qemu" "control_nodes" {
-  count = local.control_cnt
+  count = local.control.count
 
   name        = format("k8s-control-node%02d", count.index + 1)
-  vmid        = local.control_vmid_start + count.index
+  vmid        = local.control.vmid_start + count.index
   agent       = 1
   boot        = "order=scsi0"
   target_node = "home-pve"
@@ -104,8 +111,7 @@ resource "proxmox_vm_qemu" "control_nodes" {
   cicustom   = "vendor=local:snippets/qemu-guest-agent.yml" # /var/lib/vz/snippets/qemu-guest-agent.yml
   ciupgrade  = true
   nameserver = "1.1.1.1 8.8.8.8"
-  # ipconfig0  = "ip=dhcp"
-  ipconfig0  = "ip=192.168.4.${local.control_start_ip + count.index}/24,gw=192.168.4.1,ip6=dhcp"
+  ipconfig0  = "ip=${local.network}${local.control.ip_start + count.index}/24,gw=192.168.4.1,ip6=dhcp"
   skip_ipv6  = true
   ciuser     = var.ci_user
   cipassword = var.ci_pass
@@ -116,10 +122,10 @@ EOF
 }
 
 resource "proxmox_vm_qemu" "worker_nodes" {
-  count = local.worker_cnt
+  count = local.worker.count
 
   name        = format("k8s-worker-node%02d", count.index + 1)
-  vmid        = local.worker_vmid_start + count.index
+  vmid        = local.worker.vmid_start + count.index
   agent       = 1
   boot        = "order=scsi0"
   target_node = "home-pve"
@@ -168,8 +174,7 @@ resource "proxmox_vm_qemu" "worker_nodes" {
   cicustom   = "vendor=local:snippets/qemu-guest-agent.yml" # /var/lib/vz/snippets/qemu-guest-agent.yml
   ciupgrade  = true
   nameserver = "1.1.1.1 8.8.8.8"
-  # ipconfig0  = "ip=dhcp"
-  ipconfig0  = "ip=192.168.4.${local.worker_start_ip + count.index}/24,gw=192.168.4.1,ip6=dhcp"
+  ipconfig0  = "ip=${local.network}${local.worker.ip_start + count.index}/24,gw=192.168.4.1,ip6=dhcp"
   skip_ipv6  = true
   ciuser     = var.ci_user
   cipassword = var.ci_pass
@@ -180,10 +185,10 @@ EOF
 }
 
 resource "proxmox_vm_qemu" "haproxy_nodes" {
-  count = local.haproxy_cnt
+  count = local.haproxy.count
 
   name        = format("k8s-haproxy-node%02d", count.index + 1)
-  vmid        = local.haproxy_vmid_start + count.index
+  vmid        = local.haproxy.vmid_start + count.index
   agent       = 1
   boot        = "order=scsi0"
   target_node = "home-pve"
@@ -232,8 +237,7 @@ resource "proxmox_vm_qemu" "haproxy_nodes" {
   cicustom   = "vendor=local:snippets/qemu-guest-agent.yml" # /var/lib/vz/snippets/qemu-guest-agent.yml
   ciupgrade  = true
   nameserver = "1.1.1.1 8.8.8.8"
-  # ipconfig0  = "ip=dhcp"
-  ipconfig0  = "ip=192.168.4.${local.haproxy_start_ip + count.index}/24,gw=192.168.4.1,ip6=dhcp"
+  ipconfig0  = "ip=${local.network}${local.haproxy.ip_start + count.index}/24,gw=192.168.4.1,ip6=dhcp"
   skip_ipv6  = true
   ciuser     = var.ci_user
   cipassword = var.ci_pass
