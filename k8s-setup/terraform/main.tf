@@ -31,13 +31,13 @@ locals {
   }
   worker = {
     count      = 2
-    ip_start   = 150 + control.count
-    vmid_start = control.vmid_start + control.count
+    ip_start   = 150 + local.control.count
+    vmid_start = local.control.vmid_start + local.control.count
   }
   haproxy = {
     count      = 2
-    ip_start   = 150 + control.count + worker.count
-    vmid_start = worker.vmid_start + worker.count
+    ip_start   = 150 + local.control.count + local.worker.count
+    vmid_start = local.worker.vmid_start + local.worker.count
   }
 
   storage = {
