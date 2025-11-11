@@ -63,14 +63,13 @@ resource "proxmox_vm_qemu" "control_nodes" {
 
   name        = format("k8s-control-node%02d", count.index + 1)
   vmid        = local.control.vmid_start + count.index
+  target_node = local.pve_node
   agent       = 1
   boot        = "order=scsi0"
-  target_node = local.pve_node
   clone       = "rocky-10-cloudinit-template"
   full_clone  = false
 
   memory = local.mem
-
   cpu {
     cores   = local.cpu.cores
     sockets = local.cpu.sockets
@@ -111,7 +110,7 @@ resource "proxmox_vm_qemu" "control_nodes" {
   cicustom   = "vendor=local:snippets/qemu-guest-agent.yml" # /var/lib/vz/snippets/qemu-guest-agent.yml
   ciupgrade  = true
   nameserver = "1.1.1.1 8.8.8.8"
-  ipconfig0  = "ip=${local.network}${local.control.ip_start + count.index}/24,gw=192.168.4.1,ip6=dhcp"
+  ipconfig0  = "ip=${local.network}${local.control.ip_start + count.index}/24,gw=${local.network}1,ip6=dhcp"
   skip_ipv6  = true
   ciuser     = var.ci_user
   cipassword = var.ci_pass
@@ -123,9 +122,9 @@ resource "proxmox_vm_qemu" "worker_nodes" {
 
   name        = format("k8s-worker-node%02d", count.index + 1)
   vmid        = local.worker.vmid_start + count.index
+  target_node = local.pve_node
   agent       = 1
   boot        = "order=scsi0"
-  target_node = local.pve_node
   clone       = "rocky-10-cloudinit-template"
   full_clone  = false
 
@@ -171,7 +170,7 @@ resource "proxmox_vm_qemu" "worker_nodes" {
   cicustom   = "vendor=local:snippets/qemu-guest-agent.yml" # /var/lib/vz/snippets/qemu-guest-agent.yml
   ciupgrade  = true
   nameserver = "1.1.1.1 8.8.8.8"
-  ipconfig0  = "ip=${local.network}${local.worker.ip_start + count.index}/24,gw=192.168.4.1,ip6=dhcp"
+  ipconfig0  = "ip=${local.network}${local.worker.ip_start + count.index}/24,gw=${local.network}1,ip6=dhcp"
   skip_ipv6  = true
   ciuser     = var.ci_user
   cipassword = var.ci_pass
@@ -183,14 +182,13 @@ resource "proxmox_vm_qemu" "haproxy_nodes" {
 
   name        = format("k8s-haproxy-node%02d", count.index + 1)
   vmid        = local.haproxy.vmid_start + count.index
-  agent       = 1
-  boot        = "order=scsi0"
   target_node = local.pve_node
-  clone       = "rocky-10-cloudinit-template"
+  agent       = 1
   full_clone  = false
+  boot        = "order=scsi0"
+  clone       = "rocky-10-cloudinit-template"
 
   memory = local.mem
-
   cpu {
     cores   = local.cpu.cores
     sockets = local.cpu.sockets
@@ -231,7 +229,7 @@ resource "proxmox_vm_qemu" "haproxy_nodes" {
   cicustom   = "vendor=local:snippets/qemu-guest-agent.yml" # /var/lib/vz/snippets/qemu-guest-agent.yml
   ciupgrade  = true
   nameserver = "1.1.1.1 8.8.8.8"
-  ipconfig0  = "ip=${local.network}${local.haproxy.ip_start + count.index}/24,gw=192.168.4.1,ip6=dhcp"
+  ipconfig0  = "ip=${local.network}${local.haproxy.ip_start + count.index}/24,gw=${local.network}1,ip6=dhcp"
   skip_ipv6  = true
   ciuser     = var.ci_user
   cipassword = var.ci_pass
