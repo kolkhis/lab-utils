@@ -65,7 +65,7 @@ resource "proxmox_vm_qemu" "control_nodes" {
   vmid        = local.control.vmid_start + count.index
   agent       = 1
   boot        = "order=scsi0"
-  target_node = "home-pve"
+  target_node = local.pve_node
   clone       = "rocky-10-cloudinit-template"
   full_clone  = false
 
@@ -115,10 +115,7 @@ resource "proxmox_vm_qemu" "control_nodes" {
   skip_ipv6  = true
   ciuser     = var.ci_user
   cipassword = var.ci_pass
-  sshkeys    = <<EOF
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICGjGGUL4ld+JmvbDmQFu2XZrxEQio3IN7Yhgcir377t Optiplex Homelab key
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAQdazsCyvNGrXGT+zEc6l5X/JILWouFlnPchYsCeFZk kolkhis@home-pve
-EOF
+  sshkeys    = local.sshkeys
 }
 
 resource "proxmox_vm_qemu" "worker_nodes" {
@@ -128,7 +125,7 @@ resource "proxmox_vm_qemu" "worker_nodes" {
   vmid        = local.worker.vmid_start + count.index
   agent       = 1
   boot        = "order=scsi0"
-  target_node = "home-pve"
+  target_node = local.pve_node
   clone       = "rocky-10-cloudinit-template"
   full_clone  = false
 
@@ -178,10 +175,7 @@ resource "proxmox_vm_qemu" "worker_nodes" {
   skip_ipv6  = true
   ciuser     = var.ci_user
   cipassword = var.ci_pass
-  sshkeys    = <<EOF
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICGjGGUL4ld+JmvbDmQFu2XZrxEQio3IN7Yhgcir377t Optiplex Homelab key
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAQdazsCyvNGrXGT+zEc6l5X/JILWouFlnPchYsCeFZk kolkhis@home-pve
-EOF
+  sshkeys    = local.sshkeys
 }
 
 resource "proxmox_vm_qemu" "haproxy_nodes" {
@@ -191,7 +185,7 @@ resource "proxmox_vm_qemu" "haproxy_nodes" {
   vmid        = local.haproxy.vmid_start + count.index
   agent       = 1
   boot        = "order=scsi0"
-  target_node = "home-pve"
+  target_node = local.pve_node
   clone       = "rocky-10-cloudinit-template"
   full_clone  = false
 
@@ -241,9 +235,6 @@ resource "proxmox_vm_qemu" "haproxy_nodes" {
   skip_ipv6  = true
   ciuser     = var.ci_user
   cipassword = var.ci_pass
-  sshkeys    = <<EOF
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICGjGGUL4ld+JmvbDmQFu2XZrxEQio3IN7Yhgcir377t Optiplex Homelab key
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAQdazsCyvNGrXGT+zEc6l5X/JILWouFlnPchYsCeFZk kolkhis@home-pve
-EOF
+  sshkeys    = local.sshkeys
 }
 
