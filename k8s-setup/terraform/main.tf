@@ -29,6 +29,10 @@ locals {
   worker_start_ip  = "192.168.4.${150 + control_cnt}"
   haproxy_start_ip = "192.168.4.${150 + control_cnt + worker_cnt}"
 
+  control_vmid_start = 6000
+  worker_vmid_start  = control_vmid_start + control_cnt
+  haproxy_vmid_start = control_vmid_start + control_cnt + worker_cnt
+
   storage = {
     pool = "vmdata"
     size = "10G"
@@ -51,7 +55,7 @@ resource "proxmox_vm_qemu" "control_nodes" {
   count = local.control_cnt
 
   name        = format("k8s-control-node%02d", count.index + 1)
-  vmid        = 6000 + count.index
+  vmid        = local.control_vmid_start + count.index
   agent       = 1
   boot        = "order=scsi0"
   target_node = "home-pve"
@@ -101,7 +105,71 @@ resource "proxmox_vm_qemu" "control_nodes" {
   ciupgrade  = true
   nameserver = "1.1.1.1 8.8.8.8"
   # ipconfig0  = "ip=dhcp"
-  ipconfig0  = "ip=192.168.4.${150 + count.index}/24,gw=192.168.4.1,ip6=dhcp"
+  ipconfig0  = "ip=192.168.4.${local.control_start_ip + count.index}/24,gw=192.168.4.1,ip6=dhcp"
+  skip_ipv6  = true
+  ciuser     = var.ci_user
+  cipassword = var.ci_pass
+  sshkeys    = <<EOF
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICGjGGUL4ld+JmvbDmQFu2XZrxEQio3IN7Yhgcir377t Optiplex Homelab key
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAQdazsCyvNGrXGT+zEc6l5X/JILWouFlnPchYsCeFZk kolkhis@home-pve
+EOF
+}
+
+resource "proxmox_vm_qemu" "worker_nodes" {
+  count = local.worker_cnt
+
+  name        = format("k8s-worker-node%02d", count.index + 1)
+  vmid        = local.worker_vmid_start + count.index
+  agent       = 1
+  boot        = "order=scsi0"
+  target_node = "home-pve"
+  clone       = "rocky-10-cloudinit-template"
+  full_clone  = false
+
+  memory = local.mem
+
+  cpu {
+    cores   = local.cpu.cores
+    sockets = local.cpu.sockets
+    type    = local.cpu.type
+  }
+
+  network {
+    id     = 0
+    model  = "virtio"
+    bridge = "vmbr0"
+  }
+
+  scsihw = "virtio-scsi-pci"
+  bios   = "ovmf"
+  efidisk {
+    storage = local.storage.pool
+    efitype = "4m"
+  }
+  disks {
+    scsi {
+      scsi0 {
+        disk {
+          storage = local.storage.pool
+          size    = local.storage.size
+        }
+      }
+    }
+    ide {
+      ide2 {
+        cloudinit {
+          storage = local.storage.pool
+        }
+      }
+    }
+  }
+
+  # Cloud-Init configuration
+  cicustom   = "vendor=local:snippets/qemu-guest-agent.yml" # /var/lib/vz/snippets/qemu-guest-agent.yml
+  ciupgrade  = true
+  nameserver = "1.1.1.1 8.8.8.8"
+  # ipconfig0  = "ip=dhcp"
+  ipconfig0  = "ip=192.168.4.${local.worker_start_ip + count.index}/24,gw=192.168.4.1,ip6=dhcp"
   skip_ipv6  = true
   ciuser     = var.ci_user
   cipassword = var.ci_pass
