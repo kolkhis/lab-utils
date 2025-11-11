@@ -1,3 +1,4 @@
+```hcl
 terraform {
   required_providers {
     proxmox = {
@@ -84,4 +85,4 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICGjGGUL4ld+JmvbDmQFu2XZrxEQio3IN7Yhgcir377t
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAQdazsCyvNGrXGT+zEc6l5X/JILWouFlnPchYsCeFZk kolkhis@home-pve
 EOF
 }
-
+```
