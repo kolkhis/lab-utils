@@ -48,7 +48,7 @@ EOF
 
 
 resource "proxmox_vm_qemu" "control_nodes" {
-  count = local.control_node_count
+  count = local.control_cnt
 
   name        = format("k8s-control-node%02d", count.index + 1)
   vmid        = 6000 + count.index
