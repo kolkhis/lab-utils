@@ -22,7 +22,8 @@ provider "proxmox" {
 }
 
 locals {
-  network = "192.168.4."
+  clone_template = "rocky-10-cloudinit-template"
+  network        = "192.168.4."
   # format as "${local.network}${type.ip_start}"
   control = {
     count      = 1
@@ -66,7 +67,7 @@ resource "proxmox_vm_qemu" "control_nodes" {
   target_node = local.pve_node
   agent       = 1
   boot        = "order=scsi0"
-  clone       = "rocky-10-cloudinit-template"
+  clone       = local.clone_template
   full_clone  = false
 
   memory = local.mem
@@ -125,7 +126,7 @@ resource "proxmox_vm_qemu" "worker_nodes" {
   target_node = local.pve_node
   agent       = 1
   boot        = "order=scsi0"
-  clone       = "rocky-10-cloudinit-template"
+  clone       = local.clone_template
   full_clone  = false
 
   memory = local.mem
@@ -186,7 +187,7 @@ resource "proxmox_vm_qemu" "haproxy_nodes" {
   agent       = 1
   full_clone  = false
   boot        = "order=scsi0"
-  clone       = "rocky-10-cloudinit-template"
+  clone       = local.clone_template
 
   memory = local.mem
   cpu {
