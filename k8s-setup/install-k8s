@@ -2,7 +2,7 @@
 # shellcheck disable=SC1090
 # This script installs the Kubernetes tools kubelet, kubectl, and kubeadm.  
 # containerd is also installed as the k8s container runtime.  
-# The firewalld ports for k8s and Flannel CNI are opened.  
+# The firewalld ports for k8s and Cilium CNI are opened.  
 
 K8S_VERSION="1.32"
 
@@ -24,9 +24,9 @@ OS_FAMILY=$(cat /etc/*release | grep -i "ID_LIKE" | awk -F= '{print $2}')
 if [[ -z "$OS_FAMILY" ]]; then
     printf "Trying again to determine OS family.\n"
     {
-        which apt && printf "OS_FAMILY: %s\n" "${OS_FAMILY:=debian}"; 
+        command -v apt && printf "OS_FAMILY: %s\n" "${OS_FAMILY:=debian}"; 
     } || {
-        which dnf && printf "OS_FAMILY: %s\n" "${OS_FAMILY:=rhel}"; 
+        command -v dnf && printf "OS_FAMILY: %s\n" "${OS_FAMILY:=rhel}"; 
     }
 fi
 
@@ -221,11 +221,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
     }
 
     # Configure containerd to use systemdcgroup
-    {
-        sudo sed -i \
-            -e '/SystemdCgroup/s/false/true/' \
-            /etc/containerd/config.toml
-    } || {
+    sudo sed -i -e '/SystemdCgroup/s/false/true/' /etc/containerd/config.toml || {
         printf >&2 "Error when enabling systemd_cgroup in /etc/containerd/config.toml\n" && exit 1
     }
 
@@ -238,7 +234,7 @@ if [[ $OS_FAMILY == *rhel* ]]; then
         printf >&2 "There was a problem enabling containerd.\n" && exit 1
     }
 
-    sudo systemctl status --no-pager containerd || {
+    sudo systemctl is-active containerd > /dev/null 2>&1 || {
         printf >&2 "Could not verify the status of containerd!\n" && exit 1
     }
 
