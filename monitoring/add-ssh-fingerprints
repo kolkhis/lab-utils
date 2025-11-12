@@ -71,8 +71,8 @@ while [[ -n $1 && $1 =~ ^- && $1 != '--' ]]; do
             { [[ -n $2 && ! $2 =~ ^- ]] && shift && SSH_CONFIG_FILE=$1; } || {
                 printf >&2 "Bad argument to -s/--ssh-config: %s\n" "$2" && exit 1
             }
-            [[ -f $INVENTORY_FILE ]] || {
-                printf >&2 "Bad ssh config file: %s -- File does not exist.\n" "$INVENTORY_FILE"
+            [[ -f $SSH_CONFIG_FILE ]] || {
+                printf >&2 "Bad ssh config file: %s -- File does not exist.\n" "$SSH_CONFIG_FILE"
                 exit 1
             }
             shift;
