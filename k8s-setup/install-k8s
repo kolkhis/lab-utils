@@ -4,7 +4,7 @@
 # containerd is also installed as the k8s container runtime.  
 # The firewalld ports for k8s and Cilium CNI are opened.  
 
-K8S_VERSION="1.32"
+declare K8S_VERSION="1.32"
 
 # TODO: Refactor to use these fns 
 error() {
@@ -18,20 +18,17 @@ fatal() {
 
 # TODO: Test Debian install on a Debian-based system
 # TODO: add error handling (debian)
-NODE_IP=$(hostname -I | awk '{print $1}' | tr -d ' ')
-OS_FAMILY=$(cat /etc/*release | grep -i "ID_LIKE" | awk -F= '{print $2}')
+declare NODE_IP
+NODE_IP="$(hostname -I | cut -d' ' -f1)"
+declare OS_FAMILY
 
-if [[ -z "$OS_FAMILY" ]]; then
-    printf "Trying again to determine OS family.\n"
-    {
-        command -v apt && printf "OS_FAMILY: %s\n" "${OS_FAMILY:=debian}"; 
-    } || {
-        command -v dnf && printf "OS_FAMILY: %s\n" "${OS_FAMILY:=rhel}"; 
-    }
+if command -v apt > /dev/null 2>&1; then
+    printf "OS family detected: %s\n" "${OS_FAMILY:=debian}"
+elif command -v dnf > /dev/null 2>&1; then
+    printf "OS family detected: %s\n" "${OS_FAMILY:=rhel}"
+else
+    : "${OS_FAMILY:?"Unable to verify the OS family!"}"
 fi
-
-: "${OS_FAMILY:?"Unable to verify the OS family!"}"
-
 
 
 # Disable swap 
