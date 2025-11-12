@@ -1,18 +1,48 @@
 #!/bin/bash
 # Wrapper script for cluster initialization with `kubeadm init`
 
-declare -r POD_NETWORK_CIDR="10.244.0.0/16"
+declare POD_NETWORK_CIDR="10.244.0.0/16"
+declare CLEANUP=0
+
+while [[ -n $1 && $1 =~ ^- ]]; do
+    case $1 in
+        -n|-no-cleanup|--no-cleanup)
+            printf "Skipping cleanup.\n"
+            CLEANUP=1
+            shift
+            ;;
+        -p|-pod-network|--pod-network)
+            if [[ -n $2 && ! $2 =~ ^- ]]; then
+                shift
+                printf "Setting pod network CIDR to: %s\n" "$1"
+            else
+                printf >&2 "[ERROR]: Bad or missing argument to -p|--pod-network.\n"
+                exit 1
+            fi
+            shift
+            ;;
+        *)
+            printf >&2 "[ERROR]: Unknown argument, exiting: %s\n" "$1"
+            exit 1
+            ;;
+    esac
+done
 
 # Cleanup
-[[ -f ~/.kube/config ]] && {
-    printf "Cleaning up old kube config file...\n"
-    sudo rm -f ~/.kube/config
-} 
+cleanup(){
+    if [[ -f ~/.kube/config ]]; then
+        printf "Cleaning up old kube config file...\n"
+        sudo rm -f ~/.kube/config
+    fi
 
-[[ -d ~/.kube/cache ]] && {
-    printf "Cleaning up old kube config cache directory...\n"
-    sudo rm -rf ~/.kube/cache
+    if [[ -d ~/.kube/cache ]]; then
+        printf "Cleaning up old kube config cache directory...\n"
+        sudo rm -rf ~/.kube/cache
+    fi
 }
+
+[[ $CLEANUP -gt 0 ]] && cleanup
+
 
 printf "Initializing cluster with kubeadm...\n"
 sudo kubeadm init \
