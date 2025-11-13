@@ -2,6 +2,8 @@ locals {
   rocky_version = 10
   target_node   = "home-pve"
   vmid_start    = 7000
+  network       = "192.168.4."
+  ip_start      = 200
   mem           = 2048
   cpu = {
     cores   = 1
@@ -65,7 +67,7 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   scsihw = "virtio-scsi-pci"
   bios   = "ovmf"
   efidisk {
-    storage = "vmdata"
+    storage = local.storage.pool
     efitype = "4m"
   }
 
@@ -92,7 +94,7 @@ resource "proxmox_vm_qemu" "test-tf-vm" {
   cicustom   = "vendor=local:snippets/qemu-guest-agent.yml" # /var/lib/vz/snippets/qemu-guest-agent.yml
   ciupgrade  = true
   nameserver = "1.1.1.1 8.8.8.8"
-  ipconfig0  = "ip=192.168.4.${200 + count.index}/24,gw=192.168.4.1,ip6=dhcp"
+  ipconfig0  = "ip=${local.network}${local.ip_start + count.index}/24,gw=192.168.4.1,ip6=dhcp"
   skip_ipv6  = true
   ciuser     = var.ci_user
   cipassword = var.ci_pass
