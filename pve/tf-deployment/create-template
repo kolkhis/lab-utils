@@ -20,6 +20,10 @@ declare TEMPLATE_IMAGE="/var/lib/vz/template/qcow/Rocky-10-GenericCloud-Base.lat
 declare TEMPLATE_NAME="rocky10-cloudinit-template"
 declare STORAGE="vmdata"
 declare -i VMID=100
+declare -i MEM=2048
+declare -i CORES=1
+declare -i SOCKETS=1
+declare CPU_TYPE='host'
 
 while [[ -n $1 && $1 =~ ^- ]]; do
     [[ $1 == '--' ]] && break
@@ -28,10 +32,7 @@ while [[ -n $1 && $1 =~ ^- ]]; do
             if [[ -n $2 && ! $2 =~ ^- && -f $2 ]]; then
                 shift
                 TEMPLATE_IMAGE="$1"
-            else
-                err 'Bad or missing argument to -i|--image. Does the image file exist?'
-                exit 1
-            fi
+            else err 'Bad or missing argument to -i|--image. Does the image file exist?' && exit 1; fi
             shift;
             ;;
 
@@ -39,10 +40,7 @@ while [[ -n $1 && $1 =~ ^- ]]; do
             if [[ -n $2 && ! $2 =~ ^- ]]; then
                 shift
                 STORAGE="$1"
-            else
-                err 'Bad or missing argument to -s|--storage.'
-                exit 1
-            fi
+            else err 'Bad or missing argument to -s|--storage.' && exit 1; fi
             shift
             ;;
 
@@ -50,21 +48,47 @@ while [[ -n $1 && $1 =~ ^- ]]; do
             if [[ -n $2 && ! $2 =~ ^- ]]; then
                 shift
                 TEMPLATE_NAME="$1"
-            else
-                err 'Bad or missing argument to -n|--name.'
-                exit 1
-            fi
+            else err 'Bad or missing argument to -n|--name.' && exit 1; fi
             shift
             ;;
 
         -v|--vmid)
             if [[ -n $2 && ! $2 =~ ^- ]]; then
                 shift
-                VMID="$2"
-            else
-                err 'Bad or missing argument to -v|--vmid.'
-                exit 1
-            fi
+                VMID="$1"
+            else err 'Bad or missing argument to -v|--vmid.' && exit 1; fi
+            shift
+            ;;
+
+        -m|--memory)
+            if [[ -n $2 && ! $2 =~ ^- ]]; then
+                shift
+                MEM=$1
+            else err 'Bad or missing argument to -m|--memory.' && exit 1; fi
+            shift
+            ;;
+
+        -c|--cores)
+            if [[ -n $2 && ! $2 =~ ^- ]]; then
+                shift
+                CORES=$1
+            else err 'Bad or missing argument to -c|--cores.' && exit 1; fi
+            shift
+            ;;
+
+        -S|--sockets)
+            if [[ -n $2 && ! $2 =~ ^- ]]; then
+                shift
+                SOCKETS=$1
+            else err 'Bad or missing argument to -S|--sockets.' && exit 1; fi
+            shift
+            ;;
+
+        -t|--cpu-type)
+            if [[ -n $2 && ! $2 =~ ^- ]]; then
+                shift
+                CPU_TYPE=$1
+            else err 'Bad or missing argument to -t|--cpu-type.' && exit 1; fi
             shift
             ;;
 
@@ -79,67 +103,37 @@ done
 [[ -n $1 && $1 == '--' ]] && shift
 
 create-uefiboot-template(){
-    local -i vmid=9030
-    local -i mem=2048
-    local -i cores=1
-    local -i sockets=1
-    local storage_pool="vmdata"
-    local template_name="rocky-10-cloudinit-template"
-    local template_image="/var/lib/vz/template/qcow/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2"
-    local cputype="host"
 
-    while [[ -n $1 && $1 =~ ^- ]]; do
-        case $1 in
-            -i|--image) 
-                [[ -n $2 && -f $2 ]] && shift && template_image="$1"
-                shift
-                ;;
-            -n|--name)
-                [[ -n $2 ]] && shift && template_name="$1"
-                ;;
-            -v|--vmid)
-                [[ -n $2 ]] && shift && vmid="$1"
-                shift
-                ;;
-            -s|--storage)
-                [[ -n $2 && ! $2 =~ ^- ]] && shift && storage_pool="$1"
-                shift
-                ;;
-        esac
-    done
-
-    if ! [[ -f $template_image ]]; then
-        err "Template image does not exist: $template_image"
-        return 1
+    if ! [[ -f $TEMPLATE_IMAGE ]]; then
+        err "Template image does not exist: $TEMPLATE_IMAGE" && return 1
     fi
 
-    qm create "$vmid" \
-        --name "$template_name" \
-        --memory "$mem" \
-        --cpu "$cputype" \
-        --cores "$cores" \
-        --sockets "$sockets" \
-        --storage "$storage_pool" \
+    qm create "$VMID" \
+        --name "$TEMPLATE_NAME" \
+        --memory "$MEM" \
+        --cpu "$CPU_TYPE" \
+        --cores "$CORES" \
+        --sockets "$SOCKETS" \
+        --storage "$STORAGE" \
         --net0 virtio,bridge=vmbr0 \
         --machine q35 \
         --bios ovmf || {
-            err 'Initial VM creation failed.'
-            return 1
+            err 'Initial VM creation failed.' && return 1
         }
 
-    qm disk import "$vmid" "$template_image" "$storage_pool"
+    qm disk import "$VMID" "$TEMPLATE_IMAGE" "$STORAGE"
 
-    qm set "$vmid" --scsihw virtio-scsi-pci --scsi0 "$storage_pool:vm-$vmid-disk-0"
-    qm set "$vmid" --efidisk0 "$storage_pool:0,format=raw,efitype=4m"
-    qm set "$vmid" --ide2 "$storage_pool:cloudinit"
-    qm set "$vmid" --agent enabled=1
-    qm set "$vmid" --boot order=scsi0
+    qm set "$VMID" --scsihw virtio-scsi-pci --scsi0 "$STORAGE:vm-$VMID-disk-0"
+    qm set "$VMID" --efidisk0 "$STORAGE:0,format=raw,efitype=4m"
+    qm set "$VMID" --ide2 "$STORAGE:cloudinit"
+    qm set "$VMID" --agent enabled=1
+    qm set "$VMID" --boot order=scsi0
 
     printf "[INFO]: Successfully created the base image.\n" 
     printf "[INFO]: Convert new VM to a template when ready by running: qm template %d\n" "$vmid"
 }
 
-create-uefiboot-template -i "$TEMPLATE_IMAGE" -n "$TEMPLATE_NAME" -v "$VMID" -s "$STORAGE" || {
+create-uefiboot-template || {
     err "Failed to create Proxmox template."
     exit 1
 }
