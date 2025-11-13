@@ -17,7 +17,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 declare TEMPLATE_IMAGE="/var/lib/vz/template/qcow/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2"
-declare TEMPLATE_NAME="/var/lib/vz/template/qcow/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2"
+declare TEMPLATE_NAME="rocky10-cloudinit-template"
 declare -i VMID=100
 
 while [[ -n $1 && $1 =~ ^- ]]; do
@@ -37,6 +37,9 @@ while [[ -n $1 && $1 =~ ^- ]]; do
             if [[ -n $2 && ! $2 =~ ^- ]]; then
                 shift
                 TEMPLATE_NAME="$1"
+            else
+                err 'Bad or missing argument to -n|--name.'
+                exit 1
             fi
             shift
             ;;
@@ -44,10 +47,15 @@ while [[ -n $1 && $1 =~ ^- ]]; do
             if [[ -n $2 && ! $2 =~ ^- ]]; then
                 shift
                 VMID="$2"
+            else
+                err 'Bad or missing argument to -v|--vmid.'
+                exit 1
             fi
             shift
             ;;
         *)
+            err "Unknown argument given: $1"
+            exit 1
             ;;
     esac
 done
