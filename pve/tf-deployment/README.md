@@ -106,12 +106,29 @@ Then the script can be run directly (using `sudo`).
 ```bash
 sudo ./create-template
 ```
-This creates the VM with a VMID of 9030.
-It allocates 2G of memory and uses the storage pool `vmdata`.  
-It uses a single CPU core and socket.  
 
-All of this can be configured by manually setting the variables within the
-`create-rocky10-template` function.  
+By default: 
+
+- This creates the VM with a VMID of 9030.
+- It allocates 2G of memory and uses the storage pool `vmdata`.  
+- It uses a single CPU core and socket.  
+
+The resulting template's name, VMID, and image file used can be configured by 
+passing in arguments.  
+
+Accepted arguments:
+
+- `-i|--image`: The image file to use.  
+- `-v|--vmid`: The VMID of the resulting Proxmox VM template.  
+- `-n|--name`: The name of the resulting Proxmox VM template.
+
+An example:
+```bash
+sudo ./create-template --image "/path/to/example.qcow2" --name "test-proxmox-template" --vmid 2000
+```
+
+This will create a template using the image named `test-proxmox-template`, with
+a VMID of `2000`, and it will use the image `/path/to/example.qcow2`.  
 
 
 
