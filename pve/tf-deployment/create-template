@@ -18,6 +18,7 @@ fi
 
 declare TEMPLATE_IMAGE="/var/lib/vz/template/qcow/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2"
 declare TEMPLATE_NAME="rocky10-cloudinit-template"
+declare STORAGE="vmdata"
 declare -i VMID=100
 
 while [[ -n $1 && $1 =~ ^- ]]; do
@@ -28,11 +29,23 @@ while [[ -n $1 && $1 =~ ^- ]]; do
                 shift
                 TEMPLATE_IMAGE="$1"
             else
-                err 'Bad or missing argument to -i|--image.'
+                err 'Bad or missing argument to -i|--image. Does the image file exist?'
                 exit 1
             fi
             shift;
             ;;
+
+        -s|--storage)
+            if [[ -n $2 && ! $2 =~ ^- ]]; then
+                shift
+                STORAGE="$1"
+            else
+                err 'Bad or missing argument to -s|--storage.'
+                exit 1
+            fi
+            shift
+            ;;
+
         -n|--name)
             if [[ -n $2 && ! $2 =~ ^- ]]; then
                 shift
@@ -43,6 +56,7 @@ while [[ -n $1 && $1 =~ ^- ]]; do
             fi
             shift
             ;;
+
         -v|--vmid)
             if [[ -n $2 && ! $2 =~ ^- ]]; then
                 shift
@@ -53,12 +67,16 @@ while [[ -n $1 && $1 =~ ^- ]]; do
             fi
             shift
             ;;
+
         *)
             err "Unknown argument given: $1"
             exit 1
             ;;
+
     esac
 done
+
+[[ -n $1 && $1 == '--' ]] && shift
 
 create-uefiboot-template(){
     local -i vmid=9030
@@ -81,6 +99,10 @@ create-uefiboot-template(){
                 ;;
             -v|--vmid)
                 [[ -n $2 ]] && shift && vmid="$1"
+                shift
+                ;;
+            -s|--storage)
+                [[ -n $2 && ! $2 =~ ^- ]] && shift && storage_pool="$1"
                 shift
                 ;;
         esac
@@ -117,7 +139,7 @@ create-uefiboot-template(){
     printf "[INFO]: Convert new VM to a template when ready by running: qm template %d\n" "$vmid"
 }
 
-create-uefiboot-template -i "$TEMPLATE_IMAGE" -n "$TEMPLATE_NAME" -v "$VMID" || {
+create-uefiboot-template -i "$TEMPLATE_IMAGE" -n "$TEMPLATE_NAME" -v "$VMID" -s "$STORAGE" || {
     err "Failed to create Proxmox template."
     exit 1
 }
