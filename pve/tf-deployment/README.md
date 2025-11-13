@@ -139,6 +139,16 @@ configured by passing in arguments.
     - Default: `rocky10-cloudinit-template`  
 - `-s|--storage`: The storage pool to use for the VM template.  
     - Default: `vmdata`  
+- `-m|--memory`: The amount of memory to assign to the VM template.  
+    - Default: `2048`  
+- `-c|--cores`: Number of CPU cores to assign to the VM template.  
+    - Defaut: `1`  
+- `-S|--sockets`: Number of CPU sockets to assign to the VM template.  
+    - Defaut: `1`  
+- `-t|--cpu-type`: The CPU instruction set to assign to the VM template (as
+  accepted by Proxmox).  
+    - Default: `host`  
+
 
 An example:
 ```bash
@@ -146,7 +156,11 @@ sudo ./create-template  \
     --image "/path/to/example.qcow2" \
     --name "test-proxmox-template" \
     --vmid 2000 \
-    --storage "local-lvm"
+    --storage "local-lvm" \
+    --memory 4096 \
+    --cores 2 \
+    --sockets 1 \
+    --cpu-type "x86-64-v2-AES"
 
 sudo qm template 2000 # Convert VM to template
 ```
