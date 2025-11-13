@@ -87,12 +87,14 @@ terraform plan
 
 ## `create-template` Usage
 
-As of right now, the script is used to create a Proxmox template from a Rocky
-Linux 10 cloud image (`Rocky-10-GenericCloud-Base.latest.x86_64.qcow2`).  
+This script is used to create a Proxmox template from a Cloud-Init ready image
+(usually bundled as a `.qcow2` or `.img` file).  
+
+For example, the default image used is the Rocky Linux 10 cloud image (`Rocky-10-GenericCloud-Base.latest.x86_64.qcow2`).  
 This image is downloaded from the 
 [official Rocky Linux downloads](https://dl.rockylinux.org/pub/rocky/10/images/x86_64/) 
-website and placed in the `/var/lib/vz/template/qcow/` directory. This
-directory must be created first, as it's not present on a base Proxmox
+website and placed in the `/var/lib/vz/template/qcow/` directory.  
+This directory must be created first, as it's not present on a base Proxmox 
 installation.  
 
 An example snippet for downloading the image to the directory:
@@ -109,26 +111,49 @@ sudo ./create-template
 
 By default: 
 
-- This creates the VM with a VMID of 9030.
+- This creates the VM with a VMID of `100`.
+- It uses the Rocky 10 image shown above.  
+- The template's name is "`rocky10-cloudinit-template`".  
 - It allocates 2G of memory and uses the storage pool `vmdata`.  
 - It uses a single CPU core and socket.  
 
-The resulting template's name, VMID, and image file used can be configured by 
-passing in arguments.  
+The VM is not converted to a template by the script. After running the script,
+we must convert it to a template manually. This is so further configuration can
+be done before templating the VM.  
 
-Accepted arguments:
+To convert to template:
+```bash
+sudo qm template 100 # The VMID of the resulting VM
+```
+
+The resulting template's name, VMID, storage pool, and image file used can be 
+configured by passing in arguments.  
+
+### Accepted Options/Arguments
 
 - `-i|--image`: The image file to use.  
+    - Default: `/var/lib/vz/template/qcow/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2`  
 - `-v|--vmid`: The VMID of the resulting Proxmox VM template.  
-- `-n|--name`: The name of the resulting Proxmox VM template.
+    - Default: `100`  
+- `-n|--name`: The name of the resulting Proxmox VM template.  
+    - Default: `rocky10-cloudinit-template`  
+- `-s|--storage`: The storage pool to use for the VM template.  
+    - Default: `vmdata`  
 
 An example:
 ```bash
-sudo ./create-template --image "/path/to/example.qcow2" --name "test-proxmox-template" --vmid 2000
+sudo ./create-template  \
+    --image "/path/to/example.qcow2" \
+    --name "test-proxmox-template" \
+    --vmid 2000 \
+    --storage "local-lvm"
+
+sudo qm template 2000 # Convert VM to template
 ```
 
 This will create a template using the image named `test-proxmox-template`, with
-a VMID of `2000`, and it will use the image `/path/to/example.qcow2`.  
+a VMID of `2000`, and it will use the image `/path/to/example.qcow2`, and the
+storage pool `local-lvm` will be used.  
 
 
 
