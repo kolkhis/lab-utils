@@ -26,7 +26,7 @@
 
 
 
-printf "Content transformations with Bash (and adjacent tools).\n"
+printf "Content Transformation Tools (Bash, Perl, sed, cut, AWK, and adjacent tools).\n"
 
 
 
@@ -97,8 +97,6 @@ printf "Content transformations with Bash (and adjacent tools).\n"
 
 
 
-printf "This is a tricky topic to approach.\n"
-printf "First, I'll lay out some groundwork.\n"
 
 printf "This talk assumes some knowledge (I have talked about all of these things).\n"
 
@@ -108,6 +106,7 @@ declare -a PREREQUISITES=(
     "parameter expansion"
 )
 
+printf "If at any point you don't understand something or have a question, stop me.\n"
 
 
 
@@ -173,7 +172,7 @@ printf "I've shown these types of substitutions before but I've never really wen
     sed 's/old/new/' file.txt
 
 printf "It's simple on the face of it: Match a pattern, replace it with something else.\n"
-printf "There are modifiers you can add at the end (like 'g' for global, or 'i' for case-insensitive).\n"
+printf "There are modifiers we can add at the end (like 'g' for global, or 'i' for case-insensitive).\n"
 
 
 
@@ -249,28 +248,27 @@ printf "There are modifiers you can add at the end (like 'g' for global, or 'i' 
 
 printf "Let's look at this substitution.\n"
 
-    printf "Match the word hello.\n" | perl -pe 's/hello//'
+    echo "Match the word hello." | perl -pe 's/hello//'
     # Output: Match the word .
 
 printf "This simply matches the word 'hello' and replaces it with nothing.\n"
 printf "But what's happening here?\n"
 
-printf "Doing a substutition or other one-liner with perl, you'll usually want to use the -pe options.\n"
-
-    printf "The '-p' wraps the input in a printing loop. \
-            Each line will print after being passed through the expression.\n"
-    printf "The '-e' specifies the expression.\n"
+printf "Doing a substutition or other one-liner with perl, we usually want to use the -pe options.\n"
+printf "The '-p' wraps the input in a 'printing loop'. \
+        Each line will print after being passed through the expression.\n"
+printf "The '-e' specifies the expression.\n"
 
 printf "Each line will be printed after being run through whatever code we put in the -e (expression).\n"
 
-    printf "Match the word hello.\n" | perl -pe 's/hello//'
+    echo "Match the word hello." | perl -pe 's/hello//'
 
 printf "This is the default behavior in 'sed'.\n"
 
-    printf "Match the word hello.\n" | sed 's/hello//'
+    echo "Match the word hello." | sed 's/hello//'
     # Output: Match the word .
 
-printf "So basically, use 'perl -pe' to make it behave like sed.\n"
+printf "So basically, we'd use 'perl -pe' to make it behave like sed.\n"
 
 
 
@@ -328,18 +326,20 @@ printf "So basically, use 'perl -pe' to make it behave like sed.\n"
 
 
 
-printf "By default, 'sed' uses basic regular expressions (BREs).\n"
+printf "By default, 'sed' uses POSIX Basic Regular Expressions (BREs).\n"
 printf "I went over this in the regex talk.\n"
-printf "To recap, BREs require you to escape certin regex operators (e.g., capture groups).\n"
+printf "To recap, BREs require us to escape certin regex operators (e.g., capture groups).\n"
 
-    printf "Capture hello and greet the user.\n" | sed "s/.*\(hello\).*/\1, $USER./"
+    echo "Capture hello and greet the user." | sed "s/.*\(hello\).*/\1, $USER./"
     # output: hello, kolkhis. 
 
-    printf 'Note the double quotes, needed for $USER to expand.\n'
+printf 'Note the double quotes, needed for $USER to expand.\n'
+printf "Typically we'll see 'sed' invoked with single quotes to avoid expansion, but we want it here.\n"
 
-printf "To enable Extended regular expresssions (EREs), use the -E option.\n"
+printf "Escaping regex characters is annoying, so we can enable Extended Regular Expresssions (EREs),"
+printf "To enable EREs, use the -E option.\n"
 
-    printf "Capture hello and greet the user.\n" | sed -E "s/.*(hello).*/\1, $USER./"
+    sed -E "s/.*(hello).*/\1, $USER./" <<< "Capture hello and greet the user."
     # output: hello, kolkhis.
 
 printf "Now sed regex looks a little bit more like perl.\n"
@@ -407,20 +407,34 @@ printf "Side note: The -E is now POSIX-compliant.\n"
 printf "After the last '/' in a substitution command, we can add modifiers to change behavior.\n"
 printf "A common one is 'g' (global), which performs the substitution on ALL matches.\n"
 
-    printf "hello, replace hello with hi\n" | perl -pe 's/hello/hi/g'
-    printf "hello, replace hello with hi\n" | sed 's/hello/hi/g'
+printf "Let's use a varible for this.\n"
+
+    declare mystring="hello, replace hello with hi"
+
+printf "The goal: Replace the word 'hello' with 'hi'.\n"
+
+    # Desired output: hi, replace hi with hi
+    perl -pe 's/hello/hi/g' <<< "$mystring"
+    sed 's/hello/hi/g' <<< "$mystring"
+
+printf "Or, as shellcheck suggests, we can use a parameter expansion.\n"
+
+    echo "${mystring/hello/hi}"   # Single replacement
+    echo "${mystring//hello/hi}"  # Global modifier
     # output: hi, replace hi with hi
 
 printf "Cool. But this is case sensitive.\n"
 
-    printf "Hello, replace hello with hi\n" | perl -pe 's/hello/hi/g'
-    printf "Hello, replace hello with hi\n" | sed 's/hello/hi/g'
+    mystring="Hello, replace hello with hi"
+
+    perl -pe 's/hello/hi/g' <<< "$mystring"
+    sed 's/hello/hi/g' <<< "$mystring"
     # output: Hello, replace hi with hi
 
 printf "We can use the 'i' modifier to make it case-insensitive.\n"
 
-    printf "Hello, replace hello with hi\n" | perl -pe 's/hello/hi/gi'
-    printf "Hello, replace hello with hi\n" | sed 's/hello/hi/gi'
+    perl -pe 's/hello/hi/gi' <<< "$mystring"
+    sed 's/hello/hi/gi' <<< "$mystring"
     # output: hi, replace hi with hi
 
 
@@ -517,13 +531,13 @@ printf "That's built in to '-i'. Just add a suffix directly after the '-i' and i
     sed -i.bak 's/world/friend/g' ./examples/hello.c
 
 printf "This will create a 'examples/hello.c.bak' file, which is a backup of the original.\n"
-printf "This is very useful if you're working with files that are not under version control.\n"
+printf "This is very useful if we're working with files that are not under version control.\n"
 
 printf "To restore a file from its backup, just use 'mv'\n"
 
     mv ./examples/hello.c.bak ./examples/hello.c
 
-printf "Then your file is successfully restored.\n"
+printf "Then our file is successfully restored.\n"
 
 
 
@@ -892,7 +906,7 @@ printf 'We could also just leave out the $_, as it is implied when calling print
     # Same as:
     perl -e 'while(<>) { print unless m/(fred|aaron)/ }' ./examples/users.txt
 
-printf "That's how you can delete lines with perl.\n"
+printf "That's how we can delete lines with perl.\n"
 printf "It's a tiny bit more cumbersome (on us) than sed for this operation, but still works just fine.\n"
 
 
@@ -960,18 +974,25 @@ printf "For now, we'll talk about columns separated by whitespace.\n"
 printf "There are a number of ways to do this. Most people reach for 'awk' first.\n"
 
     echo "One two three" | awk '{print $1}'
+    # or, let's use a herestring (it's better, trust me)
+    awk '{print $1}' <<< "One two three"
 
 printf "A more lightweight option is to use 'cut'.\n"
 
-    echo "One two three" | cut -d' ' -f1
+    cut -d' ' -f1 <<< "One two three"
 
 printf "Or... we can use perl!\n"
 
-    echo "One two three" | perl -ae 'print "$F[0]\n"'
+    perl -ae 'print "$F[0]\n"' <<< "One two three"
 
 printf "The -a option turns on 'autosplit mode', which saves each field into the @F array.\n"
 
+printf "We can also use the 'read' bash builtin.\n"
 
+    IFS=' ' read -r -d '' col1 col2 col3 <<< "One two three"
+    echo "$col1"
+
+printf "The benefit of this method is that we save them into variables for later use.\n"
 
 
 
@@ -1032,6 +1053,10 @@ printf "We can use the same tools for this as well.\n"
     # Using cut
     echo "One,two,three" | cut -d, -f1
 
+    # Using read
+    IFS=',' read -r col1 col2 col3 <<< "One,two,three"
+    echo "$col1"
+
     # Using perl
     echo "One,two,three" | perl -F, -e 'print "$F[0]\n"'
 
@@ -1089,25 +1114,22 @@ printf "The -F option takes a delimiter, and uses that for -a (which is implicit
 
 
 
-## TO BE CONTINUED
 # Benchmarking the different options
-time for i in {1..1000}; do echo "one,two,three" | perl -F, -e 'print "$F[0]\n"'; done
-# real    0m3.463s
-# user    0m2.310s
-# sys     0m1.745s
+printf "Let's put these to the test and see which method is most performant.\n"
 
-time for i in {1..1000}; do echo "one,two,three" | awk -F, '{print $1}'; done
-# real    0m4.531s
-# user    0m2.504s
-# sys     0m2.880s
+    time for _ in {1..1000}; do echo "one,two,three" | perl -F, -e 'print "$F[0]\n"'; done
 
-time for i in {1..1000}; do echo "one,two,three" | cut -d, -f1; done
-# real    0m2.222s
-# user    0m1.909s
-# sys     0m0.888s
+    time for _ in {1..1000}; do echo "one,two,three" | awk -F, '{print $1}'; done
 
+    time for _ in {1..1000}; do echo "one,two,three" | cut -d, -f1; done
 
+printf "Cool! What if we used herestrings instead?\n"
 
+    time for _ in {1..1000}; do perl -F, -e 'print "$F[0]\n"' <<< "one,two,three"; done
+
+    time for _ in {1..1000}; do awk -F, '{print $1}' <<< "one,two,three"; done
+
+    time for _ in {1..1000}; do cut -d, -f1 <<< "one,two,three"; done
 
 
 
@@ -1116,6 +1138,60 @@ time for i in {1..1000}; do echo "one,two,three" | cut -d, -f1; done
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## TO BE CONTINUED
 
 
 
