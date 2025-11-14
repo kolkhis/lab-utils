@@ -181,7 +181,7 @@ resource "proxmox_vm_qemu" "worker_nodes" {
 resource "proxmox_vm_qemu" "haproxy_nodes" {
   count = local.haproxy.count
 
-  name        = format("k8s-haproxy-node%02d", count.index + 1)
+  name        = format("k8s-haproxy-lb%02d", count.index + 1)
   vmid        = local.haproxy.vmid_start + count.index
   target_node = local.pve_node
   agent       = 1
