@@ -104,18 +104,23 @@ We'll need to install these tools on all of the nodes:
 
 ## Set up the k8s Environment
 ### Spin up VMs
-Three to start:
+This process is automated with Terraform. The [main.tf
+file](../terraform/main.tf) provisions all nodes with IP ranges starting at 150-155.  
 
-* `control-node1`
-* `worker-node1`
-* `worker-node2`
+If setting up manually:
+
+- Three to start:
+
+    - `k8s-control-node1`
+    - `k8s-worker-node1`
+    - `k8s-worker-node2`
 
 To scale, you'd just create more worker nodes.  
 
 The HAProxy nodes are separate.  
 
-* `haproxy-lb1`
-* `haproxy-lb2`
+- `k8s-haproxy-lb1`
+- `k8s-haproxy-lb2`
 
 Add more load balancers to scale if more redundancy is needed.  
 
