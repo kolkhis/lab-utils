@@ -1,0 +1,2 @@
+#cloud-config
+# TODO: Set up monitoring-hub to be ansible-ready
