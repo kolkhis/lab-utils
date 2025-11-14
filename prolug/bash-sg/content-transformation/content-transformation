@@ -953,8 +953,164 @@ printf "It's a tiny bit more cumbersome (on us) than sed for this operation, but
 
 
 
+# Using cut, awk, and perl to print columns
+printf "Commonly, we'll want to grab a specific field or column from text output.\n"
+printf "For now, we'll talk about columns separated by whitespace.\n"
+
+printf "There are a number of ways to do this. Most people reach for 'awk' first.\n"
+
+    echo "One two three" | awk '{print $1}'
+
+printf "A more lightweight option is to use 'cut'.\n"
+
+    echo "One two three" | cut -d' ' -f1
+
+printf "Or... we can use perl!\n"
+
+    echo "One two three" | perl -ae 'print "$F[0]\n"'
+
+printf "The -a option turns on 'autosplit mode', which saves each field into the @F array.\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Print columns separated by non-whitespace characters
+printf "Not all data is separated by whitespace.\n"
+printf "Take CSV, for example. These are comma-delimited fields of data.\n"
+printf "We can use the same tools for this as well.\n"
+
+    # Using awk
+    echo "One,two,three" | awk -F, '{print $1}'
+
+    # Using cut
+    echo "One,two,three" | cut -d, -f1
+
+    # Using perl
+    echo "One,two,three" | perl -F, -e 'print "$F[0]\n"'
+
+printf "Notice we're not using -a here with perl. It's implied when using -F.\n"
+printf "The -F option takes a delimiter, and uses that for -a (which is implicit).\n"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## TO BE CONTINUED
+# Benchmarking the different options
+time for i in {1..1000}; do echo "one,two,three" | perl -F, -e 'print "$F[0]\n"'; done
+# real    0m3.463s
+# user    0m2.310s
+# sys     0m1.745s
+
+time for i in {1..1000}; do echo "one,two,three" | awk -F, '{print $1}'; done
+# real    0m4.531s
+# user    0m2.504s
+# sys     0m2.880s
+
+time for i in {1..1000}; do echo "one,two,three" | cut -d, -f1; done
+# real    0m2.222s
+# user    0m1.909s
+# sys     0m0.888s
+
+
+
+
+
+
 
 
 
