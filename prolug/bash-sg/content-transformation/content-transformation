@@ -24,8 +24,6 @@
 
 
 
-
-
 printf "Content Transformation Tools (Bash, Perl, sed, cut, AWK, and adjacent tools).\n"
 
 
@@ -412,8 +410,8 @@ printf "Let's use a varible for this.\n"
     declare mystring="hello, replace hello with hi"
 
 printf "The goal: Replace the word 'hello' with 'hi'.\n"
+# Desired output: hi, replace hi with hi
 
-    # Desired output: hi, replace hi with hi
     perl -pe 's/hello/hi/g' <<< "$mystring"
     sed 's/hello/hi/g' <<< "$mystring"
 
@@ -507,7 +505,6 @@ printf "We can use the 'i' modifier to make it case-insensitive.\n"
 
 # in-place editing
 printf "Now, if we're not using a pipe and we want to perform operations on files, we can.\n"
-
 printf "Both perl and sed have a '-i' option to enable in-place editing of files.\n"
 
     cat ./examples/hello.c
@@ -520,7 +517,7 @@ printf "If we didn't specify '-i', it would only output the change to stdout.\n"
 printf "Now let's change it back with sed.\n"
 
     cat ./examples/hello.c
-    sed -i -E 's/friend/world/g' ./examples/hello.c
+    sed -i 's/friend/world/g' ./examples/hello.c
     cat ./examples/hello.c
 
 printf "Cool. But, what if we wanted to make a backup before we make any changes?\n"
@@ -613,7 +610,6 @@ printf "Then our file is successfully restored.\n"
 
 # Substituting only on matching lines
 printf "Sometimes we only want to perform substitutions on lines that match a certain pattern.\n"
-
 printf "Take this 'users.txt' for example:\n"
 
     cat ./examples/users.txt
@@ -802,7 +798,7 @@ printf "We can also add lines AFTER a specific line using the 'a' command.\n"
 printf "Now let's delete those entries we made.\n"
 
     sed 's/.*fred.*//' ./examples/users.txt
-    sed '/fred/d' ./examples/users.txt
+    sed -i.bak '/fred/d' ./examples/users.txt
 
 printf "This just deletes any lines that match the pattern.\n"
 printf "But we added multiple lines. Let's specify multiple patterns.\n"
@@ -818,7 +814,6 @@ printf "But we added multiple lines. Let's specify multiple patterns.\n"
 printf "Here we use a capture group to specify two patterns. Match either 'fred' or 'aaron', and delete.\n"
 printf "We used -E so that we did not have to escape the parentheses.\n"
 
-printf "If we wanted to use perl to achieve this functionality, we'd use something like this:\n"
 
 
 
@@ -1115,20 +1110,48 @@ printf "The -F option takes a delimiter, and uses that for -a (which is implicit
 printf "Let's put these to the test and see which method is most performant.\n"
 
     time for _ in {1..1000}; do echo "one,two,three" | perl -F, -e 'print "$F[0]\n"'; done
+    # real    0m3.179s
 
     time for _ in {1..1000}; do echo "one,two,three" | awk -F, '{print $1}'; done
+    # real    0m3.001s
 
     time for _ in {1..1000}; do echo "one,two,three" | cut -d, -f1; done
+    # real    0m3.060s
 
 printf "Cool! What if we used herestrings instead?\n"
 
     time for _ in {1..1000}; do perl -F, -e 'print "$F[0]\n"' <<< "one,two,three"; done
+    # real    0m4.160s
 
     time for _ in {1..1000}; do awk -F, '{print $1}' <<< "one,two,three"; done
+    # real    0m4.073s
 
     time for _ in {1..1000}; do cut -d, -f1 <<< "one,two,three"; done
+    # real    0m3.432s
+
+printf "Well this is interesting stuff.\n"
 
 
+printf "We can use /usr/bin/time, which is a separate utility with more options.\n"
+printf "Let's try comparing the echo pipe vs. the herestring method.\n"
+
+    /usr/bin/time -f "Elapsed time: %e" bash -c 'for _ in {1..1000}; do echo "one,two,three" | perl -F, -e '\''print "$F[0]\n"'\''; done'
+    # Elapsed: 2.94
+    /usr/bin/time -f "Elapsed time: %e" bash -c 'for _ in {1..1000}; do perl -F, -e '\''print "$F[0]\n"'\'' <<< "one,two,three"; done'
+    # Elapsed time: 3.52
+
+    /usr/bin/time -f "Elapsed time: %e" bash -c 'for _ in {1..1000}; do awk -F, '\''{print $1}'\'' <<< "one,two,three"; done'
+    # 2.26
+    /usr/bin/time -f "Elapsed time: %e" bash -c 'for _ in {1..1000}; do echo "one,two,three" | awk -F, '\''{print $1}'\''; done'
+    # 2.35
+
+# TODO: Use hyperfine to benchmark all different options
+
+    declare mystring="\"one,two,three\""
+    declare perlcmd="perl -F, -e 'print \"\$F[0]\n\"' <<< $mystring"
+    declare awkcmd="awk -F, '{print \$1}' <<< $mystring"
+    declare cutcmd="cut -d, -f1 <<< $mystring"
+    hyperfine "$perlcmd" "$awkcmd" "$cutcmd"
 
 
 
@@ -1243,6 +1266,8 @@ printf "Cool! What if we used herestrings instead?\n"
 man perlretut
 man perlre
 man sed
+man awk 
+man cut
 
 printf "Questions?\n"
 
