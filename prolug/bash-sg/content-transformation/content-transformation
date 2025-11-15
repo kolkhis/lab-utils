@@ -423,7 +423,8 @@ printf "Or, as shellcheck suggests, we can use a parameter expansion.\n"
     echo "${mystring//hello/hi}"  # Global modifier
     # output: hi, replace hi with hi
 
-printf "Cool. But this is case sensitive.\n"
+printf "Cool. But all of that is case sensitive.\n"
+printf "Let's redefine that variable to have a capital Hello.\n"
 
     mystring="Hello, replace hello with hi"
 
@@ -533,7 +534,7 @@ printf "That's built in to '-i'. Just add a suffix directly after the '-i' and i
 printf "This will create a 'examples/hello.c.bak' file, which is a backup of the original.\n"
 printf "This is very useful if we're working with files that are not under version control.\n"
 
-printf "To restore a file from its backup, just use 'mv'\n"
+printf "To restore a file from its backup, just use 'mv'.\n"
 
     mv ./examples/hello.c.bak ./examples/hello.c
 
@@ -611,25 +612,15 @@ printf "Then our file is successfully restored.\n"
 
 
 # Substituting only on matching lines
-
 printf "Sometimes we only want to perform substitutions on lines that match a certain pattern.\n"
 
 printf "Take this 'users.txt' for example:\n"
 
     cat ./examples/users.txt
-cat << EOF
-user: alice, role: admin
-user: bob, role: user
-user: carol, role: admin
-user: dave, role: user
-user: eve, role: guest
-user: elon, role: guest
-user: steve, role: guest
-EOF
 
 printf "Say we want to change the role for 'eve' from 'guest' to 'admin'.\n"
 
-    sed -i.bak '/\beve\b/ s/guest/admin/' ./examples/users.txt
+    sed -i.bak '/\beve\b/s/guest/admin/' ./examples/users.txt
     sed -i.bak '/\beve\b/ s/admin/guest/' ./examples/users.txt
     # \< \> \b (word bounaries)
     printf "We use word boundaries here so we don't also match 'steve'.\n"
@@ -647,8 +638,14 @@ printf "We have a simple 'command if condition' here.\n"
 printf "This leverages the fact that Perl is an actual entire programming language.\n"
 printf "The 'm/pattern/' in Perl is just a way to match a pattern, and will return true if it matches.\n"
 
+# Alternative: Capture groups
+printf "We can also use capture groups instead of matching on a pattern.\n"
 
+    perl -pi.bak -e 's/(user: eve, role: ).*/$1admin/' ./examples/users.txt
+    # Change it back with sed
+    sed -Ei 's/(user: eve, role: ).*/\1guest/' ./examples/users.txt 
 
+printf "Although this is more explicit, I prefer the previous method for this purpose.\n"
 
 
 
