@@ -9,11 +9,13 @@ image (typically `.qcow2` format).
 
 The `./basic-clone` directory contains a Terraform configuration for cloning a
 regular Proxmox VM or template. It it not meant to be used with Cloud-Init, and 
-does not contain any Cloud-Init configuration.  
+does not contain any Cloud-Init configuration.    
 
 The `./cloud-init` directory contains a Terraform configuration for cloning a
 VM or template that is Cloud-Init ready. The VM or template should be created 
 using a cloud image from the OS distributor.  
+This Cloud-Init Terraform configuration has a `locals` block that can be 
+modified to facilitate easy scaling of resources.  
 
 ## `create-template`
 
