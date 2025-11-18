@@ -1,3 +1,5 @@
+user: aaron, role: user
+user: aaron, role: user
 user: alice, role: admin
 user: bob, role: user
 user: carol, role: admin
