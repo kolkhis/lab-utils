@@ -9,4 +9,7 @@ Default setup is 5 VMs total:
 - 2 worker nodes
 - 2 load balancer nodes
 
+Each node is provisioned with the resources defined in the `locals` block
+within [`main.tf`](./main.tf).  
+
 
