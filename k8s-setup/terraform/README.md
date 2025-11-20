@@ -12,4 +12,40 @@ Default setup is 5 VMs total:
 Each node is provisioned with the resources defined in the `locals` block
 within [`main.tf`](./main.tf).  
 
+## Main Configuration
+
+Set the VM specs in the `locals` block:
+```hcl
+  clone_template = "rocky-10-cloudinit-template"
+  network        = "192.168.4."
+  # format as "${local.network}${type.ip_start}"
+  control = {
+    count      = 1
+    ip_start   = 150
+    vmid_start = 6000
+  }
+  worker = {
+    count      = 2
+    ip_start   = local.control.ip_start + local.control.count
+    vmid_start = local.control.vmid_start + local.control.count
+  }
+  haproxy = {
+    count      = 2
+    ip_start   = local.control.ip_start + local.control.count + local.worker.count
+    vmid_start = local.worker.vmid_start + local.worker.count
+  }
+
+  storage = {
+    pool = "vmdata"
+    size = "10G"
+  }
+  cpu = {
+    cores   = 1
+    sockets = 1
+    type    = "host"
+  }
+  mem      = 2048
+  pve_node = "home-pve"
+  sshkeys  = <<EOF
+```
 
