@@ -14,7 +14,9 @@ within [`main.tf`](./main.tf).
 
 ## Main Configuration
 
-Set the VM specs in the `locals` block:
+Set the VM specs in the `locals` block, as well as the Proxmox template/VM you
+wish to use as the base template.
+
 ```hcl
   clone_template = "rocky-10-cloudinit-template"
   network        = "192.168.4."
@@ -47,5 +49,8 @@ Set the VM specs in the `locals` block:
   mem      = 2048
   pve_node = "home-pve"
   sshkeys  = <<EOF
+your keys here
+EOF
 ```
+
 
