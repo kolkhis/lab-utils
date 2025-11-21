@@ -59,8 +59,12 @@ nodes.
 
 Changing the `local.control.ip_start` variable will shift the entire range.  
 
-The default VMID range starts at `6000` and goes up to `6004` (or higher/lower if
-`count`s are changed).  
+The default VMID range starts at `6000` and goes up to `6004` (or higher/lower 
+if `count`s are changed). VMID allocation is designed to be a contiguous set of 
+numbers.  
+
+Default VMIDs can be changed by modifying the `local.control.vmid_start` variable.  
+
 
 
 
