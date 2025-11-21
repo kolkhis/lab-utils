@@ -55,5 +55,10 @@ EOF
 
 The IP range in the default configuration is `192.168.4.150-155`.  
 
+The control node(s) start at 150, followed by the workers, then the load balancer
+nodes.  
+
+Changing the `local.control.ip_start` variable will shift the entire range.  
+
 
 
