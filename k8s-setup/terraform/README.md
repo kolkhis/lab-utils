@@ -53,4 +53,7 @@ your keys here
 EOF
 ```
 
+The IP range in the default configuration is `192.168.4.150-155`.  
+
+
 
