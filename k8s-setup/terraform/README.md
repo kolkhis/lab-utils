@@ -68,6 +68,8 @@ Default VMIDs can be changed by modifying the `local.control.vmid_start` variabl
 Modifying the `count` of each will dynamically update all other relevant
 variables (i.e., `ip_start`, `vmid_start`).  
 
+The name of each the VMs will be `<type>-node-<count>`.  
+
 
 
 
