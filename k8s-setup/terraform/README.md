@@ -53,6 +53,7 @@ your keys here
 EOF
 ```
 
+## IPs, VMIDs, VM Names
 The IP range in the default configuration is `192.168.4.150-155`.  
 The control node(s) start at 150, followed by the workers, then the load balancer
 nodes.  
