@@ -62,6 +62,9 @@ All nodes have the same specs:
 - 1 socket
 - 10 GB storage (in the `vmdata` storage pool)
 
+These can all be modified in the `locals` block. Upon modification, changes
+will take effect for **all** VMs (control, worker, and loadbalancer nodes).  
+
 
 ### IPs, VMIDs, VM Names
 The IP range in the default configuration is `192.168.4.150-155`.  
