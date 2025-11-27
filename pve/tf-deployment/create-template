@@ -3,6 +3,51 @@
 # Create a VM template that is cloud-init ready for Proxmox VE
 # Written by Connor W. (https://github.com/kolkhis)
 
+usage() {
+        cat <<EOF
+Usage: ${BASH_SOURCE[0]} [OPTIONS]
+
+Create a Proxmox VM template that is Cloud-Init ready.
+Defaults are chosen to work on most Proxmox installations.
+
+OPTIONS:
+  -i, --image <file>       Path to the QCOW2 cloud image to import.
+                           Default: $TEMPLATE_IMAGE
+
+  -s, --storage <name>     Proxmox storage target for disks.
+                           Default: $STORAGE
+
+  -n, --name <string>      Name of the VM template to create.
+                           Default: $TEMPLATE_NAME
+
+  -v, --vmid <number>      Proxmox VMID for the new VM.
+                           Default: $VMID
+
+  -m, --memory <MiB>       Amount of RAM (in MiB).
+                           Default: $MEM
+
+  -c, --cores <number>     Number of CPU cores assigned.
+                           Default: $CORES
+
+  -S, --sockets <number>   Number of CPU sockets assigned.
+                           Default: $SOCKETS
+
+  -t, --cpu-type <string>  Proxmox CPU type (e.g., host, x86-64-v2-AES).
+                           Default: $CPU_TYPE
+
+  -h, --help               Show this help message and exit.
+
+NOTES:
+  - Requires root privileges.
+  - After creation, convert the VM into a template using:
+        qm template <vmid>
+
+EXAMPLE:
+  ${BASH_SOURCE[0]} --image /path/to/cloud-image.qcow2 --vmid 900 --name rocky-ci-template
+
+EOF
+}
+
 err() {
     if [[ $# -gt 0 ]]; then
         printf >&2 '[\033[31mERROR\033[0m]: %s\n' "$*"
@@ -91,7 +136,10 @@ while [[ -n $1 && $1 =~ ^- ]]; do
             else err 'Bad or missing argument to -t|--cpu-type.' && exit 1; fi
             shift
             ;;
-
+        -h|-help|--help)
+            usage
+            exit 0
+            ;;
         *)
             err "Unknown argument given: $1"
             exit 1
