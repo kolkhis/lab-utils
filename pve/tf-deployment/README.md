@@ -19,6 +19,12 @@ modified to facilitate easy scaling of resources.
 
 ## `create-template`
 
+
+The script is self-documenting. Run with `--help` for full usage information.
+```bash
+./create-template --help
+```
+
 This script is used to create a Proxmox template from a Cloud-Init ready image
 (usually bundled as a `.qcow2` or `.img` file).  
 
@@ -81,6 +87,7 @@ Accepted options are as follows (all require arguments):
 - `-t|--cpu-type`: The CPU instruction set to assign to the VM template (as
   accepted by Proxmox).  
     - Default: `host`  
+- `-h|--help`: Show help text and exit.
 
 
 An example:
