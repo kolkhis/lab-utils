@@ -53,6 +53,8 @@ your keys here
 EOF
 ```
 
+### VM Specs
+
 All nodes have the same specs:
 
 - 2048 memory
@@ -61,7 +63,7 @@ All nodes have the same specs:
 - 10 GB storage (in the `vmdata` storage pool)
 
 
-## IPs, VMIDs, VM Names
+### IPs, VMIDs, VM Names
 The IP range in the default configuration is `192.168.4.150-155`.  
 The control node(s) start at 150, followed by the workers, then the load balancer
 nodes.  
