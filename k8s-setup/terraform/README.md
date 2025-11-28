@@ -58,13 +58,18 @@ EOF
 All nodes have the same specs:
 
 - 2048 memory
-- 1 core
-- 1 socket
+- CPU specs:
+    - 1 core
+    - 1 socket
+    - `host` type.  
 - 10 GB storage (in the `vmdata` storage pool)
 
 These can all be modified in the `locals` block. Upon modification, changes
 will take effect for **all** VMs (control, worker, and loadbalancer nodes).  
 
+The CPU type is defaulted to `host` due to Rocky Linux booting into a kernel
+panic when using `x86-64-v2-AES`.  
+This can easily be changed within the `local.cpu.type` variable.  
 
 ### IPs, VMIDs, VM Names
 The IP range in the default configuration is `192.168.4.150-155`.  
