@@ -91,7 +91,8 @@ variables (i.e., `ip_start`, `vmid_start`).
 
 The name of each the VMs will be `k8s-<type>-node<count>`. 
 An exception to this convention is the load balancer nodes, which will be named
-`k8s-haproxy-lb<count>`. 
+`k8s-haproxy-lb<count>`. The `<count>` will be zero-padded to 2 digits (e.g.,
+`01`, `02`, etc.).   
 Naming conventions can be changed by modifying the `name` field of each
 resource.  
 
