@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 declare LOGFILE="./zfs-check.log"
 declare -i MAX_ALLOWED_USAGE=70
 
@@ -8,6 +9,28 @@ declare -a STORAGE_PROBLEM
 declare -a ERROR_PROBLEM
 
 read -r -d '' -a POOLS < <(zpool list -H -o name)
+
+report-webhook(){
+    # The message you want to send
+    if [[ -n $1 ]]; then
+        printf >&2 "[ERROR]: No message for webhook report.\n"
+        return 1
+    fi
+
+    local MESSAGE="$1"
+
+    # Replace with your Discord webhook URL
+    local DISCORD_WEBHOOK_URL="${DISCORD_WEBHOOK_URL:?Discord webhook URL must be set as an environment variable}"
+
+    # Construct the JSON payload
+    local PAYLOAD='{"content":"'$MESSAGE'"}'
+
+    # Send the POST request to the Discord webhook
+    curl -X POST \
+        -H "Content-Type: application/json" \
+        -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL"
+}
+
 
 for pool in "${POOLS[@]}"; do
     errors="$(zpool status "$pool" | tail -n 1)"
@@ -25,15 +48,22 @@ for pool in "${POOLS[@]}"; do
 
 done
 
-
 if [[ ${#ERROR_PROBLEM[@]} -gt 0 ]]; then
-    printf "%(%F %T)T [ERROR]: Problematic pools found (errors):\n" >> "$LOGFILE"
-    printf "\t%s\n" "${ERROR_PROBLEM[@]}" >> "$LOGFILE"
+    printf -v message "%(%F %T)T [ERROR]: Problematic pools found (errors): %s" -1 "${ERROR_PROBLEM[*]}"
+    report-webhook "$message"
+    printf "%s\n" "$message" >> "$LOGFILE"
 fi
 
 if [[ ${#STORAGE_PROBLEM[@]} -gt 0 ]]; then
-    printf "%(%F %T)T [ERROR]: Problematic pools found (storage saturation):\n" >> "$LOGFILE"
-    printf "\t%s\n" "${STORAGE_PROBLEM[@]}" >> "$LOGFILE"
+    printf -v message "%(%F %T)T [ERROR]: Problematic pools found (storage saturation):\n%s\n" -1 "${STORAGE_PROBLEM[@]}" 
+    report-webhook "$message"
+    printf "%s\n" "$message" >> "$LOGFILE"
+fi
+
+if [[ ${#STORAGE_PROBLEM[@]} -eq 0 && ${#ERROR_PROBLEM[@]} -eq 0 ]]; then
+    printf -v message "%(%F %T)T [INFO]: No problems found in ZFS pools." -1 
+    report-webhook "$message"
+    printf "%s\n" "$message" >> "$LOGFILE"
 fi
 
 
