@@ -1,6 +1,6 @@
 #!/bin/bash
 # Wrapper script for cluster initialization with `kubeadm init`
-# Removes ~/.kube/config and ~/.kube/cache unless `-n`/`--no-cleanup` is passed.
+# Removes ~/.kube/config and ~/.kube/cache (if present) unless `-n`/`--no-cleanup` is passed.
 
 declare POD_NETWORK_CIDR="10.244.0.0/16"
 declare CLEANUP=0
