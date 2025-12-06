@@ -1,0 +1,27 @@
+#!/bin/bash
+
+
+declare MAX_ALLOWED_USAGE=70
+
+declare -a POOLS
+
+read -r -d '' -a POOLS < <(zpool list -H -o name)
+
+for pool in "${POOLS[@]}"; do
+    errors="$(zpool status "$pool" | tail -n 1)"
+    usage="$(zpool list -H -o capacity vmdata)"
+
+    printf "Errors: %s\n" "$errors"
+    printf "Usage:  %s (%d)\n" "$usage" "${usage%%%}"
+
+    if [[ $errors != "errors: No known data errors" ]]; then
+        printf "[WARNING]: Errors found in pool: %s\n" "$pool"
+    fi
+
+    if [[ ${usage%%%} -gt "$MAX_ALLOWED_USAGE" ]]; then
+        printf "[WARNING]: Storage utilization exceeds max allowed usage. Usage: %s\n" "$usage"
+    fi
+
+done
+
+
