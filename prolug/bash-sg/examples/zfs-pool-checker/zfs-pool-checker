@@ -2,7 +2,7 @@
 
 # ansible localhost -m setup -a "filter=ansible_mounts"
 
-declare LOGFILE="./zfs-check.log"
+declare -r LOGFILE="./zfs-check.log"
 declare -i MAX_ALLOWED_USAGE=70
 declare -a POOLS
 declare -a STORAGE_PROBLEM
