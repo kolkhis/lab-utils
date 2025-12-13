@@ -1,0 +1,31 @@
+#!/bin/bash
+
+
+make-dir() {
+    mkdir "$1"
+}
+
+change-dir() {
+    cd "$1"
+}
+
+show-pwd() {
+    pwd
+}
+
+make-dir "$1"
+change-dir "$1"
+show-pwd
+
+
+
+
+# test-fn() {
+#     printf "This is inside of a function.\n"
+# }
+# printf "This is outside of a function.\n"
+
+
+
+
+

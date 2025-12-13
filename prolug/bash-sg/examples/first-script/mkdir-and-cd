@@ -1,0 +1,6 @@
+#!/bin/bash
+
+mkdir -p /home/kolkhis/testdir
+cd /home/kolkhis/testdir
+pwd
+

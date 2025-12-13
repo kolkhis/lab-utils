@@ -1,5 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # shellcheck disable=SC2016,SC2164,SC2129,SC1091,SC2317,SC2120,SC2218
+
 
 
 
@@ -373,7 +374,6 @@ printf "Let's run it.\n"
 
 printf "Wait, what happened? My pwd didn't change.\n"
 
-
 printf "That's because scripts run in subshells. That means they won't affect your current environment.\n"
 
 printf "So, what is the solution?"
@@ -632,7 +632,69 @@ printf 'So we would use $1 again.\n'
 
 
 
+
+
+
+
+
+
+
+# TODO: Add loops
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 printf "That's a brief overview of how bash scripts and functions work.\n"
+
 
 
 

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+
+touch "$1"
+echo '#!/bin/bash' > "$1"
+chmod +x "$1"
+
+echo "Successfully created script file: $1"
+
