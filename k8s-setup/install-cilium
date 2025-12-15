@@ -23,6 +23,8 @@ while [[ -n $1 && $1 =~ ^- && $1 != '--' ]]; do
     esac
 done
 
+[[ $1 == '--' ]] && shift
+
 install-cilium() {
 
     printf "Creating temporary install directory...\n"
