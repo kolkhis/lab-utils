@@ -11,6 +11,18 @@ declare -r CILIUM_DOWNLOAD_LINK='https://github.com/cilium/cilium-cli/releases/l
 declare -r CILIUM_TARBALL="${CILIUM_DOWNLOAD_LINK##*/}"
 declare -r TMP_INSTALL_DIR="/tmp/cilium-install"
 
+declare -i IGNORE_HOSTNAME=0
+
+while [[ -n $1 && $1 =~ ^- && $1 != '--' ]]; do
+    case $1 in
+        -i|--ignore-hostname)
+            ;;
+        *)
+            IGNORE_HOSTNAME=1
+            ;;
+    esac
+done
+
 install-cilium() {
 
     printf "Creating temporary install directory...\n"
@@ -51,20 +63,22 @@ install-cilium() {
 
 }
 
-case $HOSTNAME in
-    *control*|*master*)
-        printf "On master/control node. Installing cilium...\n"
-        if ! install-cilium; then
-            printf >&2 "Problem installing cilium.\n" && exit 1
-        fi
-        ;;
-    *worker*)
-        printf "Cilium only needs to be installed on the master/control node!\n"
-        exit 0
-        ;;
-    *)
-        printf "Hostname does not reflect a k8s worker or control node. Exiting.\n"
-        exit 0
-        ;;
-esac
+if [[ $IGNORE_HOSTNAME -gt 0 ]]; then
+    case $HOSTNAME in
+        *control*|*master*)
+            printf "On master/control node. Installing cilium...\n"
+            if ! install-cilium; then
+                printf >&2 "Problem installing cilium.\n" && exit 1
+            fi
+            ;;
+        *worker*)
+            printf "Cilium only needs to be installed on the master/control node!\n"
+            exit 0
+            ;;
+        *)
+            printf "Hostname does not reflect a k8s worker or control node. Exiting.\n"
+            exit 0
+            ;;
+    esac
+fi
 
