@@ -3,7 +3,8 @@
 # Run only on your k8s control node.  
 # Cilium only needs to be installed on the master node. As a safety mechanism, 
 # this script will not install Cilium if the local hostname does not contain 
-# the word 'control' or 'master'.  
+# the word 'control' or 'master'. This is to prevent accidental installation on
+# worker nodes or load balancer nodes.
 
 
 declare -r CILIUM_DOWNLOAD_LINK='https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz'
