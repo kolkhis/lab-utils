@@ -5,7 +5,6 @@
 # this script will not install Cilium if the local hostname does not contain 
 # the word 'control' or 'master'. This is to prevent accidental installation on
 # worker nodes or load balancer nodes.
-# TODO(feat): Add an option to ignore hostname and install anyway
 
 declare -r CILIUM_DOWNLOAD_LINK='https://github.com/cilium/cilium-cli/releases/latest/download/cilium-linux-amd64.tar.gz'
 declare -r CILIUM_TARBALL="${CILIUM_DOWNLOAD_LINK##*/}"
