@@ -29,3 +29,8 @@ HAProxy-LB1           HAProxy-LB2
    Worker1           Worker2
 ```
 
+## `./install-cilium`
+
+This is a helper script used to install the Cilium CNI (Container Network
+Interface). This script should only be run on the K8s control node.  
+
