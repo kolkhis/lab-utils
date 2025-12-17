@@ -16,8 +16,6 @@ declare -i IGNORE_HOSTNAME=0
 while [[ -n $1 && $1 =~ ^- && $1 != '--' ]]; do
     case $1 in
         -i|--ignore-hostname)
-            ;;
-        *)
             IGNORE_HOSTNAME=1
             ;;
     esac
@@ -65,7 +63,7 @@ install-cilium() {
 
 }
 
-if [[ $IGNORE_HOSTNAME -ne 0 ]]; then
+if [[ $IGNORE_HOSTNAME -eq 0 ]]; then
     case $HOSTNAME in
         *control*|*master*)
             printf "On master/control node. Installing cilium...\n"
