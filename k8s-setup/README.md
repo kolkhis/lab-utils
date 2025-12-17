@@ -34,10 +34,22 @@ HAProxy-LB1           HAProxy-LB2
 This is a helper script used to install the Cilium CNI (Container Network
 Interface). This script should only be run on the K8s control node.  
 
+It should be invoked directly on the control node:
+```bash
+./install-cilium
+```
+
 By default, this script is equipped with a safety mechanism that checks the
 hostname of the machine it's currently be run on, and will not proceed with the
 installation unless the hostname contains either of the words "control" or 
 "master." To disable this behavior, pass in the `-i` or `--ignore-hostname`
 option on invocation.  
+
+```bash
+./install-cilium -i
+```
+
+
+
 
 
