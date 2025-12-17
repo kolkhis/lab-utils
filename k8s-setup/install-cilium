@@ -65,7 +65,7 @@ install-cilium() {
 
 }
 
-if [[ $IGNORE_HOSTNAME -gt 0 ]]; then
+if [[ $IGNORE_HOSTNAME -ne 0 ]]; then
     case $HOSTNAME in
         *control*|*master*)
             printf "On master/control node. Installing cilium...\n"
