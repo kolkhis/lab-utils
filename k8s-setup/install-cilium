@@ -17,6 +17,7 @@ while [[ -n $1 && $1 =~ ^- && $1 != '--' ]]; do
     case $1 in
         -i|--ignore-hostname)
             IGNORE_HOSTNAME=1
+            shift;
             ;;
         *)
             printf >&2 "[ERROR]: Unknown option: %s\n" "$1"
