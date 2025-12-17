@@ -80,5 +80,10 @@ if [[ $IGNORE_HOSTNAME -eq 0 ]]; then
             exit 0
             ;;
     esac
+else
+    printf "Ignoring hostname and installing Cilium...\n"
+    if ! install-cilium; then
+        printf >&2 "Problem installing cilium.\n" && exit 1
+    fi
 fi
 
