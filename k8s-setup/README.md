@@ -8,6 +8,7 @@ It uses a Kubernetes cluster with Cilium networking, initially tested and deploy
 ---
 
 A basic deployment consists of 5 nodes.  
+
 - 1 K8s control plane.  
     - This is the control node for the k8s cluster.  
     - More control nodes can be added as backups.
@@ -50,9 +51,14 @@ option on invocation.
 ```
 
 This downloads and installs the latest Cilium CLI release from GitHub.  
+
 By default it utilizes the `/tmp/cilium-install` temporary directory to store
 the tarball file. It deletes this directory and the tarball automatically after 
 installation.  
+
+To change the version downloaded, modify the value of the
+`CILIUM_DOWNLOAD_LINK` variable to store the download link for the desired
+version.  
 
 
 
