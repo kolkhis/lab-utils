@@ -49,6 +49,10 @@ option on invocation.
 ./install-cilium -i
 ```
 
+This downloads and installs the latest Cilium CLI release from GitHub.  
+By default it utilizes the `/tmp/cilium-install` temporary directory to store
+the tarball file. It deletes this directory and the tarball automatically after 
+installation.  
 
 
 
