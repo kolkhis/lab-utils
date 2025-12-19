@@ -30,6 +30,18 @@ HAProxy-LB1           HAProxy-LB2
    Worker1           Worker2
 ```
 
+## `./install-k8s`
+
+This script configures the system for Kubernetes and installs the necessary
+tools:
+
+- `kubelet`  
+- `kubectl`  
+- `kubeadm`  
+
+The container runtime engine used in this installation is `containerd`.  
+
+
 ## `./install-cilium`
 
 This is a helper script used to install the Cilium CNI (Container Network
