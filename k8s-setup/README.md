@@ -41,6 +41,15 @@ tools:
 
 The container runtime engine used in this installation is `containerd`.  
 
+System configuration performed:
+
+- Disable swap
+- Enable necessary kernel modules
+    - `net.bridge.bridge-nf-call-ip6tables`
+    - `net.bridge.bridge-nf-call-iptables`
+    - `net.ipv4.ip_forward`
+- Open ports required for Kubernetes and Cilium
+
 
 ## `./install-cilium`
 
