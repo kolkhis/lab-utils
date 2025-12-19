@@ -38,8 +38,10 @@ tools:
 - `kubelet`  
 - `kubectl`  
 - `kubeadm`  
+- `containerd`
 
-The container runtime engine used in this installation is `containerd`.  
+The container runtime engine used in this installation is `containerd`, which
+is additionally installed alongside K8s administration tools.    
 
 System configuration performed:
 
