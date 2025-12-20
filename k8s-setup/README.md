@@ -32,6 +32,10 @@ HAProxy-LB1           HAProxy-LB2
 
 ## `./install-k8s`
 
+> **Note**: This script has only been tested on RedHat-based operating
+> systems (Rocky Linux).  
+> The Debian-based installation process is present but untested.  
+
 This script configures the system for Kubernetes and installs the necessary
 tools:
 
