@@ -42,21 +42,20 @@ tools:
 - `kubelet`  
 - `kubectl`  
 - `kubeadm`  
-- `containerd`
+- `containerd`  
 
 The container runtime engine used in this installation is `containerd`, which
 is additionally installed alongside K8s administration tools.    
 
 System configuration performed:
 
-- Disable swap
-- Enable necessary kernel modules
-    - `net.bridge.bridge-nf-call-ip6tables`
-    - `net.bridge.bridge-nf-call-iptables`
-    - `net.ipv4.ip_forward`
-- Open ports required for Kubernetes and Cilium (with `firewalld`, RHEL only)
-
-
+- Disable swap  
+- Enable necessary kernel modules  
+    - `net.bridge.bridge-nf-call-ip6tables`  
+    - `net.bridge.bridge-nf-call-iptables`  
+    - `net.ipv4.ip_forward`  
+    - Saves kernel module configuration into `/etc/sysctl.d/k8s.conf`.  
+- Open ports required for Kubernetes and Cilium (with `firewalld`, RHEL only)  
 
 ## `./install-cilium`
 
