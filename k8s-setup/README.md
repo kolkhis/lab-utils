@@ -51,10 +51,11 @@ System configuration performed:
 
 - Disable swap  
 - Enable necessary kernel modules  
+- Configure network bridge for iptables, enable IP forwarding in `sysctl`
     - `net.bridge.bridge-nf-call-ip6tables`  
     - `net.bridge.bridge-nf-call-iptables`  
     - `net.ipv4.ip_forward`  
-    - Saves kernel module configuration into `/etc/sysctl.d/k8s.conf`.  
+    - Saves iptables configuration into `/etc/sysctl.d/k8s.conf`.  
 - Open ports required for Kubernetes and Cilium (with `firewalld`, RHEL only)  
 
 ## `./install-cilium`
