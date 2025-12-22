@@ -55,7 +55,8 @@ System configuration performed:
     - `net.bridge.bridge-nf-call-ip6tables`  
     - `net.bridge.bridge-nf-call-iptables`  
     - `net.ipv4.ip_forward`  
-    - Saves iptables configuration into `/etc/sysctl.d/k8s.conf`.  
+    - In case modification is needed, this process saves the iptables configuration 
+      into `/etc/sysctl.d/k8s.conf`.  
 - Open ports required for Kubernetes and Cilium (with `firewalld`, RHEL only)  
 
 ## `./install-cilium`
