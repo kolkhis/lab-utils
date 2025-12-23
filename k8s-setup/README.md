@@ -58,6 +58,8 @@ System configuration performed:
     - In case modification is needed, this process saves the iptables configuration 
       into `/etc/sysctl.d/k8s.conf`.  
 - Open ports required for Kubernetes and Cilium (with `firewalld`, RHEL only)  
+- Configure `systemd` to use `systemdcgroup`  
+    - This configuration is stored in `/etc/containerd/config.toml`.  
 
 ## `./install-cilium`
 
