@@ -87,8 +87,8 @@ By default it utilizes the `/tmp/cilium-install` temporary directory to store
 the tarball file. It deletes this directory and the tarball automatically after 
 installation.  
 
-To change the version downloaded, modify the value of the
-`CILIUM_DOWNLOAD_LINK` variable to store the download link for the desired
+To change the Cilium version that is downloaded and installed, modify the value 
+of the `CILIUM_DOWNLOAD_LINK` variable to store the download link for the desired
 version.  
 
 
