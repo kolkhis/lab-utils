@@ -6,4 +6,10 @@ Tower, from RedHat.
 It is free, open-source software that provides a web UI and REST API for 
 managing Ansible across environments.
 
+## Setup
+
+AWX is typically run in a Kubernetes cluster using the AWX Operator.  
+It can be deployed with Docker/Compose for labs or quick tests, but in
+production environments it is run in k8s, OpenShift, k3s, etc.
+
 
