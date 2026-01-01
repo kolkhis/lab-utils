@@ -9,7 +9,7 @@ managing Ansible across environments.
 ## Setup
 
 AWX is typically run in a Kubernetes cluster using the AWX Operator.  
-It can be deployed with Docker/Compose for labs or quick tests, but in
-production environments it is run in k8s, OpenShift, k3s, etc.
+It can be deployed with Docker/Compose for labs or testing purposes, but in
+production environments it is run on Kubernetes (k8s, OpenShift, k3s, etc.).
 
 
