@@ -24,7 +24,7 @@ kubectl --version
 kubectl get nodes
 ```
 
-### AWX Operator
+### Install AWX Operator
 
 AWX is deployed via an **Operator**, which is a Kubernetes controller.  
 It can be cloned directly from Github:  
@@ -43,5 +43,4 @@ starts watching for AWX resources.
 - Essentially, the custom resource is used to interact with the operator.  
 - An operator is a piece of software that turns a complex application into a 
   native K8s **object** that can be controlled with yaml.  
-
 
