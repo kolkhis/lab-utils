@@ -44,3 +44,41 @@ starts watching for AWX resources.
 - An operator is a piece of software that turns a complex application into a 
   native K8s **object** that can be controlled with yaml.  
 
+
+### Deploy AWX
+Now that k3s is set up and the AWX operator is installed, we can deploy AWX
+itself.  
+
+First, create a namespace for AWX.  
+```bash
+kubectl create ns awx
+```
+Then we create an AWX **Custom Resource (CR)** file named `awx.yaml`.  
+```bash
+touch awx.yaml
+vi awx.yaml
+```
+Add the configuration:
+```yaml
+apiVersion: awx.ansible.com/v1beta1
+kind: AWX
+metadata:
+  name: awx
+  namespace: awx
+spec:
+  service_type: nodeport
+  replicas: 1
+```
+
+Then we can `apply` it.  
+```bash
+kubectl apply -f awx.yaml
+```
+
+Watch for it to come up.
+```bash
+kubectl get pods -n awx -w
+```
+It may take a couple minutes for it to fully come online.  
+
+
