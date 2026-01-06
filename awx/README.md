@@ -6,7 +6,7 @@ Tower, from RedHat.
 It is free, open-source software that provides a web UI and REST API for 
 managing Ansible across environments.
 
-## Setup
+## Manual Setup
 
 AWX is typically run in a Kubernetes cluster using the AWX Operator.  
 It can be deployed with Docker/Compose for labs or testing purposes, but in
@@ -80,5 +80,9 @@ Watch for it to come up.
 kubectl get pods -n awx -w
 ```
 It may take a couple minutes for it to fully come online.  
+
+
+---
+
 
 
