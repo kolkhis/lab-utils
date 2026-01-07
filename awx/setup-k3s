@@ -1,0 +1,10 @@
+#!/bin/bash
+
+install-k3s(){
+    curl -fsSL https://get.k3s.io | sh - || {
+        printf >&2 '[ERROR]: Problem installing k3s.\n'
+        return 1
+    }
+}
+
+install-k3s || exit 1
