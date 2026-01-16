@@ -93,7 +93,7 @@ To reboot hosts, supply the `reboot` tag at runtime.
 If the `reboot` tag is provided, the playbook will reboot **non-production hosts only**. 
 
 Production servers that need a reboot will show up in the post-patch report, as
-well as roduce output at runtime.  
+well as produce output at runtime.  
 
 **All** hosts that require a reboot will show up in the post-patch report.  
 
