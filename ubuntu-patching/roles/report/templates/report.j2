@@ -1,0 +1,56 @@
+This is an auto-generated patch report at {{ ansible_date_time.time }} on {{ ansible_date_time.date }}
+
+Inventory group used during patch:
+----------------------------------------------
+{% if ansible_play_hosts | intersect(groups['non_production'] | default([])) | length > 0 %}
+- 'non_production': Patch run against non-production hosts.
+{% endif %}
+{% if ansible_play_hosts | intersect(groups['production'] | default([])) | length > 0 %}
+- 'production': Patch run against production hosts.
+{% endif %}
+
+Packages excluded from patch cycle: {{ lock_package_list | default([]) | length }}
+----------------------------------------------
+{% if lock_package_list | default([]) | length > 0 %}
+{% for pkg in lock_package_list %}
+{% if pkg is match('^linux-image') %}
+- {{ pkg }}  (NOTE: Locked Kernel version may vary from host to host)
+{% else %}
+- {{ pkg }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+Unreachable/failed systems: {{ ansible_play_hosts_all | default([]) | length - ansible_play_hosts | default([]) | length }}
+----------------------------------------------
+{% for host in ansible_play_hosts_all %}
+{% if host not in ansible_play_hosts %}
+  {{ host }} ({{ hostvars[host].ansible_default_ipv4.address | default('') }})
+{% endif  %}
+{% endfor %}
+
+Systems patched: {{ ansible_play_hosts | length }}
+----------------------------------------------
+{% for host in ansible_play_hosts %}
+  {{ host }} ({{ hostvars[host].ansible_default_ipv4.address }})
+{% endfor %}
+
+{% if groups['production'] is defined %}
+Production systems that require reboot:
+----------------------------------------------
+{% for host in groups['production'] %}
+{% if hostvars[host].needs_reboot is defined and hostvars[host].needs_reboot %}
+ {{ hostvars[host].ansible_hostname }} ({{ hostvars[host].ansible_default_ipv4.address | default('') }})
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if groups['non_production'] is defined %}
+Non-production systems that require reboot:
+----------------------------------------------
+{% for host in groups['non_production'] %}
+{% if hostvars[host].needs_reboot is defined and hostvars[host].needs_reboot %}
+ {{ hostvars[host].ansible_hostname }} ({{ hostvars[host].ansible_default_ipv4.address | default('') }})
+{% endif %}
+{% endfor %}
+{% endif %}

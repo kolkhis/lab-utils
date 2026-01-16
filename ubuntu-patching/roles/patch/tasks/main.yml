@@ -1,0 +1,132 @@
+---
+# tasks file for roles/patch
+- name: Ensure log directory is present
+  ansible.builtin.file:
+    path: "{{ log_directory }}"
+    state: directory
+    mode: '0755'
+  tags: always
+
+- name: Output creation of log file
+  ansible.builtin.debug:
+    msg: "Creating log file at {{ log_file }}"
+  tags: always
+
+- name: Create logfile for current patch job
+  ansible.builtin.file:
+    path: "{{ log_file }}"
+    state: touch
+    mode: '0755'
+  tags: always
+
+- name: Log start of patch cycle
+  ansible.builtin.lineinfile:
+    path: "{{ log_file }}"
+    line: "{{ ansible_date_time.iso8601 }} - Host: {{ ansible_hostname }} {{ inventory_hostname }} - Starting patch cycle"
+  tags: always
+
+- name: Stop the unattended-upgrades service temporarily
+  ansible.builtin.service:
+    name: unattended-upgrades
+    state: stopped
+  when: '"dry_run" not in ansible_run_tags'
+  tags: always
+
+- name: Replace 'kernel' with the appropriate kernel version based on system
+  when: 
+    - lock_package_list is defined
+    - '"kernel" in lock_package_list'
+  tags: always
+  block:
+    - name: Fetch kernel version for locking
+      ansible.builtin.command:
+        cmd: uname -r
+      changed_when: false
+      register: kernel_version
+
+    - name: Set kernel package for version locking
+      ansible.builtin.set_fact:
+        kernel_pkg: "linux-image-{{ kernel_version.stdout }}"
+
+    - name: Replace 'kernel' in the lock_package_list list
+      ansible.builtin.set_fact:
+        lock_package_list: >-
+          {{ lock_package_list | map('regex_replace', '^kernel$', kernel_pkg) | list }} 
+
+- name: Lock specified packages
+  ansible.builtin.shell:
+    cmd: apt-mark hold "{{ item }}"
+  loop: "{{ lock_package_list | default([]) }}"
+  when: 
+    - lock_package_list is defined
+    - lock_package_list | default([]) | length > 0
+    - '"dry_run" not in ansible_run_tags'
+  tags: always
+
+- name: Log the locking of packages
+  ansible.builtin.lineinfile:
+    path: "{{ log_file }}"
+    line: "{{ ansible_date_time.iso8601 }} - Host: {{ ansible_hostname }} {{ inventory_hostname }} - Excluding packages from upgrade: {{ lock_package_list }}"
+  when: lock_package_list | default([]) | length > 0
+  tags: always
+
+- name: Update apt cache, run autoclean and autoremove
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+    autoclean: true
+    autoremove: true
+  when: '"dry_run" not in ansible_run_tags'
+  tags: always
+
+- name: Gather number of available updates
+  ansible.builtin.shell:
+    cmd: 'apt list --upgradable | grep -vi "listing..." -c'
+  failed_when: false
+  register: upgradable_packages
+  tags: always
+
+- name: Show number of updates available
+  ansible.builtin.debug:
+    msg: "Number of updates available: {{ upgradable_packages.stdout | default(0) }}"
+  tags: always
+
+- name: Output number of updates available to logfile
+  ansible.builtin.lineinfile:
+    path: "{{ log_file }}"
+    line: "{{ ansible_date_time.iso8601 }} - Host: {{ ansible_hostname }} {{ inventory_hostname }} - Available package updates: {{ upgradable_packages.stdout | default(0) }}"
+  tags: always
+
+- name: Perform upgrades
+  ansible.builtin.apt:
+    name: "*"
+    state: latest
+  register: apt_result
+  retries: 5
+  delay: 15
+  until: apt_result is succeeded
+  when: '"dry_run" not in ansible_run_tags'
+  tags: always
+
+- name: Resume unattended-upgrades service
+  ansible.builtin.service:
+    name: unattended-upgrades
+    state: started
+  when: '"dry_run" not in ansible_run_tags'
+  tags: always
+
+- name: Unlock specified packages post-patch
+  ansible.builtin.shell:
+    cmd: apt-mark unhold "{{ item }}"
+  loop: "{{ lock_package_list | default([]) }}"
+  when: 
+    - lock_package_list is defined
+    - lock_package_list | default([]) | length > 0
+  tags: always
+
+- name: Log end of patch cycle
+  ansible.builtin.lineinfile:
+    path: "{{ log_file }}"
+    line: "{{ ansible_date_time.iso8601 }} - Host: {{ ansible_hostname }} {{ inventory_hostname }} - Reached end of patch cycle"
+  tags: always
+

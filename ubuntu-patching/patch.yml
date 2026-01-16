@@ -1,0 +1,17 @@
+- name: Patching cycle playbook for Ubuntu servers
+  hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    log_directory: "/var/log/patching"
+    local_log_directory: "./log/patching"
+    log_file: "{{ log_directory }}/ansible_patching_{{ ansible_date_time.date }}.log"
+    lock_package_list:
+      - kernel  # Specific kernel version will be calculated at runtime
+      - postgresql
+  roles:
+    - precheck
+    - patch
+    - reboot
+    - report
+

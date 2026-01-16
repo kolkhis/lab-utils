@@ -1,0 +1,42 @@
+---
+# tasks file for roles/reboot
+- name: Check if system needs to be rebooted
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: reboot_required
+  tags: always
+
+- name: Set fact for server if reboot is needed
+  ansible.builtin.set_fact:
+    needs_reboot: "{{ reboot_required.stat.exists | bool }}"
+  tags: always
+
+- name: Show if system needs reboot
+  ansible.builtin.debug:
+    msg: "System needs reboot: {{ reboot_required.stat.exists | default(false) | bool }}"
+  tags: always
+
+- name: Log whether the system needs to be rebooted or not
+  ansible.builtin.lineinfile:
+    path: "{{ log_file }}"
+    line: "{{ ansible_date_time.iso8601 }} Host: {{ ansible_hostname }} - {{ inventory_hostname }} ({{ ansible_default_ipv4.address }}) requires reboot: {{ reboot_required.stat.exists }}"
+  tags: always
+
+- name: Output reboot scheduling message for production systems
+  ansible.builtin.debug:
+    msg: "PROD: {{ ansible_hostname }} - {{ inventory_hostname }} ({{ ansible_default_ipv4.address }}) requires reboot for package updates. Schedule reboot during maintenance window."
+  when: 
+    - needs_reboot | default(false) | bool
+    - inventory_hostname in (groups['production'] | default([]))
+  tags: always
+
+- name: Reboot non-prod systems
+  ansible.builtin.reboot:
+    reboot_timeout: 600
+    msg: "Rebooting system {{ ansible_hostname }} for package upgrades"
+  when: 
+    - inventory_hostname in (groups['non_production'] | default([]))
+    - '"dry_run" not in ansible_run_tags'
+    - '"reboot" in ansible_run_tags'
+    - needs_reboot | default(false) | bool
+  tags: always

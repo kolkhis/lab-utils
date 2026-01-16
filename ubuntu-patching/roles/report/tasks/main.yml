@@ -1,0 +1,38 @@
+---
+# tasks file for roles/report
+- name: Set up log directory for copying remote logs
+  delegate_to: localhost
+  ansible.builtin.file:
+    path: "{{ log_directory }}/{{ ansible_hostname }}"
+    state: directory
+    mode: '0755'
+  tags: always
+
+- name: Show the name of the log file being pulled
+  ansible.builtin.debug:
+    msg: "Pulling log file from {{ log_file }} to {{ local_log_directory }}/{{ ansible_hostname }}"
+  tags: always
+
+- name: Copy remote logfile to Ansible control node
+  ansible.builtin.fetch:
+    src: "{{ log_file }}"
+    dest: "{{ local_log_directory }}/{{ ansible_hostname }}/"
+    flat: true
+  tags: always
+
+- name: Set name for patch report based on prod/non-prod
+  delegate_to: localhost
+  run_once: true
+  ansible.builtin.set_fact:
+    patch_type: >-
+      {{ 'nonprod' if (groups['non_production'] | default([]) | intersect(ansible_play_hosts_all) | length) else 'prod' }}
+  tags: always
+
+- name: Generate patch report
+  delegate_to: localhost
+  run_once: true
+  ansible.builtin.template:
+    dest: "{{ local_log_directory }}/patch_report_{{ patch_type }}_{{ ansible_date_time.date }}.txt"
+    src: report.j2
+    mode: '0755'
+  tags: always

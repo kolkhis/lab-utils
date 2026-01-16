@@ -1,0 +1,47 @@
+---
+# tasks file for roles/precheck
+- name: Pre-flight check, check for proper group names and ensure inventories are not empty
+  delegate_to: localhost
+  run_once: true
+  block:
+    - name: Show inventory being used
+      ansible.builtin.debug:
+        msg: "Inventory being used: {{ ansible_inventory_sources }}"
+      tags: always
+
+    - name: Fail if neither group is clearly defined
+      ansible.builtin.fail:
+        msg: |
+          Could not find either the 'production' or 'non_production' inventory groups!
+          Make sure to format your inventory with production hosts in the 'production' group,
+          and non-production hosts in the 'non_production' group.  
+      when: 
+        - groups['non_production'] is not defined
+        - groups['production'] is not defined
+      tags: always
+
+    - name: Fail if running against all hosts in both production and non_production
+      ansible.builtin.fail:
+        msg: |
+          Patching is being run against ALL hosts (both production AND non_production).
+          This is unsafe. Please specify only one group, either 'production' or 'non_production'.  
+      when:
+        - ansible_play_hosts | intersect(groups['production'] | default([])) | length > 0
+        - ansible_play_hosts | intersect(groups['non_production'] | default([])) | length > 0
+      tags: always
+
+    - name: Fail if running against an empty production inventory
+      ansible.builtin.fail:
+        msg: "Attempted to run against an empty production inventory!"
+      when: 
+        - groups['production'] is defined
+        - groups['production'] | length == 0
+      tags: always
+
+    - name: Fail if running against an empty non_prod inventory
+      ansible.builtin.fail:
+        msg: "Attempted to run against an empty non-production inventory!"
+      when: 
+        - groups['non_production'] is defined
+        - groups['non_production'] | length == 0
+      tags: always
