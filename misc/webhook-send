@@ -31,7 +31,10 @@ report-webhook(){
 
     curl -X POST \
         -H "Content-Type: application/json" \
-        -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL"
+        -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL" || {
+            printf >&2 '[ERROR]: Failed to send message to webhook!\n'
+            return 1
+        }
 }
 
 if [[ -n $MESSAGE && -n $DISCORD_WEBHOOK_URL ]]; then
