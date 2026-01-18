@@ -1,5 +1,7 @@
 #!/bin/bash
-# TODO: Make all of these variables controllable from the command line
+# Messy script that was home to a lot of code used to modify files in the
+# ProLUG course books.  
+
 declare SEARCH_DIR='./src'
 declare FILE_PATTERN='u*.md'
 declare SEARCH_TEXT="The discussion posts are done in Discord threads"
