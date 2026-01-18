@@ -1,0 +1,43 @@
+#!/bin/bash
+
+declare DISCORD_WEBHOOK_URL="${DISCORD_WEBHOOK_URL:?Discord webhook URL must be set as an environment variable}"
+declare MESSAGE
+declare WEBHOOK_URL_FILE
+
+while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
+    case "$1" in
+        -m|--message)
+            [[ -n $2 && ! $2 =~ ^- ]] && shift && MESSAGE="$1"
+            shift
+            ;;
+        -f|--webhook-url-file)
+            [[ -n $2 && ! $2 =~ ^- ]] && shift && WEBHOOK_URL_FILE="$1"
+            shift
+            ;;
+        *) 
+            printf >&2 '[ERROR]: Unknown argument: %s\n' "$1"
+            exit 1
+            ;;
+    esac
+    :
+done
+
+if [[ -f $WEBHOOK_URL_FILE ]]; then
+    DISCORD_WEBHOOK_URL="$(head -n 1 "$WEBHOOK_URL_FILE")"
+fi
+
+report-webhook(){
+    local PAYLOAD='{"content":"'$MESSAGE'"}'
+
+    curl -X POST \
+        -H "Content-Type: application/json" \
+        -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL"
+}
+
+if [[ -n $MESSAGE && -n $DISCORD_WEBHOOK_URL ]]; then
+    report-webhook
+else
+    printf >&2 '[ERROR]: Missing message or webhook URL!\n'
+    exit 1
+fi
+
