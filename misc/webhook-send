@@ -1,4 +1,7 @@
 #!/bin/bash
+# Basic script used to send a payload to a webhook URL.  
+# Use `-m` to specify message, use `-f` to specify a file containing the
+# webhook URL. 
 
 declare MESSAGE
 declare WEBHOOK_URL
