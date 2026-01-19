@@ -1,7 +1,7 @@
 #!/bin/bash
 # Basic script used to send a payload to a webhook URL.  
-# Use `-m` to specify message, use `-f` to specify a file containing the
-# webhook URL. 
+# Use `-m` to specify message, `-u` to specify a webhook URL, or
+# use `-f` to specify a file containing the webhook URL. 
 
 declare MESSAGE
 declare WEBHOOK_URL
@@ -23,6 +23,10 @@ while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
             fi
             shift
             ;;
+        -u|--url)
+            [[ -n $2 && ! $2 =~ ^- ]] && shift && WEBHOOK_URL="$1"
+            shift;
+            ;;
         *) 
             printf >&2 '[ERROR]: Unknown argument: %s\n' "$1"
             exit 1
@@ -31,8 +35,11 @@ while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
     :
 done
 
+
 report-webhook(){
     local PAYLOAD='{"content":"'$MESSAGE'"}'
+
+    printf 'Sending payload to %s:\n%s\n' "$WEBHOOK_URL" "$PAYLOAD"
 
     curl -X POST \
         -H "Content-Type: application/json" \
@@ -40,6 +47,7 @@ report-webhook(){
             printf >&2 '[ERROR]: Failed to send message to webhook!\n'
             return 1
         }
+    printf 'Successfully sent payload.\n'
 }
 
 if [[ -n $MESSAGE && -n $WEBHOOK_URL ]]; then
