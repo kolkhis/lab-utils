@@ -10,11 +10,21 @@ declare WEBHOOK_URL_FILE
 while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
     case "$1" in
         -m|--message)
-            [[ -n $2 && ! $2 =~ ^- ]] && shift && MESSAGE="$1"
+            if [[ -n $2 && ! $2 =~ ^- ]]; then
+                shift && MESSAGE="$1"
+            else
+                printf >&2 '[ERROR]: Invalid argument to -m/--message: %s\n' "$2"
+                exit 1
+            fi
             shift
             ;;
         -f|--webhook-url-file)
-            [[ -n $2 && ! $2 =~ ^- ]] && shift && WEBHOOK_URL_FILE="$1"
+            if [[ -n $2 && ! $2 =~ ^- ]]; then
+                shift && WEBHOOK_URL_FILE="$1"
+            else
+                printf >&2 '[ERROR]: Invalid argument to -f/--webhook-url-file: %s\n' "$2"
+                exit 1
+            fi
             if [[ -f $WEBHOOK_URL_FILE ]]; then
                 WEBHOOK_URL="$(head -n 1 "$WEBHOOK_URL_FILE")"
             else
@@ -24,7 +34,12 @@ while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
             shift
             ;;
         -u|--url)
-            [[ -n $2 && ! $2 =~ ^- ]] && shift && WEBHOOK_URL="$1"
+            if [[ -n $2 && ! $2 =~ ^- ]]; then
+                shift && WEBHOOK_URL="$1"
+            else
+                printf >&2 '[ERROR]: Invalid argument to -u/--url: %s\n' "$2"
+                exit 1
+            fi
             shift;
             ;;
         *) 
