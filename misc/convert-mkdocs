@@ -1,4 +1,5 @@
 #!/bin/bash
+# Helper script for converting mdbook config to mkdocs config
 
 for type in {intro,ws,lab,b}; do
     declare title=
