@@ -63,10 +63,14 @@ report-webhook(){
             return 1
         }
     printf 'Successfully sent payload.\n'
+    return 0
 }
 
 if [[ -n $MESSAGE && -n $WEBHOOK_URL ]]; then
-    report-webhook
+    report-webhook || {
+        printf >&2 '[ERROR]: Failed to send payload to webhook\n'
+        exit 1
+    }
 else
     printf >&2 '[ERROR]: Missing message or webhook URL!\n'
     exit 1
