@@ -1,5 +1,5 @@
 #!/usr/bin/rbash
-# shellcheck disable=SC2120,SC2317
+# shellcheck disable=SC2120,SC2317,SC2329
 
 declare -i VERBOSE
 
