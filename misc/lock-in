@@ -19,7 +19,7 @@ info(){ printf '[INFO]: %s\n' "$*"; }
 block-access(){
     local entry
     [[ -z $1 ]] && err "No argument passed!" && return 1
-    entry="127.0.0.1 $1"
+    entry="127.0.0.1 $1 www.$1"
     if grep -qi "$entry" "$HOSTS_FILE"; then
         info "Entry already exists"
         return 0
@@ -43,6 +43,7 @@ while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
             ;;
     esac
 done
+
 
 
 if [[ $UNLOCK -gt 0 ]]; then
