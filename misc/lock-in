@@ -40,3 +40,7 @@ block-access(){
 }
 
 
+for site in "${SITES[@]}"; do
+    block-access "$site"
+done
+
