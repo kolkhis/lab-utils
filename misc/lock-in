@@ -1,8 +1,6 @@
 #!/bin/bash
-
 # Disable local access to all social media platforms.  
-
-
+# TODO(unlock): Add code to remove /etc/hosts entries
 
 declare -r HOSTS_FILE="/etc/hosts"
 declare -a SITES=(
@@ -10,23 +8,13 @@ declare -a SITES=(
     "reddit.com"
     "facebook.com"
 )
+declare -i UNLOCK=0
 
-fatal(){ 
-    printf >&2 '[FATAL ERROR]: %s\n' "$*"
-    exit 1
-}
-
-err(){ 
-    printf >&2 '[ERROR]: %s\n' "$*"
-    exit 1
-}
-
-info(){
-    printf '[INFO]: %s\n' "$*"
-}
+fatal(){ printf >&2 '[FATAL ERROR]: %s\n' "$*" && exit 1; }
+err(){ printf >&2 '[ERROR]: %s\n' "$*" && exit 1; }
+info(){ printf '[INFO]: %s\n' "$*"; }
 
 [[ $EUID -ne 0 ]] && fatal "Must run as root."
-
 
 block-access(){
     local entry
@@ -39,8 +27,30 @@ block-access(){
     sed -i '$a '"$entry" "$HOSTS_FILE"
 }
 
+unblock-access() {
+    : TODO
+}
 
-for site in "${SITES[@]}"; do
-    block-access "$site"
+
+while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
+    case $1 in
+        -u|--unlock)
+            UNLOCK=1
+            shift
+            ;;
+        *)
+            fatal "Bad argument: $1"
+            ;;
+    esac
 done
+
+
+if [[ $UNLOCK -gt 0 ]]; then
+    printf "Unlocking sites...\n"
+else
+    for site in "${SITES[@]}"; do
+        block-access "$site"
+    done
+fi
+
 
