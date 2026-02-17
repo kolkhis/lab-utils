@@ -1,8 +1,10 @@
 #!/bin/bash
+
 # Disable local access to all social media platforms.  
 
-declare -r HOSTS_FILE="/etc/hosts"
 
+
+declare -r HOSTS_FILE="/etc/hosts"
 declare -a SITES=(
     "x.com"
     "reddit.com"
@@ -10,29 +12,31 @@ declare -a SITES=(
 )
 
 fatal(){ 
+    printf >&2 '[FATAL ERROR]: %s\n' "$*"
+    exit 1
+}
+
+err(){ 
     printf >&2 '[ERROR]: %s\n' "$*"
     exit 1
 }
 
 info(){
-    printf '[INFO]: %s\n'
+    printf '[INFO]: %s\n' "$*"
 }
 
 [[ $EUID -ne 0 ]] && fatal "Must run as root."
 
 
 block-access(){
-    local -a entries
-    for site in "${SITES[@]}"; do
-        if grep -qi "$site" "$HOSTS_FILE"; then
-            info "Entry already exists"
-        fi
-    done
+    local entry
+    [[ -z $1 ]] && err "No argument passed!" && return 1
+    entry="127.0.0.1 $1"
+    if grep -qi "$entry" "$HOSTS_FILE"; then
+        info "Entry already exists"
+        return 0
+    fi
+    sed -i '$a '"$entry" "$HOSTS_FILE"
 }
-
-
-
-
-
 
 
