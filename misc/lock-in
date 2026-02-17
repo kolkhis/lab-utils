@@ -1,0 +1,38 @@
+#!/bin/bash
+# Disable local access to all social media platforms.  
+
+declare -r HOSTS_FILE="/etc/hosts"
+
+declare -a SITES=(
+    "x.com"
+    "reddit.com"
+    "facebook.com"
+)
+
+fatal(){ 
+    printf >&2 '[ERROR]: %s\n' "$*"
+    exit 1
+}
+
+info(){
+    printf '[INFO]: %s\n'
+}
+
+[[ $EUID -ne 0 ]] && fatal "Must run as root."
+
+
+block-access(){
+    local -a entries
+    for site in "${SITES[@]}"; do
+        if grep -qi "$site" "$HOSTS_FILE"; then
+            info "Entry already exists"
+        fi
+    done
+}
+
+
+
+
+
+
+
