@@ -2,7 +2,7 @@
 # Disable local access to all social media platforms.  
 # TODO(unlock): Add code to remove /etc/hosts entries
 
-declare -r HOSTS_FILE="/etc/hosts"
+declare HOSTS_FILE="./testhosts"
 declare -a SITES=(
     "x.com"
     "reddit.com"
@@ -20,17 +20,30 @@ block-access(){
     local entry
     [[ -z $1 ]] && err "No argument passed!" && return 1
     entry="127.0.0.1 $1 www.$1"
+    info "Entry for $1: '$entry'"
     if grep -qi "$entry" "$HOSTS_FILE"; then
         info "Entry already exists"
         return 0
     fi
-    sed -i '$a '"$entry" "$HOSTS_FILE"
+    printf "%s\n" "$entry" >> "$HOSTS_FILE"
+    # sed -i '$a '"$entry" "$HOSTS_FILE" || {
+    #     err "Couldn't add entry for $1"
+    #     return 1
+    # }
 }
 
 unblock-access() {
-    : TODO
+    local entry
+    if [[ -z $1 ]]; then
+        err "No argument passed to unblock-access"
+    fi
+    printf "Unblocking access for %s\n" "$1"
+    entry="127\.0\.0\.1 $1 www\.$1"
+    sed -i "/$entry/d" "$HOSTS_FILE" || {
+        err "Couldn't unblock access to $1"
+        return 1
+    }
 }
-
 
 while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
     case $1 in
@@ -44,13 +57,20 @@ while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
     esac
 done
 
-
-
 if [[ $UNLOCK -gt 0 ]]; then
-    printf "Unlocking sites...\n"
-else
+    printf "Unblocking sites...\n"
     for site in "${SITES[@]}"; do
-        block-access "$site"
+        unblock-access "$site" || {
+            err "Failed to unblock access to $site"
+        }
+    done
+else
+    printf "LOCKING IN...\n"
+    for site in "${SITES[@]}"; do
+        info "Blocking site: $site"
+        block-access "$site" || {
+            err "Failed to block access to $site"
+        }
     done
 fi
 
