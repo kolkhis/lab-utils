@@ -2,7 +2,7 @@
 # Disable local access to all social media platforms.  
 # TODO(unlock): Add code to remove /etc/hosts entries
 
-declare HOSTS_FILE="./testhosts"
+declare HOSTS_FILE="/etc/hosts"
 declare -a SITES=(
     "x.com"
     "reddit.com"
@@ -50,6 +50,16 @@ while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
         -u|--unlock)
             UNLOCK=1
             shift
+            ;;
+        -f|--hosts-file)
+            if [[ -n $2 && ! $2 =~ ^- ]]; then
+                shift
+                [[ -f $1 ]] || fatal "Hosts file given to '-f' ($1) does not exist"
+                HOSTS_FILE=$1
+            else
+                fatal "Missing or invalid argument to -f / --hosts-file"
+            fi
+            shift;
             ;;
         *)
             fatal "Bad argument: $1"
