@@ -20,9 +20,9 @@ block-access(){
     local entry
     [[ -z $1 ]] && err "No argument passed!" && return 1
     entry="127.0.0.1 $1 www.$1"
-    info "Entry for $1: '$entry'"
+    # info "Entry for $1: '$entry'"
     if grep -qi "$entry" "$HOSTS_FILE"; then
-        info "Entry already exists"
+        # info "Entry already exists"
         return 0
     fi
     printf "%s\n" "$entry" >> "$HOSTS_FILE"
@@ -75,14 +75,16 @@ if [[ $UNLOCK -gt 0 ]]; then
             err "Failed to unblock access to $site"
         }
     done
+    printf "Finished unblocking sites.\n"
 else
     printf "LOCKING IN...\n"
     for site in "${SITES[@]}"; do
-        info "Blocking site: $site"
+        # info "Blocking site: $site"
         block-access "$site" || {
             err "Failed to block access to $site"
         }
     done
+    printf "\033[32mLOCKED IN. Get to work.\033[0m\n"
 fi
 
 
