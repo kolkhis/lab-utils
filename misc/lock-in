@@ -66,6 +66,7 @@ while [[ -n $1 && $1 =~ ^- && ! $1 == '--' ]]; do
             ;;
     esac
 done
+[[ $1 == '--' ]] && shift
 
 if [[ $UNLOCK -gt 0 ]]; then
     printf "Unblocking sites...\n"
