@@ -1,0 +1,58 @@
+#!/bin/bash
+
+declare SSH_CONFIG_FILE="$HOME/.ssh/config"
+declare -A DESTINATIONS
+
+declare SSH_USER="$USER"
+declare -i PORT=22
+while [[ -n $1 && $1 =~ ^- ]]; do
+    case $1 in 
+        -u)
+            [[ -n $2 ]] && shift && SSH_USER="$1"
+            shift
+            ;;
+        -p)
+            [[ -n $2 ]] && shift && PORT="$1"
+            shift
+            ;;
+        *)
+            ;;
+    esac
+done
+
+parse-ssh-file() {
+    local -a hosts=()
+    local -a hostnames=()
+    local -a users=()
+
+    IFS=$'\n' read -r -d '' -a hosts < <(
+         perl -ne 'print "$1\n" if m/^\s*Host\s+(.+)/' "$SSH_CONFIG_FILE"
+    )
+
+    IFS=$'\n' read -r -d '' -a hostnames < <(
+         perl -ne 'print "$1\n" if m/^\s*Hostname\s+(.+)/' "$SSH_CONFIG_FILE"
+    )
+
+    IFS=$'\n' read -r -d '' -a users < <(
+         perl -ne 'print "$1\n" if m/^\s*User\s+(.+)/' "$SSH_CONFIG_FILE"
+    )
+
+    for n in "${!hostnames[@]}"; do
+        if [[ $SSH_USER != "$USER" ]]; then
+            DESTINATIONS+=(["${hosts[$n]}"]="$SSH_USER@${hostnames[$n]}")
+        else
+            DESTINATIONS+=(["${hosts[$n]}"]="${users[$n]}@${hostnames[$n]}")
+        fi
+    done
+    # [host]="user@hostname"
+}
+
+parse-ssh-file
+
+PS3=$'\nSelect destination: '
+select choice in "${!DESTINATIONS[@]}"; do
+    printf "Sending you to: %s\n" "$choice"
+    break
+done
+
+exec ssh "${DESTINATIONS[$choice]}" -p "$PORT"
