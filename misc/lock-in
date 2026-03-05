@@ -73,7 +73,6 @@ if [[ $UNLOCK -gt 0 ]]; then
 else
     printf "LOCKING IN...\n"
     for site in "${SITES[@]}"; do
-        # info "Blocking site: $site"
         block-access "$site" || {
             err "Failed to block access to $site"
         }
