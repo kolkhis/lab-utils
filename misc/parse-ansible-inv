@@ -1,5 +1,8 @@
 #!/bin/bash
 
+declare INVENTORY_FILE
+declare SSH_CONFIG_FILE
+
 parse-ansible-inventory(){
     local -a ENTRIES=()
     IFS=$'\n' read -r -d $'\0' -a ENTRIES < <(
@@ -20,9 +23,38 @@ parse-ssh-config(){
     printf "Entries: %s \n" "${ENTRIES[@]}"
 }
 
-if [[ -n $1 ]]; then
-    parse-ansible-inventory "$1" || printf >&2 '[ERROR]: No arguments given\n'
-else
-    # parse-ssh-config ~/.ssh/config
-    parse-ansible-inventory ./hosts.ini
-fi
+err() {
+    printf >&2 '[ERROR]: %s\n' "$*"
+}
+
+while [[ -n $1 && $1 =~ ^- ]]; do
+    case "$1" in
+        -i|--inventory-file)
+            if [[ -n $2 && -f $2 ]]; then
+                shift
+                INVENTORY_FILE="$1"
+            else
+                err "Bad argument to -i/--inventory-file: $1"
+                exit 1
+            fi
+            shift
+            ;;
+        -s|--ssh-config-file)
+            if [[ -n $2 && -f $2 ]]; then
+                shift
+                SSH_CONFIG_FILE="$1"
+            else
+                err "Bad argument to -s/--ssh-config-file: $1"
+                exit 1
+            fi
+            shift
+            ;;
+        *)
+            err "Invalid argument: $1"
+            exit 1
+            ;;
+    esac
+done
+
+parse-ansible-inv "$INVENTORY_FILE"
+parse-ssh-config "$SSH_CONFIG_FILE"
