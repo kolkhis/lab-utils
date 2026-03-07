@@ -20,10 +20,9 @@ parse-ssh-config(){
     printf "Entries: %s \n" "${ENTRIES[@]}"
 }
 
-parse-ssh-config ~/.ssh/config
-parse-ansible-inventory ./hosts.ini
-
-# [[ -n $1 ]] && parse-ansible-inventory "$1" || printf >&2 "No arguments given."
-
-#
-#
+if [[ -n $1 ]]; then
+    parse-ansible-inventory "$1" || printf >&2 '[ERROR]: No arguments given\n'
+else
+    # parse-ssh-config ~/.ssh/config
+    parse-ansible-inventory ./hosts.ini
+fi
