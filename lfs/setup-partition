@@ -1,6 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC2016
 declare -r TARGET_DISK="/dev/sdb"
+declare -r MOUNT_POINT="/mnt/lfs"
 
 if [[ $EUID -ne 0 ]]; then
     printf >&2 'ERROR: Run as root.\n'
@@ -76,6 +77,46 @@ format-disk(){
         printf >&2 '[ERROR]: Failed to format root filesystem partition as EXT4: %s\n' "$ROOT_PARTITION"
         return 1
     }
+}
+
+mount-partition(){
+    local rootfs_uuid
+    rootfs_uuid="$(lsblk -o UUID "${TARGET_DISK}4" | tail -n 1)"
+    local fstab_entry="/dev/disk/by-uuid/$rootfs_uuid $MOUNT_POINT ext4 defaults 0 0"
+
+    if ! [[ -d $MOUNT_POINT ]]; then
+        mkdir -p "$MOUNT_POINT" || {
+            printf >&2 '[ERROR]: Failed to make mount point: %s\n' "$MOUNT_POINT"
+            return 1
+        }
+    fi
+
+    mount -t ext4 "${TARGET_DISK}4" "$MOUNT_POINT" || {
+        printf >&2 '[ERROR]: Failed to mount disk %s to %s\n' "${TARGET_DISK}4" "$MOUNT_POINT"
+        return 1
+    }
+
+    chown root:root "$MOUNT_POINT" || { 
+        printf >&2 '[ERROR]: Failed to change ownership for mount point %s\n' "$MOUNT_POINT"
+        return 1
+    }
+
+    chmod 755 "$MOUNT_POINT" || {
+        printf >&2 '[ERROR]: Failed to change permissions for mount point %s\n' "$MOUNT_POINT"
+        return 1
+    }
+
+    printf "Adding /etc/fstab entry for persistent mounting...\n"
+    tee -a /etc/fstab <<< "$fstab_entry" || {
+        printf >&2 '[ERROR]: Failed to add /etc/fstab entry: %s\n' "$fstab_entry"
+        return 1
+    }
+
+    printf "fstab entry added. Attempting remount...\n"
+    mount -a || {
+        printf >&2 '[ERROR]: Failed to remount with /etc/fstab\n'
+        return 1
+    }
 
 }
 
@@ -89,4 +130,8 @@ format-disk || {
     exit 1
 }
 
+mount-disk || {
+    printf >&2 '[ERROR]: Problem while mounting rootfs disk partition.\n'
+    exit 1
+}
 
