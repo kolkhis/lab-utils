@@ -84,6 +84,10 @@ mount-partition(){
     rootfs_uuid="$(lsblk -o UUID "${TARGET_DISK}4" | tail -n 1)"
     local fstab_entry="/dev/disk/by-uuid/$rootfs_uuid $MOUNT_POINT ext4 defaults 0 0"
 
+    { swapon "${TARGET_DISK}3" && swapon; } || { 
+        printf >&2 '[ERROR]: Failed to enable SWAP for %s\n' "${MOUNT_POINT}3"
+    }
+
     if ! [[ -d $MOUNT_POINT ]]; then
         mkdir -p "$MOUNT_POINT" || {
             printf >&2 '[ERROR]: Failed to make mount point: %s\n' "$MOUNT_POINT"
