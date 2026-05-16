@@ -1,0 +1,29 @@
+#!/bin/bash
+
+declare -a DEPS=(
+    "sort"
+    "bash"
+    "ld"
+    "bison"
+    "utils"  # provides the diff tool
+    "find"
+    "gawk"
+    "gcc"
+    "g++"
+    "grep"
+    "gzip"
+    "m4"
+    "make"
+    "patch"
+    "perl"
+    "python3"
+    "sed"
+    "tar"
+    "texi2any"
+    "xz"
+)
+
+sudo apt-get install -y "${DEPS[@]}"
+
+
+

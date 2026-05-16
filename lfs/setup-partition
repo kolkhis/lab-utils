@@ -1,0 +1,92 @@
+#!/bin/bash
+# shellcheck disable=SC2016
+declare -r TARGET_DISK="/dev/sdb"
+
+if [[ $EUID -ne 0 ]]; then
+    printf >&2 'ERROR: Run as root.\n'
+    exit 1
+fi
+
+declare selection
+read -r -p "WARNING: This is a destructive operation. It will overwrite the disk: $TARGET_DISK. Continue? [y/N]" selection
+case $selection in
+    n|N|n*|N*)
+        printf "Aborting...\n"
+        exit 0
+esac
+
+partition-disk(){
+    printf "Running the script through SFDISK now...\n"
+
+    { 
+        sfdisk "$TARGET_DISK" << 'EOF'
+# Partition table type
+label: gpt
+unit: sectors
+first-lba: 2048
+
+# BIOS boot partition
+# This `type` specifies a BIOS Boot Partition
+size=1M, type=21686148-6449-6E6D-744E-6574626F6F74, name="BIOS_Boot"
+
+# 1. /boot (EFI System Partition) - 1GB
+# type=U is the shortcut for EFI System
+size=1G, type=U, name="EFI_System"
+
+# 2. Swap - 4GB
+# type=S is the shortcut for Linux Swap
+size=4G, type=S, name="Linux_Swap"
+
+# 3. / (Root) - Remainder of disk
+# type=L is the shortcut for Linux Filesystem
+type=L, name="Linux_Root"
+EOF
+    } || {
+        printf >&2 '[ERROR]: Failed to run script through SFDISK.\n'
+        return 1
+    }
+
+    printf 'Successfully ran script through SFDISK.\n'
+    fdisk -l "$TARGET_DISK"
+    return 0
+}
+
+
+format-disk(){
+    printf "Formatting disk partitions for disk %s...\n" "$TARGET_DISK"
+    # local BIOS_PARTITION="${TARGET_DISK}1"
+    local EFI_PARTITION="${TARGET_DISK}2"
+    local SWAP_PARTITION="${TARGET_DISK}3"
+    local ROOT_PARTITION="${TARGET_DISK}4"
+
+    printf "Formatting EFI system partition (FAT32)...\n"
+    mkfs.vfat -f32 "$EFI_PARTITION" || {
+        printf >&2 '[ERROR]: Failed to format EFI System Partition\n'
+        return 1
+    }
+
+    printf "Formatting SWAP partition as SWAP...\n"
+    mkswap "$SWAP_PARTITION" || { 
+        printf >&2 '[ERROR]: Failed to format SWAP partition.\n'
+        return 1
+    }
+
+    printf "Formatting Root Filesystem Partition as EXT4...\n"
+    mkfs.ext4 "$ROOT_PARTITION" || {
+        printf >&2 '[ERROR]: Failed to format root filesystem partition as EXT4: %s\n' "$ROOT_PARTITION"
+        return 1
+    }
+
+}
+
+partition-disk || {
+    printf >&2 '[ERROR]: Problem while partitioning disk.\n'
+    exit 1
+}
+
+format-disk || {
+    printf >&2 '[ERROR]: Problem while formatting disk partitions.\n'
+    exit 1
+}
+
+
