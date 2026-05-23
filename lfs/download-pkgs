@@ -1,0 +1,42 @@
+#!/bin/bash
+
+if [[ -f ./env-vars ]]; then
+    source ./env-vars
+fi
+
+
+declare PKG_LIST_ENDPOINT='https://www.linuxfromscratch.org/lfs/view/stable-systemd/wget-list-systemd'
+declare DOWNLOAD_LOCATION="$LFS/sources"
+
+if [[ $EUID -ne 0 ]]; then
+    printf >&2 'ERROR: Run as root\n'
+    exit 1
+fi
+
+download-pkgs() {
+
+    if ! [[ -d "$DOWNLOAD_LOCATION" ]]; then
+        mkdir -m 1755 "$DOWNLOAD_LOCATION"
+    fi
+
+    curl -o "$DOWNLOAD_LOCATION/pkg-list.txt" "$PKG_LIST_ENDPOINT" || {
+        printf >&2 'ERROR: Failed to download the package list.\n'
+        return 1
+    }
+
+    wget --input-file="$DOWNLOAD_LOCATION/pkg-list.txt" \
+        --continue \
+        --directory-prefix="$DOWNLOAD_LOCATION" || {
+        printf >&2 'ERROR: Failed to download packages in %s\n' "$DOWNLOAD_LOCATION/pkg-list.txt"
+        return 1
+    }
+
+    chown -R root:root "$LFS/sources" || {
+        printf >&2 'ERROR: Failed to change ownership of %s to root:root\n' "$LFS/sources"
+        return 1
+    }
+}
+
+download-pkgs
+
+
