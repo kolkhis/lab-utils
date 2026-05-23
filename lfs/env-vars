@@ -1,0 +1,13 @@
+#!/bin/bash
+
+declare -x LFS="/mnt/lfs"
+declare -x LC_ALL="POSIX"
+declare -x LFS_TGT
+LFS_TGT="$(uname -m)-lfs-linux-gnu" # x86_64-lfs-linux-gnu
+declare -x CONFIG_SITE="$LFS/usr/share/config.site"
+PATH="/usr/bin"
+if [[ ! -L /bin ]]; then PATH="/bin:$PATH"; fi
+PATH="$LFS/tools/bin:$PATH"
+declare -x MAKEFLAGS
+MAKEFLAGS="-j$(nproc)"
+
