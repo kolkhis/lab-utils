@@ -1,0 +1,49 @@
+#!/bin/bash
+
+if [[ -f ./env-vars ]]; then
+    source ./env-vars
+else
+    printf >&2 "ERROR: env-vars file not found. Please create it with the necessary environment variables."
+    exit 1
+fi
+
+declare -xr LFS_USER="lfs"
+
+create-dirs(){
+
+    cd "$LFS" || {
+        printf >&2 "ERROR: Failed to change directory to %s\n" "$LFS"
+        exit 1
+    }
+    mkdir -pv $LFS/{etc,var} $LFS/usr/{bin,lib,sbin}
+
+    for dir in {bin,lib,sbin}; do
+        printf "Linking %s to %s\n" "usr/$dir" "$LFS/$dir"
+        ln -sv "usr/$dir" "$LFS/$dir"
+    done
+
+    case "$(uname -m)" in
+        x86_64)
+            mkdir -pv "$LFS/lib64";;
+    esac
+    mkdir -pv "$LFS/tools"
+
+}
+
+setup-lfs-user(){
+    groupadd "$LFS_USER"
+    useradd -s /bin/bash -g "$LFS_USER" -m  -k /dev/null "$LFS_USER" || {
+        printf >&2 'ERROR: Failed to add user %s\n' "$LFS_USER"
+    }
+    chown -v "$LFS_USER" $LFS/{usr{,/*},var,etc,tools}
+
+    printf "LFS user created with username: %s\n" "$LFS_USER"
+}
+
+create-dirs
+setup-lfs-user
+
+printf "IMPORTANT: Please make sure to set a password for the %s user.\n" "$LFS_USER"
+printf "Run 'passwd %s'\n" "$LFS_USER"
+printf "Make sure to switch to the LFS user for the rest of the setup process.\n" 
+
