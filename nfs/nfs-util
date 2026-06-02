@@ -58,7 +58,7 @@ nfs-client-setup() {
         printf "fstab entry already exists in /etc/fstab.\n"
     fi
 
-    mount -a && printf "Remounted stuff.\n"
+    mount -a && printf "Remounted NFS share.\n"
     systemctl daemon-reload
 }
 
