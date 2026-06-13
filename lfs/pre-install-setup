@@ -1,4 +1,7 @@
 #!/bin/bash
+# Pre-install setup script used to configure the environment for the LFS build
+# process. This script creates necessary directories, sets up the LFS user, and ensures
+# that the environment variables are properly sourced.
 
 if [[ -f ./env-vars ]]; then
     source ./env-vars
