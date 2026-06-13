@@ -17,6 +17,9 @@
 # specified in the TARGET_DISK variable.
 # Ensure that you have selected the correct disk and that you have backed up any important data 
 # before running this script.
+#
+# If the target disk is already prepared with the correct paritions, this script can
+# be skipped.
 
 
 declare -r TARGET_DISK="/dev/sdb"
@@ -27,12 +30,16 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
-declare selection
+declare selection="n"
 read -r -p "WARNING: This is a destructive operation. It will overwrite the disk: $TARGET_DISK. Continue? [y/N]" selection
 case $selection in
     n|N|n*|N*)
         printf "Aborting...\n"
         exit 0
+        ;;
+    *)
+        printf "Continuing with disk partitioning...\n"
+        ;;
 esac
 
 partition-disk(){
