@@ -3,6 +3,11 @@
 # process. This script creates necessary directories, sets up the LFS user, and ensures
 # that the environment variables are properly sourced.
 
+if [[ $EUID -ne 0 ]]; then
+    printf >&2 "ERROR: Run as root.\n"
+    exit 1
+fi
+
 if [[ -f ./env-vars ]]; then
     source ./env-vars
 else
