@@ -1,4 +1,5 @@
 #!/bin/bash
+# Install packages on the builder machine that are required to build the LFS system.
 
 declare -a DEPS=(
     "sort"
