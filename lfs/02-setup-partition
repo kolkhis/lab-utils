@@ -1,5 +1,24 @@
 #!/bin/bash
 # shellcheck disable=SC2016
+#
+# This script partitions, formats, and mounts the target disk for the LFS build.
+# This was written with the assumption that the entire disk will be used for
+# the LFS build, and that the disk is /dev/sdb. Adjust the TARGET_DISK variable
+# as needed for your specific setup. The script will create a GPT partition table
+# with the following partitions:
+# 1. BIOS Boot Partition (1MB) - Required for GRUB on GPT disks when using BIOS/Legacy boot mode.
+#   - Not strictly necessary for UEFI boot, but good to have for compatibiltiy
+#     reasons.
+# 2. EFI System Partition (1GB) - Formatted as FAT32, used for storing the bootloader and related files.
+# 3. Linux Swap Partition (4GB) - SWAP partition.
+# 4. Linux Root Partition (Remainder of disk) - Formatted as EXT4
+#
+# WARNING: This script performs destructive operations and will overwrite the entire target disk
+# specified in the TARGET_DISK variable.
+# Ensure that you have selected the correct disk and that you have backed up any important data 
+# before running this script.
+
+
 declare -r TARGET_DISK="/dev/sdb"
 declare -r MOUNT_POINT="/mnt/lfs"
 
