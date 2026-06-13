@@ -23,20 +23,25 @@ create-dirs(){
 
     cd "$LFS" || {
         printf >&2 "ERROR: Failed to change directory to %s\n" "$LFS"
-        exit 1
+        return 1
     }
-    mkdir -pv $LFS/{etc,var} $LFS/usr/{bin,lib,sbin}
+    mkdir -pv $LFS/{etc,var,tools} $LFS/usr/{bin,lib,sbin} || {
+        printf >&2 "ERROR: Failed to create necessary directories in %s\n" "$LFS"
+        return 1
+    }
 
     for dir in {bin,lib,sbin}; do
         printf "Linking %s to %s\n" "usr/$dir" "$LFS/$dir"
-        ln -sv "usr/$dir" "$LFS/$dir"
+        ln -sv "usr/$dir" "$LFS/$dir" || {
+            printf >&2 "ERROR: Failed to create symbolic link for %s\n" "$dir"
+            return 1
+        }
     done
 
     case "$(uname -m)" in
         x86_64)
             mkdir -pv "$LFS/lib64";;
     esac
-    mkdir -pv "$LFS/tools"
 
 }
 
