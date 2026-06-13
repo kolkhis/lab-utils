@@ -1,9 +1,11 @@
 #!/bin/bash
-# Download all the tarballs needed to build the systemd-based LFS system.
-# This script should be run as root.
+# Download all the tarballs containing the source code for programs needed to
+# build the systemd-based LFS system.
 # The list of packages to download is obtained from the LFS website, and the
 # tarballs are downloaded to $LFS/sources. The script will create the directory
 # if it doesn't exist.  
+#
+# This script should be run as root.
 
 if [[ -f ./env-vars ]]; then
     source ./env-vars
