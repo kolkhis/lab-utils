@@ -56,9 +56,6 @@ setup-lfs-user(){
 
     cat > /home/$LFS_USER/.bash_profile << 'EOF'
 exec env -i HOME="$HOME" TERM="$TERM" PS1='\u:\w\$ ' /bin/bash
-EOF
-
-    cat > /home/$LFS_USER/.bashrc << 'EOF'
 set +h
 umask 022
 LFS=/mnt/lfs
@@ -79,7 +76,7 @@ EOF
 create-dirs
 setup-lfs-user
 
-printf "IMPORTANT: Please make sure to set a password for the %s user.\n" "$LFS_USER"
+printf "\033[33m[IMPORTANT]\033[0m: Please make sure to set a password for the %s user.\n" "$LFS_USER"
 printf "Run 'passwd %s'\n" "$LFS_USER"
 printf "Make sure to switch to the LFS user for the rest of the setup process.\n" 
 
