@@ -12,6 +12,9 @@ Default setup is 5 VMs total:
 Each node is provisioned with the resources defined in the `locals` block
 within [`main.tf`](./main.tf).  
 
+Requires a Proxmox template to use for cloning. A template must be created from 
+a VM with the desired OS and base system configuration.  
+
 ## Main Configuration
 
 Set the VM specs in the `locals` block, as well as the Proxmox template/VM you
@@ -52,6 +55,45 @@ wish to use as the base template.
 your keys here
 EOF
 ```
+
+- `clone_template`: The name of the Proxmox template to use for cloning.
+- `network`: The network on which the cluster will be operating.  
+
+The several proceeding blocks specify the number of nodes to provision, as well as
+their starting IP addresses and VMIDs. 
+
+- `control`: These variables set the the number of control nodes, the starting
+  IP address (host ID), and the starting VMID number.  
+    - `count`: The number of nodes to provision.  
+    - `ip_start`: The starting number for the host ID (last number of the IP
+      address).  
+        - In this example, since the network is set to `192.168.4.`, the
+          starting IP for this node will be `192.168.4.150`.  
+    - `vmid_start`: The starting number for VMID assignments.  
+
+- `worker`: Specify the number of worker nodes to provision.  
+    - `count`: The number of nodes to provision.  
+    - `ip_start` and `vmid_start` are incremented from the `control` block.  
+        - E.g., if the `ip_start` in the `control` block is set to `150`, and 2 control 
+          nodes are created, the `ip_start` will be set to `152` for the worker nodes.
+
+- `haproxy`: Specify the number of HAProxy nodes to provision.  
+    - `count`: The number of nodes to provision.  
+    - `ip_start` and `vmid_start` are also incremented from the preceding blocks.  
+        - E.g., if the `ip_start` in the `control` block is set to `150`, and 2 control 
+          nodes are created, the `ip_start` will be set to `152` for the worker nodes.
+
+- `storage`: This block specifies the storage pool (`pool`) used for the
+  provisioned VMs, as well as the storage size allocated to those VMs.  
+
+- `cpu`: The number of cores, sockets, and type for the VM's CPU configuration.  
+    - `type`: The CPU architecture to use for the nodes.  
+
+- `mem`: The amount of RAM to allocate to each node.  
+- `pve_node`: The name of the Proxmox node on which the VMs will be
+  provisioned.  
+
+- `sshkeys`: SSH keys to add to each node's `authorized_keys` files.  
 
 ### VM Specs
 
