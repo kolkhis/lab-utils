@@ -1,0 +1,51 @@
+#!/bin/bash
+# This script sets up an RHCSA-style lab scenario for working with Apache and
+# SELinux.  
+
+declare -r LAB_SCENARIO="
+Your company wants Apache configured with the following requirements:
+- Apache must listen on TCP port 8081.
+- Website files must be stored under /srv/rhcsa-web.
+- The website must display:
+      RHCSA SELinux Lab
+- /srv/rhcsa-web/uploads must be writable by Apache.
+- Remote clients must be able to access port 8081.
+- SELinux must remain enforcing.
+- Everything must persist across a reboot.
+
+Do not solve SELinux problems by doing any of the following:
+- Disabling SELinux
+- Leaving SELinux permissive
+- Using chcon as the permanent solution
+- Generating a custom policy with audit2allow
+
+Use SELinux the correct way. Set contexts and booleans properly. This will
+help to gain a deeper understanding of Apache and SELinux (and will be expected
+on the RHCSA exam).  
+"
+
+printf "Setting up lab environment.\n"
+
+enable-selinux(){
+    if [[ "$(getenforce)" == 'Enforcing' ]]; then
+        return 0
+    fi
+    sudo perl -pi -e '
+        s/^(SELINUX=).*$/$1enforcing/;
+        s/^(SELINUXTYPE=).*$/$1targeted/;
+    ' /etc/selinux/config || {
+        printf >&2 'ERROR: Failed to configure SELinux to enforcing.\n'
+        return 1
+    }
+    printf "SELinux has been enabled. Please reboot the VM and run this script again.\n"
+    exit 0
+}
+
+setup-apache() {
+    sudo dnf install -y httpd curl policycoreutils-python-utils || {
+        printf >&2 'ERROR: Failed to install lab dependencies.\n'
+        return 1
+    }
+    # TODO: Finish apache setup
+}
+
