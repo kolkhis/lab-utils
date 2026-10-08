@@ -46,6 +46,12 @@ setup-apache() {
         printf >&2 'ERROR: Failed to install lab dependencies.\n'
         return 1
     }
-    # TODO: Finish apache setup
+    sudo semanage fcontext -d '/srv/rhcsa-site(/.*)?' 2>/dev/null || true
+    sudo mkdir -p /srv/rhcsa-site 
+
 }
+
+
+enable-selinux || exit 1
+setup-apache || exit 1
 
