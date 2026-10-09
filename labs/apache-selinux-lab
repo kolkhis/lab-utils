@@ -62,6 +62,19 @@ setup-apache() {
 
 configure-apache(){ 
     sudo touch /etc/httpd/conf.d/rhcsa-site.conf
+    cat << EOF | sudo tee /etc/httpd/conf.d/rhcsa-site.conf > /dev/null
+DocumentRoot "/srv/rhcsa-site"
+
+<Directory "/srv/rhcsa-site">
+    AllowOverride None
+    Require all granted
+</Directory>
+EOF
+    if ! sudo httpd -t > /dev/null 2>&1; then
+        printf >&2 'ERROR: Invalid apache configuration found.\n'
+        return 1
+    fi
+    sudo systemctl enable --now httpd
 }
 
 
