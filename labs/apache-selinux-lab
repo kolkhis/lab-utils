@@ -47,9 +47,23 @@ setup-apache() {
         return 1
     }
     sudo semanage fcontext -d '/srv/rhcsa-site(/.*)?' 2>/dev/null || true
-    sudo mkdir -p /srv/rhcsa-site 
-
+    sudo mkdir -p /srv/rhcsa-site || {
+        printf >&2 'ERROR: Failed to create /srv/rhcsa-site.\n'
+        return 1
+    }
+    printf "SELinux lab completed successfully!\n" | sudo tee /srv/rhcsa-site/index.html > /dev/null 2>&1 ||{
+        printf >&2 'ERROR: Failed to write index.html\n'
+        return 1
+    }
+    sudo chmod 755 /srv/rhcsa-site
+    sudo chmod 644 /srv/rhcsa-site/index.html
+    sudo chcon -R -t var_t /srv/rhcsa-site
 }
+
+configure-apache(){ 
+    sudo touch /etc/httpd/conf.d/rhcsa-site.conf
+}
+
 
 
 enable-selinux || exit 1
