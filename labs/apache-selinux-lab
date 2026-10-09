@@ -78,7 +78,7 @@ EOF
 }
 
 
-
 enable-selinux || exit 1
 setup-apache || exit 1
+configure-apache || exit 1
 
