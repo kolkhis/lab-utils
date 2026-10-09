@@ -55,12 +55,14 @@ setup-apache() {
         printf >&2 'ERROR: Failed to write index.html\n'
         return 1
     }
+    printf "Setting traditional Linux permissions and SELinux contexts for /srv/rhcsa-site.\n"
     sudo chmod 755 /srv/rhcsa-site
     sudo chmod 644 /srv/rhcsa-site/index.html
     sudo chcon -R -t var_t /srv/rhcsa-site
 }
 
 configure-apache(){ 
+    printf "Configuring Apache's custom root document.\n"
     sudo touch /etc/httpd/conf.d/rhcsa-site.conf
     cat << EOF | sudo tee /etc/httpd/conf.d/rhcsa-site.conf > /dev/null
 DocumentRoot "/srv/rhcsa-site"
@@ -78,7 +80,16 @@ EOF
 }
 
 
-enable-selinux || exit 1
-setup-apache || exit 1
-configure-apache || exit 1
+enable-selinux || {
+    printf "ERROR: Failed to configure SELinux to persistent Enforcing mode.\n"
+    exit 1
+}
+setup-apache || {
+    printf "ERROR: Failed to set up Apache (httpd).\n"
+    exit 1
+}
+configure-apache || { 
+    printf "ERROR: Failed to set up Apache configuration\n"
+    exit 1
+}
 
