@@ -22,6 +22,27 @@ Do not solve SELinux problems by doing any of the following:
 Use SELinux the correct way. Set contexts and booleans properly. This will
 help to gain a deeper understanding of Apache and SELinux (and will be expected
 on the RHCSA exam).  
+
+
+Tasks for this lab are as follows.  
+- Verify the current SELinux mode.  
+- Verify that Apache is active.  
+- Verify the website's traditional Linux permissions and ownership.  
+- Identify the SELinux contexts of the following files:
+    - /srv
+    - /srv/rhcsa-site
+    - /srv/rhcsa-site/index.html
+    - /var/www/html
+- Indentify the SELinux domain in which Apache runs. 
+- Temporarily switch SELinux to permissive mode and test the website.  
+- Return SELinux to enforcing mode immediately.  
+- Determine the appropriate SELinux type for static Apache content.  
+- Create a persistent file-context rule for /srv/rhcsa-site **and everything
+  below it**.  
+- Apply the new rule recursively.  
+- Confirm that Apache can serve the site while SELinux is enforcing.  
+- Demonstrate that the correction survives an incorrect temporary label.  
+- Leave Apache running and SELinux enforcing.  
 "
 
 printf "Setting up lab environment.\n"
