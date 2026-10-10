@@ -27,9 +27,13 @@ on the RHCSA exam).
 printf "Setting up lab environment.\n"
 
 enable-selinux(){
+    printf "Checking if SELinux is enabled...\n"
     if [[ "$(getenforce)" == 'Enforcing' ]]; then
+        printf "SELinux already enabled. Continuing.\n"
         return 0
     fi
+    # TODO: Grep for enforcing config in /etc/selinux/config before changing
+    printf "SELinux not enabled. Enabling in /etc/selinux/config...\n"
     sudo perl -pi -e '
         s/^(SELINUX=).*$/$1enforcing/;
         s/^(SELINUXTYPE=).*$/$1targeted/;
@@ -89,7 +93,7 @@ setup-apache || {
     exit 1
 }
 configure-apache || { 
-    printf "ERROR: Failed to set up Apache configuration\n"
+    printf "ERROR: Failed to set up Apache configuration.\n"
     exit 1
 }
 
