@@ -97,3 +97,6 @@ configure-apache || {
     exit 1
 }
 
+printf "Lab scenario succesfully set up.\n"
+
+printf "The lab scenario is as follows:\n\n\t%s\n" "$LAB_SCENARIO"
